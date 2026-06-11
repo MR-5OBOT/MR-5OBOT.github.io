@@ -190,7 +190,7 @@ html[data-mode="0"] .display .l2 { color: var(--yellow); text-shadow: -.075em .0
 .logo-mask {
   width: 42px; height: 42px;
   border: var(--line);
-  border-radius: 50%;
+  border-radius: 6px;
   background: #000;
 }
 .logo .sticker { transform: rotate(-2deg); }
@@ -618,7 +618,7 @@ html[data-mode="0"] .mode-switch .c0 {
 }
 .footer a { color: #ffd23f; text-decoration-thickness: 2px; text-underline-offset: 3px; }
 .footer .f-logo { display: flex; align-items: center; gap: .6rem; }
-.footer .f-logo img { width: 30px; height: 30px; border: 2px solid #fffdf2; border-radius: 50%; }
+.footer .f-logo img { width: 30px; height: 30px; border: 2px solid #fffdf2; border-radius: 6px; }
 
 /* toast */
 #toast {
