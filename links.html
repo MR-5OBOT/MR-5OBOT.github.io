@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en" data-mode="1" class="no-js">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Links — MR5OBOT</title>
+  <meta name="description" content="Every channel where you can find MR5OBOT. Pick a frequency.">
+
+  <script>
+    (function () {
+      try {
+        var q = new URLSearchParams(location.search).get('m');
+        var m = (q === '0' || q === '1') ? q : (localStorage.getItem('m') || '1');
+        if (q === '0' || q === '1') localStorage.setItem('m', q);
+        document.documentElement.dataset.mode = m;
+      } catch (e) { document.documentElement.dataset.mode = '1'; }
+    })();
+  </script>
+
+  <link rel="icon" type="image/png" href="assets/mask.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Press+Start+2P&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">SKIP TO CONTENT</a>
+
+  <header class="nav">
+    <div class="container nav-inner">
+      <a class="logo" href="index.html" aria-label="MR5OBOT — home">
+        <img class="logo-mask" src="assets/mask.png" alt="" width="42" height="42">
+        <span class="sticker">MR5OBOT</span>
+        <span class="sticker alt">.OHLC</span>
+      </a>
+
+      <ul class="nav-links" id="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="stuff.html">Stuff</a></li>
+        <li><a href="links.html" aria-current="page">Links</a></li>
+      </ul>
+
+      <a class="btn btn-pink btn-sm nav-cta" href="mailto:yassir7m7@gmail.com">Say hi &#128165;</a>
+
+      <button class="mode-switch" type="button" title="Are you 1 or 0?" aria-label="Toggle blackout mode — are you 1 or 0?">
+        <span class="c1">1</span><span class="c0">0</span>
+      </button>
+
+      <button class="menu-btn" type="button" aria-expanded="false" aria-controls="nav-links">MENU</button>
+    </div>
+  </header>
+
+  <main id="main">
+
+    <section class="hero" style="padding-bottom: clamp(2rem, 5vh, 3rem);">
+      <div class="container">
+        <span class="tag">&#9888;&#65038; ALL FREQUENCIES OPEN &#9888;&#65038;</span>
+        <h1 class="display">
+          <span class="l1">Find me</span>
+          <span class="l2">Anywhere</span>
+        </h1>
+        <p class="lede">
+          Pick a channel. I respond fastest wherever the memes are.
+          <strong>Transmissions answered in order of chaos.</strong>
+        </p>
+      </div>
+    </section>
+
+    <section class="section" style="padding-top: 1rem;">
+      <div class="container">
+        <div class="links-list">
+
+          <div class="link-row">
+            <a class="link-main" href="https://github.com/MR-5OBOT" target="_blank" rel="noopener">
+              <span class="link-chip lc-gh">GH</span>
+              <span>
+                <span class="link-name">GitHub</span><br>
+                <span class="link-handle">github.com/MR-5OBOT</span>
+              </span>
+            </a>
+            <span class="link-go" aria-hidden="true">&gt;&gt;</span>
+          </div>
+
+          <div class="link-row">
+            <a class="link-main" href="https://x.com/MR5OBOT" target="_blank" rel="noopener">
+              <span class="link-chip lc-x">X</span>
+              <span>
+                <span class="link-name">X / Twitter</span><br>
+                <span class="link-handle">@MR5OBOT</span>
+              </span>
+            </a>
+            <span class="link-go" aria-hidden="true">&gt;&gt;</span>
+          </div>
+
+          <div class="link-row">
+            <span class="link-main">
+              <span class="link-chip lc-dc">DC</span>
+              <span>
+                <span class="link-name">Discord</span><br>
+                <span class="link-handle">@mr5obot</span>
+              </span>
+            </span>
+            <button class="copy-btn" type="button" data-copy="mr5obot">COPY</button>
+          </div>
+
+          <div class="link-row">
+            <a class="link-main" href="https://t.me/MR5OBOT" target="_blank" rel="noopener">
+              <span class="link-chip lc-tg">TG</span>
+              <span>
+                <span class="link-name">Telegram</span><br>
+                <span class="link-handle">t.me/MR5OBOT</span>
+              </span>
+            </a>
+            <span class="link-go" aria-hidden="true">&gt;&gt;</span>
+          </div>
+
+          <div class="link-row">
+            <a class="link-main" href="mailto:yassir7m7@gmail.com">
+              <span class="link-chip lc-mail">@</span>
+              <span>
+                <span class="link-name">Email</span><br>
+                <span class="link-handle">yassir7m7@gmail.com</span>
+              </span>
+            </a>
+            <button class="copy-btn" type="button" data-copy="yassir7m7@gmail.com">COPY</button>
+          </div>
+
+        </div>
+
+        <div class="backline">
+          <a class="btn" href="index.html">&lt;&lt; Back to base</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <span class="f-logo"><img src="assets/mask.png" alt="" width="30" height="30"> MR5OBOT</span>
+      <span>(C) <span class="year">2026</span> MR5OBOT // MADE OF 1s AND 0s</span>
+      <span>NO TRACKERS // <a href="mailto:yassir7m7@gmail.com">SAY HI</a></span>
+    </div>
+  </footer>
+
+  <div id="toast" role="status" aria-live="polite"></div>
+  <script src="js/main.js"></script>
+</body>
+</html>

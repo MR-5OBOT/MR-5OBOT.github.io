@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en" data-mode="1" class="no-js">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stuff — MR5OBOT</title>
+  <meta name="description" content="Projects, experiments, and artifacts recovered from MR5OBOT's hard drive.">
+
+  <script>
+    (function () {
+      try {
+        var q = new URLSearchParams(location.search).get('m');
+        var m = (q === '0' || q === '1') ? q : (localStorage.getItem('m') || '1');
+        if (q === '0' || q === '1') localStorage.setItem('m', q);
+        document.documentElement.dataset.mode = m;
+      } catch (e) { document.documentElement.dataset.mode = '1'; }
+    })();
+  </script>
+
+  <link rel="icon" type="image/png" href="assets/mask.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Press+Start+2P&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">SKIP TO CONTENT</a>
+
+  <header class="nav">
+    <div class="container nav-inner">
+      <a class="logo" href="index.html" aria-label="MR5OBOT — home">
+        <img class="logo-mask" src="assets/mask.png" alt="" width="42" height="42">
+        <span class="sticker">MR5OBOT</span>
+        <span class="sticker alt">.OHLC</span>
+      </a>
+
+      <ul class="nav-links" id="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="stuff.html" aria-current="page">Stuff</a></li>
+        <li><a href="links.html">Links</a></li>
+      </ul>
+
+      <a class="btn btn-pink btn-sm nav-cta" href="links.html">Say hi &#128165;</a>
+
+      <button class="mode-switch" type="button" title="Are you 1 or 0?" aria-label="Toggle blackout mode — are you 1 or 0?">
+        <span class="c1">1</span><span class="c0">0</span>
+      </button>
+
+      <button class="menu-btn" type="button" aria-expanded="false" aria-controls="nav-links">MENU</button>
+    </div>
+  </header>
+
+  <main id="main">
+
+    <section class="hero" style="padding-bottom: clamp(2rem, 5vh, 3rem);">
+      <div class="container">
+        <span class="tag">&#9888;&#65038; THE VAULT // OPENING... &#9888;&#65038;</span>
+        <h1 class="display">
+          <span class="l1">Stuff</span>
+          <span class="l2">+ Things</span>
+        </h1>
+        <p class="lede">
+          Projects, experiments, and artifacts recovered from my hard drive.
+          Updated whenever I ship something — <strong>no refunds, no roadmap.</strong>
+        </p>
+      </div>
+    </section>
+
+    <div class="tape"><span>&#9888;&#65038; AREA UNDER CONSTRUCTION — REAL PROJECTS LOADING SOON &#9888;&#65038;</span></div>
+
+    <section class="section">
+      <div class="container">
+        <div class="card-grid">
+
+          <article class="card project">
+            <div class="project-top">
+              <h3>ALGO_BOT.EXE</h3>
+              <span class="chip chip-red">WIP</span>
+            </div>
+            <p>Trades while I sleep. So far it mostly sleeps too. The backtest says we're rich — the backtest says a lot of things.</p>
+            <div class="tech-row">
+              <span class="tech">PYTHON</span><span class="tech">OHLC</span>
+            </div>
+            <div class="project-links">
+              <span class="btn btn-sm" aria-disabled="true">LOCKED</span>
+            </div>
+          </article>
+
+          <article class="card project">
+            <div class="project-top">
+              <h3>SCRIPT_KIDDO.SH</h3>
+              <span class="chip chip-blue">SOON</span>
+            </div>
+            <p>A pile of tiny scripts that save me hours every week — and occasionally cause beautiful chaos.</p>
+            <div class="tech-row">
+              <span class="tech">BASH</span><span class="tech">PYTHON</span>
+            </div>
+            <div class="project-links">
+              <a class="btn btn-sm btn-green" href="https://github.com/MR-5OBOT" target="_blank" rel="noopener">CODE</a>
+            </div>
+          </article>
+
+          <article class="card project">
+            <div class="project-top">
+              <h3>PIXEL_LAB</h3>
+              <span class="chip chip-green">SOON</span>
+            </div>
+            <p>Experiments with pixel art, CRT effects, and other things that go beep in the night.</p>
+            <div class="tech-row">
+              <span class="tech">JS</span><span class="tech">CANVAS</span>
+            </div>
+            <div class="project-links">
+              <a class="btn btn-sm btn-green" href="https://github.com/MR-5OBOT" target="_blank" rel="noopener">CODE</a>
+            </div>
+          </article>
+
+          <article class="card flat">
+            <figure class="polaroid tall">
+              <img src="assets/poster-1or0.png" alt="Black poster with white pixel text: Are you 1 or 0?" width="1024" height="1536" loading="lazy">
+              <figcaption class="polaroid-cap">ARTIFACT #001 &#183; ARE YOU 1 OR 0?</figcaption>
+            </figure>
+            <div class="project-links" style="margin-top: 1rem;">
+              <a class="btn btn-sm btn-pink" href="assets/poster-1or0.png" download="mr5obot-1or0-wallpaper.png">FREE WALLPAPER</a>
+            </div>
+          </article>
+
+          <a class="card-cta card" href="https://github.com/MR-5OBOT" target="_blank" rel="noopener">
+            <h3>MORE ON<br>GITHUB</h3>
+            <span class="meta">THE FULL INVENTORY LIVES THERE</span>
+            <span class="go">&gt;&gt;</span>
+          </a>
+
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <span class="f-logo"><img src="assets/mask.png" alt="" width="30" height="30"> MR5OBOT</span>
+      <span>(C) <span class="year">2026</span> MR5OBOT // MADE OF 1s AND 0s</span>
+      <span>NO TRACKERS // <a href="links.html">SAY HI</a></span>
+    </div>
+  </footer>
+
+  <div id="toast" role="status" aria-live="polite"></div>
+  <script src="js/main.js"></script>
+</body>
+</html>
