@@ -1,5 +1,7 @@
 # MR5OBOT — Personal HQ
 
+**Live at <https://mr-5obot.github.io>**
+
 Pixel-arcade personal landing page. **Are you 1 or 0?**
 
 Pure HTML + CSS + vanilla JS — no framework, no build step, no dependencies.
@@ -44,10 +46,8 @@ git init && git add -A && git commit -m "hello friend"
 
 ## TODO — fill in your real info
 
-- [ ] `links.html` — replace the placeholder handles (GitHub / X / Discord / Telegram / email) with your real ones
-- [ ] `index.html` — tweak the bio in the hero + the three "Behind the mask" cards
+- [ ] `links.html` — X / Discord / Telegram handles are still guesses; replace with the real ones (GitHub + email are real)
 - [ ] `stuff.html` — swap the placeholder project cards with real projects
-- [ ] `index.html` — set `og:image` to the absolute URL once you have a domain
 
 ## Design tokens
 
