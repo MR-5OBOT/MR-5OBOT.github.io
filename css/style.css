@@ -438,9 +438,10 @@ html[data-mode="0"] .mode-switch .c0 {
 
 .project-top {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 1rem;
+  gap: .6rem 1rem;
 }
 .project-top .chip { margin-bottom: 0; flex-shrink: 0; }
 
