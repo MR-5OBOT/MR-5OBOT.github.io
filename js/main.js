@@ -8,9 +8,17 @@
   function $(sel, ctx) { return (ctx || document).querySelector(sel); }
   function $$(sel, ctx) { return Array.prototype.slice.call((ctx || document).querySelectorAll(sel)); }
 
+  /* keep the mobile browser chrome in sync with the active mode */
+  function syncThemeColor() {
+    var meta = $('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', doc.dataset.mode === '0' ? '#0d0d10' : '#ffd23f');
+  }
+  syncThemeColor();
+
   /* ----- 1 / 0 theme switch ----- */
   function setMode(m) {
     doc.dataset.mode = m;
+    syncThemeColor();
     try { localStorage.setItem('m', m); } catch (e) {}
     $$('.mode-switch').forEach(function (b) {
       b.setAttribute('aria-pressed', m === '0' ? 'true' : 'false');
