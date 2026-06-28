@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>hover demo — steal these</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Merienda:wght@700&display=swap" rel="stylesheet">
+<style>
+  :root{ --bg:#0e0e0e; --ink:#fff; --grey:#555; }
+  *{ box-sizing:border-box; margin:0; }
+  body{ font-family:'Space Grotesk',sans-serif; background:var(--bg); color:#eee;
+        padding:40px; display:flex; flex-direction:column; gap:60px; min-height:100vh; }
+
+  /* ---------- 1. navbar with "selection box" corners ---------- */
+  .nav{ position:relative; border:1.5px solid var(--ink);
+        max-width:640px; margin:0 auto; padding:16px 28px;
+        display:flex; align-items:center; gap:28px; }
+  .logo{ font-family:'Merienda',cursive; letter-spacing:.15em; font-size:20px; margin-right:auto; }
+  .nav a{ color:#ddd; text-decoration:none; font-weight:500;
+          transition:color .2s; }
+  .nav a:hover{ color:#b18cff; }                 /* simple link hover */
+  .corner{ position:absolute; width:8px; height:8px; background:var(--bg);
+           border:1.5px solid var(--ink); }
+  .tl{top:-5px;left:-5px}  .tr{top:-5px;right:-5px}
+  .bl{bottom:-5px;left:-5px} .br{bottom:-5px;right:-5px}
+
+  /* ---------- 2. hero ---------- */
+  .hero{ display:flex; gap:60px; align-items:center; flex-wrap:wrap;
+         justify-content:center; }
+  h1{ font-size:clamp(34px,5vw,58px); line-height:1.05; letter-spacing:-.02em;
+      cursor:default; transition:text-shadow .18s ease, transform .18s ease; }
+  h1:hover{ text-shadow:3px 3px 0 #8a0f0f; transform:translate(-1px,-1px); } /* neo-brutalist hard shadow */
+  .sub{ color:#aaa; margin-top:18px; max-width:340px; line-height:1.5; }
+
+  /* ---------- 3. hand-drawn frame (pure CSS) ---------- */
+  .frame{ position:relative; display:inline-block;
+          border:3px solid var(--ink);
+          box-shadow:-10px 10px 0 var(--grey);   /* the doubled grey "sketch" line */
+          transform:rotate(-1.1deg); }            /* tiny tilt = hand-drawn vibe */
+  .photo-wrap{ display:block; width:430px; height:430px; overflow:hidden; }
+  .photo{ display:block; width:100%; height:100%;
+          object-fit:cover; transform:scale(1.05); } /* crops baked-in black margin */
+
+  /* ---------- 4. hover reveals — the good part ---------- */
+  .reveal{ opacity:0; transform:scale(.6) translateY(10px);
+           transition:opacity .35s ease,
+                      transform .4s cubic-bezier(.4,1.56,.64,1); } /* springy overshoot */
+  .frame:hover .reveal{ opacity:1; transform:scale(1) translateY(0); }
+
+  .bulb{ position:absolute; top:-26px; left:-26px; width:54px; height:54px; }
+  .cloud{ position:absolute; top:-58px; right:-85px; width:245px; }
+  .tag{ position:absolute; bottom:14px; left:50%; transform-origin:center;
+        color:#fff; font-family:'Merienda',cursive; font-size:22px;
+        font-weight:700; letter-spacing:.12em; white-space:nowrap;
+        /* override the base reveal transform for centering */
+        opacity:0; transform:translate(-50%,10px) scale(.6);
+        transition:opacity .35s ease, transform .4s cubic-bezier(.34,1.56,.64,1); }
+  .frame:hover .tag{ opacity:1; transform:translate(-50%,0) scale(1); }
+
+  .hint{ text-align:center; color:#999; font-size:13px; }
+</style>
+</head>
+<body>
+
+  <nav class="nav">
+    <span class="logo">MR5OBOT</span>
+    <a href="#">Works</a><a href="#">Leaks</a><a href="#">Contact</a>
+    <span class="corner tl"></span><span class="corner tr"></span>
+    <span class="corner bl"></span><span class="corner br"></span>
+  </nav>
+
+  <div class="hero">
+    <div>
+      <h1>Are you<br>1 or 0?</h1>
+      <p class="sub">fsociety traders. exit the matrix, enter the drawdown.</p>
+    </div>
+
+    <div class="frame">
+      <div class="photo-wrap"><img class="photo" src="assets/logo3.jpg" alt=""></div>
+
+
+      <!-- lightbulb (inline SVG, no asset needed) -->
+      <svg class="reveal bulb" viewBox="0 0 92 92" fill="none">
+        <circle cx="46" cy="46" r="44" fill="#FFDC58" stroke="#000" stroke-width="2"/>
+        <path d="M46 22a16 16 0 0 0-9 29c1.5 1 2 2 2 4v3h14v-3c0-2 .5-3 2-4a16 16 0 0 0-9-29Z" stroke="#000" stroke-width="2" fill="#fff"/>
+        <path d="M39 64h14M41 69h10" stroke="#000" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+
+      <!-- speech cloud: fluffy top+bottom, centered text, outline + shadow + volume -->
+      <svg class="reveal cloud" viewBox="0 0 280 185">
+        <defs>
+          <linearGradient id="cloudfill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#ffffff"/>
+            <stop offset="1" stop-color="#e7e7ee"/>
+          </linearGradient>
+          <filter id="cloudfx" x="-25%" y="-25%" width="150%" height="170%">
+            <feMorphology in="SourceAlpha" operator="dilate" radius="2" result="dil"/>
+            <feFlood flood-color="#141414" result="ink"/>
+            <feComposite in="ink" in2="dil" operator="in" result="outline"/>
+            <feMerge>
+              <feMergeNode in="outline"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
+        </defs>
+        <g fill="url(#cloudfill)" filter="url(#cloudfx)">
+          <ellipse cx="140" cy="92" rx="108" ry="46"/>
+          <circle cx="80"  cy="58" r="34"/>
+          <circle cx="125" cy="48" r="30"/>
+          <circle cx="170" cy="48" r="32"/>
+          <circle cx="208" cy="60" r="36"/>
+          <circle cx="48"  cy="92" r="34"/>
+          <circle cx="232" cy="92" r="34"/>
+          <circle cx="80"  cy="124" r="32"/>
+          <circle cx="128" cy="134" r="30"/>
+          <circle cx="176" cy="134" r="30"/>
+          <circle cx="212" cy="124" r="32"/>
+          <circle cx="44"  cy="156" r="13"/>
+          <circle cx="24"  cy="174" r="8"/>
+        </g>
+        <g text-anchor="middle" fill="#141414" font-family="Space Grotesk" font-weight="700" font-size="17" letter-spacing=".3">
+          <text x="140" y="82">just a</text>
+          <text x="140" y="101">simulations pro</text>
+          <text x="140" y="120">nothing real</text>
+        </g>
+      </svg>
+
+      <div class="tag">MR5OBOT</div>
+    </div>
+  </div>
+
+</body>
+</html>
