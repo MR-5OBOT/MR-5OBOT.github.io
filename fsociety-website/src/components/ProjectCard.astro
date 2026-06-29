@@ -1,0 +1,13 @@
+---
+import SketchFrame from './SketchFrame.astro';
+interface Props { title: string; desc: string; href?: string; img?: string; }
+const { title, desc, href = '#', img } = Astro.props;
+---
+<a class="card reveal-up" href={href}>
+  <SketchFrame />
+  <div class="card-thumb">
+    {img ? <img src={img} alt={title} /> : <span class="ph">screenshot soon</span>}
+  </div>
+  <h3 data-decode>{title}</h3>
+  <p set:html={desc}></p>
+</a>

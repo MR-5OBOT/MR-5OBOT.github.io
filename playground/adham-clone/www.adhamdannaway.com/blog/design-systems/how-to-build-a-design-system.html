@@ -1,0 +1,952 @@
+<!doctype html>
+
+<!-- HTML5 Boilerplate -->
+<!--[if lt IE 7]><html class="no-js lt-ie9 lt-ie8 lt-ie7" lang="en"> <![endif]-->
+<!--[if (IE 7)&!(IEMobile)]><html class="no-js lt-ie9 lt-ie8" lang="en"><![endif]-->
+<!--[if (IE 8)&!(IEMobile)]><html class="no-js lt-ie9" lang="en"><![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en"><!--<![endif]-->
+
+
+<!-- Mirrored from www.adhamdannaway.com/blog/design-systems/how-to-build-a-design-system by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 29 Jun 2026 13:34:05 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=UTF-8" /><!-- /Added by HTTrack -->
+<head>
+
+	<!-- Google tag (gtag.js) -->
+	<script async src="https://www.googletagmanager.com/gtag/js?id=G-MJFDYEXZZN"></script>
+	<script>
+	  window.dataLayer = window.dataLayer || [];
+	  function gtag(){dataLayer.push(arguments);}
+	  gtag('js', new Date());
+
+	  gtag('config', 'G-MJFDYEXZZN');
+	</script>
+
+	<meta charset="utf-8">
+
+	<title>How to build a design system - Design system guide</title><link rel="stylesheet" id="siteground-optimizer-combined-css-53d44b73f71bfadc5ddac5c92ff53f43" href="../../wp-content/uploads/siteground-optimizer-assets/siteground-optimizer-combined-css-53d44b73f71bfadc5ddac5c92ff53f43.css" media="all" /> <link rel="preload" href="../../wp-content/uploads/siteground-optimizer-assets/siteground-optimizer-combined-css-53d44b73f71bfadc5ddac5c92ff53f43.css" as="style">
+
+<!-- 	<meta property="og:title" content="Design Portfolio of Adham Dannaway | UI/UX Product Designer" />
+	<meta property="og:type" content="website" />
+	<meta property="og:url" content="https://www.adhamdannaway.com" />
+	<meta property="og:image" content="https://www.adhamdannaway.com/wp-content/themes/dannaway/images/adham-dannaway-designer-coder.jpg" />
+	<meta property="og:image:width" content="1040" />
+	<meta property="og:image:height" content="600" />
+ -->
+	<!-- http://t.co/dKP3o1e -->
+	<meta name="HandheldFriendly" content="True">
+	<meta name="MobileOptimized" content="320">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="twitter:widgets:csp" content="on">
+	<meta property='fb:app_id' content='381830641890866' />
+
+	<!-- For all browsers -->
+	
+
+	<!--[if (lt IE 9) & (!IEMobile)]>
+	<script src="js/selectivizr-min.js"></script>
+	<![endif]-->
+
+	<!--[if lt IE 9]>
+	<link rel="stylesheet" type="text/css" href="https://www.adhamdannaway.com/wp-content/themes/dannaway/ie.css" />
+	<![endif]-->
+
+	<!-- JavaScript -->
+	<script src="../../wp-content/themes/dannaway/js/modernizr-2.5.3-min.js"></script>
+	
+
+	<!-- For iPhone 4 -->
+	<!-- <link rel="apple-touch-icon-precomposed" sizes="114x114" href="img/h/apple-touch-icon.png"> -->
+	<!-- For iPad 1-->
+	<!-- <link rel="apple-touch-icon-precomposed" sizes="72x72" href="img/m/apple-touch-icon.png"> -->
+	<!-- For the new iPad -->
+	<!-- <link rel="apple-touch-icon-precomposed" sizes="144x144" href="img/h/apple-touch-icon-144x144-precomposed.png"> -->
+	<!-- For iPhone 3G, iPod Touch and Android -->
+	<!-- <link rel="apple-touch-icon-precomposed" href="img/l/apple-touch-icon-precomposed.png"> -->
+	<!-- For Nokia -->
+	<!-- <link rel="shortcut icon" href="img/l/apple-touch-icon.png"> -->
+	<!-- For everything else -->
+	<link rel="shortcut icon" href="../../favicon.ico">
+
+	<!--iOS -->
+	<!-- <meta name="apple-mobile-web-app-capable" content="yes"> -->
+	<!-- <meta name="apple-mobile-web-app-status-bar-style" content="black"> -->
+	<!-- <link rel="apple-touch-startup-image" href="img/splash.png"> -->
+
+	<!-- <script>(function(){var p,l,r=window.devicePixelRatio;if(navigator.platform==="iPad"){p=r===2?"img/startup/startup-tablet-portrait-retina.png":"img/startup/startup-tablet-portrait.png";l=r===2?"img/startup/startup-tablet-landscape-retina.png":"img/startup/startup-tablet-landscape.png";document.write('<link rel="apple-touch-startup-image" href="'+l+'" media="screen and (orientation: landscape)"/><link rel="apple-touch-startup-image" href="'+p+'" media="screen and (orientation: portrait)"/>');}else{p=r===2?"img/startup/startup-retina.png":"img/startup/startup.png";document.write('<link rel="apple-touch-startup-image" href="'+p+'"/>');}})()</script> -->
+	<!--Microsoft -->
+
+	<!-- Prevents links from opening in mobile Safari -->
+	<!-- <script>(function(a,b,c){if(c in b&&b[c]){var d,e=a.location,f=/^(a|html)$/i;a.addEventListener("click",function(a){d=a.target;while(!f.test(d.nodeName))d=d.parentNode;"href"in d&&(d.href.indexOf("http")||~d.href.indexOf(e.host))&&(a.preventDefault(),e.href=d.href)},!1)}})(document,window.navigator,"standalone")</script> -->
+	<meta http-equiv="cleartype" content="on">
+
+	<link rel="pingback" href="../../xmlrpc.php" />
+	
+
+	<script type="text/javascript">
+
+      // Eliminate FOUC
+      document.documentElement.className = 'js';
+
+    </script>
+
+     <meta name='robots' content='index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1' />
+
+	<!-- This site is optimized with the Yoast SEO plugin v27.9 - https://yoast.com/product/yoast-seo-wordpress/ -->
+	<meta name="description" content="A step by step guide to build a design system with predefined styles, a component library, and usage guidelines." />
+	<link rel="canonical" href="how-to-build-a-design-system.html" />
+	<meta property="og:locale" content="en_US" />
+	<meta property="og:type" content="article" />
+	<meta property="og:title" content="How to build a design system - Design system guide" />
+	<meta property="og:description" content="A step by step guide to build a design system with predefined styles, a component library, and usage guidelines." />
+	<meta property="og:url" content="https://www.adhamdannaway.com/blog/design-systems/how-to-build-a-design-system" />
+	<meta property="og:site_name" content="Adham Dannaway" />
+	<meta property="article:published_time" content="2026-01-01T09:57:21+00:00" />
+	<meta property="article:modified_time" content="2026-01-01T21:20:17+00:00" />
+	<meta property="og:image" content="https://www.adhamdannaway.com/wp-content/uploads/2024/07/figma-design-system.webp" />
+	<meta property="og:image:width" content="1360" />
+	<meta property="og:image:height" content="800" />
+	<meta property="og:image:type" content="image/webp" />
+	<meta name="author" content="Adham Dannaway" />
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:creator" content="@AdhamDannaway" />
+	<meta name="twitter:site" content="@AdhamDannaway" />
+	<meta name="twitter:label1" content="Written by" />
+	<meta name="twitter:data1" content="Adham Dannaway" />
+	<meta name="twitter:label2" content="Est. reading time" />
+	<meta name="twitter:data2" content="15 minutes" />
+	<script type="application/ld+json" class="yoast-schema-graph">{"@context":"https:\/\/schema.org","@graph":[{"@type":"Article","@id":"https:\/\/www.adhamdannaway.com\/blog\/design-systems\/how-to-build-a-design-system#article","isPartOf":{"@id":"https:\/\/www.adhamdannaway.com\/blog\/design-systems\/how-to-build-a-design-system"},"author":{"name":"Adham Dannaway","@id":"https:\/\/www.adhamdannaway.com\/#\/schema\/person\/f34e0be7bb1daca6c82945f4d3661ca7"},"headline":"How to build a design system","datePublished":"2026-01-01T09:57:21+00:00","dateModified":"2026-01-01T21:20:17+00:00","mainEntityOfPage":{"@id":"https:\/\/www.adhamdannaway.com\/blog\/design-systems\/how-to-build-a-design-system"},"wordCount":2695,"commentCount":0,"publisher":{"@id":"https:\/\/www.adhamdannaway.com\/#\/schema\/person\/f34e0be7bb1daca6c82945f4d3661ca7"},"image":{"@id":"https:\/\/www.adhamdannaway.com\/blog\/design-systems\/how-to-build-a-design-system#primaryimage"},"thumbnailUrl":"https:\/\/www.adhamdannaway.com\/wp-content\/uploads\/2024\/07\/figma-design-system.webp","keywords":["design system"],"articleSection":["Design systems"],"inLanguage":"en-US","potentialAction":[{"@type":"CommentAction","name":"Comment","target":["https:\/\/www.adhamdannaway.com\/blog\/design-systems\/how-to-build-a-design-system#respond"]}]},{"@type":"WebPage","@id":"https:\/\/www.adhamdannaway.com\/blog\/design-systems\/how-to-build-a-design-system","url":"https:\/\/www.adhamdannaway.com\/blog\/design-systems\/how-to-build-a-design-system","name":"How to build a design system - Design system guide","isPartOf":{"@id":"https:\/\/www.adhamdannaway.com\/#website"},"primaryImageOfPage":{"@id":"https:\/\/www.adhamdannaway.com\/blog\/design-systems\/how-to-build-a-design-system#primaryimage"},"image":{"@id":"https:\/\/www.adhamdannaway.com\/blog\/design-systems\/how-to-build-a-design-system#primaryimage"},"thumbnailUrl":"https:\/\/www.adhamdannaway.com\/wp-content\/uploads\/2024\/07\/figma-design-system.webp","datePublished":"2026-01-01T09:57:21+00:00","dateModified":"2026-01-01T21:20:17+00:00","description":"A step by step guide to build a design system with predefined styles, a component library, and usage guidelines.","breadcrumb":{"@id":"https:\/\/www.adhamdannaway.com\/blog\/design-systems\/how-to-build-a-design-system#breadcrumb"},"inLanguage":"en-US","potentialAction":[{"@type":"ReadAction","target":["https:\/\/www.adhamdannaway.com\/blog\/design-systems\/how-to-build-a-design-system"]}]},{"@type":"ImageObject","inLanguage":"en-US","@id":"https:\/\/www.adhamdannaway.com\/blog\/design-systems\/how-to-build-a-design-system#primaryimage","url":"https:\/\/www.adhamdannaway.com\/wp-content\/uploads\/2024\/07\/figma-design-system.webp","contentUrl":"https:\/\/www.adhamdannaway.com\/wp-content\/uploads\/2024\/07\/figma-design-system.webp","width":1360,"height":800,"caption":"Figma design system"},{"@type":"BreadcrumbList","@id":"https:\/\/www.adhamdannaway.com\/blog\/design-systems\/how-to-build-a-design-system#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https:\/\/www.adhamdannaway.com\/"},{"@type":"ListItem","position":2,"name":"blog","item":"https:\/\/www.adhamdannaway.com\/blog"},{"@type":"ListItem","position":3,"name":"How to build a design system"}]},{"@type":"WebSite","@id":"https:\/\/www.adhamdannaway.com\/#website","url":"https:\/\/www.adhamdannaway.com\/","name":"Adham Dannaway","description":"UI\/UX designer &amp; front end developer","publisher":{"@id":"https:\/\/www.adhamdannaway.com\/#\/schema\/person\/f34e0be7bb1daca6c82945f4d3661ca7"},"potentialAction":[{"@type":"SearchAction","target":{"@type":"EntryPoint","urlTemplate":"https:\/\/www.adhamdannaway.com\/?s={search_term_string}"},"query-input":{"@type":"PropertyValueSpecification","valueRequired":true,"valueName":"search_term_string"}}],"inLanguage":"en-US"},{"@type":["Person","Organization"],"@id":"https:\/\/www.adhamdannaway.com\/#\/schema\/person\/f34e0be7bb1daca6c82945f4d3661ca7","name":"Adham Dannaway","image":{"@type":"ImageObject","inLanguage":"en-US","@id":"https:\/\/www.adhamdannaway.comwp-content\/uploads\/2020\/12\/adham-dannaway-profile.jpg","url":"https:\/\/www.adhamdannaway.comwp-content\/uploads\/2020\/12\/adham-dannaway-profile.jpg","contentUrl":"https:\/\/www.adhamdannaway.comwp-content\/uploads\/2020\/12\/adham-dannaway-profile.jpg","width":550,"height":550,"caption":"Adham Dannaway"},"logo":{"@id":"https:\/\/www.adhamdannaway.comwp-content\/uploads\/2020\/12\/adham-dannaway-profile.jpg"},"sameAs":["http:\/\/adhamdannaway.com","https:\/\/x.com\/AdhamDannaway"]}]}</script>
+	<!-- / Yoast SEO plugin. -->
+
+
+<link rel='dns-prefetch' href='http://ajax.googleapis.com/' />
+<link rel="alternate" title="oEmbed (JSON)" type="application/json+oembed" href="../../wp-json/oembed/1.0/embedf72e.json?url=https%3A%2F%2Fwww.adhamdannaway.com%2Fblog%2Fdesign-systems%2Fhow-to-build-a-design-system" />
+<link rel="alternate" title="oEmbed (XML)" type="text/xml+oembed" href="../../wp-json/oembed/1.0/embed0179?url=https%3A%2F%2Fwww.adhamdannaway.com%2Fblog%2Fdesign-systems%2Fhow-to-build-a-design-system&amp;format=xml" />
+<style id="wp-img-auto-sizes-contain-inline-css">
+img:is([sizes=auto i],[sizes^="auto," i]){contain-intrinsic-size:3000px 1500px}
+/*# sourceURL=wp-img-auto-sizes-contain-inline-css */
+</style>
+<style id="wp-emoji-styles-inline-css">
+
+	img.wp-smiley, img.emoji {
+		display: inline !important;
+		border: none !important;
+		box-shadow: none !important;
+		height: 1em !important;
+		width: 1em !important;
+		margin: 0 0.07em !important;
+		vertical-align: -0.1em !important;
+		background: none !important;
+		padding: 0 !important;
+	}
+/*# sourceURL=wp-emoji-styles-inline-css */
+</style>
+<style id="wp-block-library-inline-css">
+:root{--wp-block-synced-color:#7a00df;--wp-block-synced-color--rgb:122,0,223;--wp-bound-block-color:var(--wp-block-synced-color);--wp-editor-canvas-background:#ddd;--wp-admin-theme-color:#007cba;--wp-admin-theme-color--rgb:0,124,186;--wp-admin-theme-color-darker-10:#006ba1;--wp-admin-theme-color-darker-10--rgb:0,107,160.5;--wp-admin-theme-color-darker-20:#005a87;--wp-admin-theme-color-darker-20--rgb:0,90,135;--wp-admin-border-width-focus:2px}@media (min-resolution:192dpi){:root{--wp-admin-border-width-focus:1.5px}}.wp-element-button{cursor:pointer}:root .has-very-light-gray-background-color{background-color:#eee}:root .has-very-dark-gray-background-color{background-color:#313131}:root .has-very-light-gray-color{color:#eee}:root .has-very-dark-gray-color{color:#313131}:root .has-vivid-green-cyan-to-vivid-cyan-blue-gradient-background{background:linear-gradient(135deg,#00d084,#0693e3)}:root .has-purple-crush-gradient-background{background:linear-gradient(135deg,#34e2e4,#4721fb 50%,#ab1dfe)}:root .has-hazy-dawn-gradient-background{background:linear-gradient(135deg,#faaca8,#dad0ec)}:root .has-subdued-olive-gradient-background{background:linear-gradient(135deg,#fafae1,#67a671)}:root .has-atomic-cream-gradient-background{background:linear-gradient(135deg,#fdd79a,#004a59)}:root .has-nightshade-gradient-background{background:linear-gradient(135deg,#330968,#31cdcf)}:root .has-midnight-gradient-background{background:linear-gradient(135deg,#020381,#2874fc)}:root{--wp--preset--font-size--normal:16px;--wp--preset--font-size--huge:42px}.has-regular-font-size{font-size:1em}.has-larger-font-size{font-size:2.625em}.has-normal-font-size{font-size:var(--wp--preset--font-size--normal)}.has-huge-font-size{font-size:var(--wp--preset--font-size--huge)}:root .has-text-align-center{text-align:center}:root .has-text-align-left{text-align:left}:root .has-text-align-right{text-align:right}.has-fit-text{white-space:nowrap!important}#end-resizable-editor-section{display:none}.aligncenter{clear:both}.items-justified-left{justify-content:flex-start}.items-justified-center{justify-content:center}.items-justified-right{justify-content:flex-end}.items-justified-space-between{justify-content:space-between}.screen-reader-text{word-wrap:normal!important;border:0;clip-path:inset(50%);height:1px;margin:-1px;overflow:hidden;padding:0;position:absolute;width:1px}.screen-reader-text:focus{background-color:#ddd;clip-path:none;color:#444;display:block;font-size:1em;height:auto;left:5px;line-height:normal;padding:15px 23px 14px;text-decoration:none;top:5px;width:auto;z-index:100000}html :where(.has-border-color){border-style:solid}html :where([style*=border-color]){border-style:solid}html :where([style*=border-top-color]){border-top-style:solid}html :where([style*=border-right-color]){border-right-style:solid}html :where([style*=border-bottom-color]){border-bottom-style:solid}html :where([style*=border-left-color]){border-left-style:solid}html :where([style*=border-width]){border-style:solid}html :where([style*=border-top-width]){border-top-style:solid}html :where([style*=border-right-width]){border-right-style:solid}html :where([style*=border-bottom-width]){border-bottom-style:solid}html :where([style*=border-left-width]){border-left-style:solid}html :where(img[class*=wp-image-]){height:auto;max-width:100%}:where(figure){margin:0 0 1em}html :where(.is-position-sticky){--wp-admin--admin-bar--position-offset:var(--wp-admin--admin-bar--height,0px)}@media screen and (max-width:600px){html :where(.is-position-sticky){--wp-admin--admin-bar--position-offset:0px}}
+
+/*# sourceURL=/wp-includes/css/dist/block-library/common.min.css */
+</style>
+<style id="wp-block-heading-inline-css">
+h1:where(.wp-block-heading).has-background,h2:where(.wp-block-heading).has-background,h3:where(.wp-block-heading).has-background,h4:where(.wp-block-heading).has-background,h5:where(.wp-block-heading).has-background,h6:where(.wp-block-heading).has-background{padding:1.25em 2.375em}h1.has-text-align-left[style*=writing-mode]:where([style*=vertical-lr]),h1.has-text-align-right[style*=writing-mode]:where([style*=vertical-rl]),h2.has-text-align-left[style*=writing-mode]:where([style*=vertical-lr]),h2.has-text-align-right[style*=writing-mode]:where([style*=vertical-rl]),h3.has-text-align-left[style*=writing-mode]:where([style*=vertical-lr]),h3.has-text-align-right[style*=writing-mode]:where([style*=vertical-rl]),h4.has-text-align-left[style*=writing-mode]:where([style*=vertical-lr]),h4.has-text-align-right[style*=writing-mode]:where([style*=vertical-rl]),h5.has-text-align-left[style*=writing-mode]:where([style*=vertical-lr]),h5.has-text-align-right[style*=writing-mode]:where([style*=vertical-rl]),h6.has-text-align-left[style*=writing-mode]:where([style*=vertical-lr]),h6.has-text-align-right[style*=writing-mode]:where([style*=vertical-rl]){rotate:180deg}
+/*# sourceURL=https://www.adhamdannaway.com/wp-includes/blocks/heading/style.min.css */
+</style>
+<style id="wp-block-image-inline-css">
+.wp-block-image>a,.wp-block-image>figure>a{display:inline-block}.wp-block-image img{box-sizing:border-box;height:auto;max-width:100%;vertical-align:bottom}@media not (prefers-reduced-motion){.wp-block-image img.hide{visibility:hidden}.wp-block-image img.show{animation:show-content-image .4s}}.wp-block-image[style*=border-radius] img,.wp-block-image[style*=border-radius]>a{border-radius:inherit}.wp-block-image.has-custom-border img{box-sizing:border-box}.wp-block-image.aligncenter{text-align:center}.wp-block-image.alignfull>a,.wp-block-image.alignwide>a{width:100%}.wp-block-image.alignfull img,.wp-block-image.alignwide img{height:auto;width:100%}.wp-block-image .aligncenter,.wp-block-image .alignleft,.wp-block-image .alignright,.wp-block-image.aligncenter,.wp-block-image.alignleft,.wp-block-image.alignright{display:table}.wp-block-image .aligncenter>figcaption,.wp-block-image .alignleft>figcaption,.wp-block-image .alignright>figcaption,.wp-block-image.aligncenter>figcaption,.wp-block-image.alignleft>figcaption,.wp-block-image.alignright>figcaption{caption-side:bottom;display:table-caption}.wp-block-image .alignleft{float:left;margin:.5em 1em .5em 0}.wp-block-image .alignright{float:right;margin:.5em 0 .5em 1em}.wp-block-image .aligncenter{margin-left:auto;margin-right:auto}.wp-block-image :where(figcaption){margin-bottom:1em;margin-top:.5em}.wp-block-image.is-style-circle-mask img{border-radius:9999px}@supports ((-webkit-mask-image:none) or (mask-image:none)) or (-webkit-mask-image:none){.wp-block-image.is-style-circle-mask img{border-radius:0;-webkit-mask-image:url('data:image/svg+xml;utf8,<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="50"/></svg>');mask-image:url('data:image/svg+xml;utf8,<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="50"/></svg>');mask-mode:alpha;-webkit-mask-position:center;mask-position:center;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-size:contain;mask-size:contain}}:root :where(.wp-block-image.is-style-rounded img,.wp-block-image .is-style-rounded img){border-radius:9999px}.wp-block-image figure{margin:0}.wp-lightbox-container{display:flex;flex-direction:column;position:relative}.wp-lightbox-container img{cursor:zoom-in}.wp-lightbox-container img:hover+button{opacity:1}.wp-lightbox-container button{align-items:center;backdrop-filter:blur(16px) saturate(180%);background-color:#5a5a5a40;border:none;border-radius:4px;cursor:zoom-in;display:flex;height:20px;justify-content:center;opacity:0;padding:0;position:absolute;right:16px;text-align:center;top:16px;width:20px;z-index:100}@media not (prefers-reduced-motion){.wp-lightbox-container button{transition:opacity .2s ease}}.wp-lightbox-container button:focus-visible{outline:3px auto #5a5a5a40;outline:3px auto -webkit-focus-ring-color;outline-offset:3px}.wp-lightbox-container button:hover{cursor:pointer;opacity:1}.wp-lightbox-container button:focus{opacity:1}.wp-lightbox-container button:focus,.wp-lightbox-container button:hover,.wp-lightbox-container button:not(:hover):not(:active):not(.has-background){background-color:#5a5a5a40;border:none}.wp-lightbox-overlay{box-sizing:border-box;cursor:zoom-out;height:100vh;left:0;overflow:hidden;position:fixed;top:0;visibility:hidden;width:100%;z-index:100000}.wp-lightbox-overlay .wp-lightbox-close-button{align-items:center;cursor:pointer;display:flex;font-family:inherit;gap:8px;justify-content:center;line-height:1;min-height:40px;min-width:40px;padding:0 4px;position:absolute;right:calc(env(safe-area-inset-right) + 16px);top:calc(env(safe-area-inset-top) + 16px);z-index:5000000}.wp-lightbox-overlay .wp-lightbox-close-button:focus,.wp-lightbox-overlay .wp-lightbox-close-button:hover,.wp-lightbox-overlay .wp-lightbox-close-button:not(:hover):not(:active):not(.has-background){background:none;border:none}.wp-lightbox-overlay .wp-lightbox-close-button:has(.wp-lightbox-close-text:not([hidden])) .wp-lightbox-close-icon svg{height:1em;width:1em}.wp-lightbox-overlay .wp-lightbox-close-icon svg{display:block}.wp-lightbox-overlay .wp-lightbox-navigation-button-next,.wp-lightbox-overlay .wp-lightbox-navigation-button-prev{align-items:center;bottom:16px;cursor:pointer;display:flex;font-family:inherit;gap:4px;justify-content:center;line-height:1;min-height:40px;min-width:40px;padding:0 8px;position:absolute;z-index:2000002}.wp-lightbox-overlay .wp-lightbox-navigation-button-next[hidden],.wp-lightbox-overlay .wp-lightbox-navigation-button-prev[hidden]{display:none}@media (min-width:960px){.wp-lightbox-overlay .wp-lightbox-navigation-button-next,.wp-lightbox-overlay .wp-lightbox-navigation-button-prev{bottom:50%;transform:translateY(-50%)}}.wp-lightbox-overlay .wp-lightbox-navigation-button-next:focus,.wp-lightbox-overlay .wp-lightbox-navigation-button-next:hover,.wp-lightbox-overlay .wp-lightbox-navigation-button-next:not(:hover):not(:active):not(.has-background),.wp-lightbox-overlay .wp-lightbox-navigation-button-prev:focus,.wp-lightbox-overlay .wp-lightbox-navigation-button-prev:hover,.wp-lightbox-overlay .wp-lightbox-navigation-button-prev:not(:hover):not(:active):not(.has-background){background:none;border:none;padding:0 8px}.wp-lightbox-overlay .wp-lightbox-navigation-button-next:has(.wp-lightbox-navigation-text:not([hidden])) .wp-lightbox-navigation-icon svg,.wp-lightbox-overlay .wp-lightbox-navigation-button-prev:has(.wp-lightbox-navigation-text:not([hidden])) .wp-lightbox-navigation-icon svg{display:block;height:1.5em;width:1.5em}.wp-lightbox-overlay .wp-lightbox-navigation-button-prev{left:calc(env(safe-area-inset-left) + 16px)}.wp-lightbox-overlay .wp-lightbox-navigation-button-next{right:calc(env(safe-area-inset-right) + 16px)}.wp-lightbox-overlay .wp-lightbox-navigation-icon svg{vertical-align:middle}.wp-lightbox-overlay .lightbox-image-container{height:var(--wp--lightbox-container-height);left:50%;overflow:hidden;position:absolute;top:50%;transform:translate(-50%,-50%);transform-origin:top left;width:var(--wp--lightbox-container-width);z-index:2000001}.wp-lightbox-overlay .wp-block-image{align-items:center;box-sizing:border-box;display:flex;height:100%;justify-content:center;margin:0;position:relative;transform-origin:0 0;width:100%;z-index:3000000}.wp-lightbox-overlay .wp-block-image img{height:var(--wp--lightbox-image-height);min-height:var(--wp--lightbox-image-height);min-width:var(--wp--lightbox-image-width);width:var(--wp--lightbox-image-width)}.wp-lightbox-overlay .wp-block-image figcaption{display:none}.wp-lightbox-overlay button{background:none;border:none}.wp-lightbox-overlay .scrim{background-color:#fff;height:100%;opacity:.9;position:absolute;width:100%;z-index:2000000}.wp-lightbox-overlay.active{visibility:visible}@media not (prefers-reduced-motion){.wp-lightbox-overlay.active{animation:turn-on-visibility .25s both}.wp-lightbox-overlay.active img{animation:turn-on-visibility .35s both}.wp-lightbox-overlay.show-closing-animation:not(.active){animation:turn-off-visibility .35s both}.wp-lightbox-overlay.show-closing-animation:not(.active) img{animation:turn-off-visibility .25s both}.wp-lightbox-overlay.zoom.active{animation:none;opacity:1;visibility:visible}.wp-lightbox-overlay.zoom.active .lightbox-image-container{animation:lightbox-zoom-in .4s}.wp-lightbox-overlay.zoom.active .lightbox-image-container img{animation:none}.wp-lightbox-overlay.zoom.active .scrim{animation:turn-on-visibility .4s forwards}.wp-lightbox-overlay.zoom.show-closing-animation:not(.active){animation:none}.wp-lightbox-overlay.zoom.show-closing-animation:not(.active) .lightbox-image-container{animation:lightbox-zoom-out .4s}.wp-lightbox-overlay.zoom.show-closing-animation:not(.active) .lightbox-image-container img{animation:none}.wp-lightbox-overlay.zoom.show-closing-animation:not(.active) .scrim{animation:turn-off-visibility .4s forwards}}@keyframes show-content-image{0%{visibility:hidden}99%{visibility:hidden}to{visibility:visible}}@keyframes turn-on-visibility{0%{opacity:0}to{opacity:1}}@keyframes turn-off-visibility{0%{opacity:1;visibility:visible}99%{opacity:0;visibility:visible}to{opacity:0;visibility:hidden}}@keyframes lightbox-zoom-in{0%{transform:translate(calc((-100vw + var(--wp--lightbox-scrollbar-width))/2 + var(--wp--lightbox-initial-left-position)),calc(-50vh + var(--wp--lightbox-initial-top-position))) scale(var(--wp--lightbox-scale))}to{transform:translate(-50%,-50%) scale(1)}}@keyframes lightbox-zoom-out{0%{transform:translate(-50%,-50%) scale(1);visibility:visible}99%{visibility:visible}to{transform:translate(calc((-100vw + var(--wp--lightbox-scrollbar-width))/2 + var(--wp--lightbox-initial-left-position)),calc(-50vh + var(--wp--lightbox-initial-top-position))) scale(var(--wp--lightbox-scale));visibility:hidden}}
+/*# sourceURL=https://www.adhamdannaway.com/wp-includes/blocks/image/style.min.css */
+</style>
+<style id="wp-block-list-inline-css">
+ol,ul{box-sizing:border-box}:root :where(.wp-block-list.has-background){padding:1.25em 2.375em}
+/*# sourceURL=https://www.adhamdannaway.com/wp-includes/blocks/list/style.min.css */
+</style>
+<style id="wp-block-paragraph-inline-css">
+.is-small-text{font-size:.875em}.is-regular-text{font-size:1em}.is-large-text{font-size:2.25em}.is-larger-text{font-size:3em}.has-drop-cap:not(:focus):first-letter{float:left;font-size:8.4em;font-style:normal;font-weight:100;line-height:.68;margin:.05em .1em 0 0;text-transform:uppercase}body.rtl .has-drop-cap:not(:focus):first-letter{float:none;margin-left:.1em}p.has-drop-cap.has-background{overflow:hidden}:root :where(p.has-background){padding:1.25em 2.375em}:where(p.has-text-color:not(.has-link-color)) a{color:inherit}p.has-text-align-left[style*="writing-mode:vertical-lr"],p.has-text-align-right[style*="writing-mode:vertical-rl"]{rotate:180deg}
+/*# sourceURL=https://www.adhamdannaway.com/wp-includes/blocks/paragraph/style.min.css */
+</style>
+<style id="wp-block-separator-inline-css">
+@charset "UTF-8";.wp-block-separator{border:none;border-top:2px solid}:root :where(.wp-block-separator.is-style-dots){height:auto;line-height:1;text-align:center}:root :where(.wp-block-separator.is-style-dots):before{color:currentColor;content:"···";font-family:serif;font-size:1.5em;letter-spacing:2em;padding-left:2em}.wp-block-separator.is-style-dots{background:none!important;border:none!important}
+/*# sourceURL=https://www.adhamdannaway.com/wp-includes/blocks/separator/style.min.css */
+</style>
+
+<style id="classic-theme-styles-inline-css">
+/*! This file is auto-generated */
+.wp-block-button__link{color:#fff;background-color:#32373c;border-radius:9999px;box-shadow:none;text-decoration:none;padding:calc(.667em + 2px) calc(1.333em + 2px);font-size:1.125em}.wp-block-file__button{background:#32373c;color:#fff;text-decoration:none}
+/*# sourceURL=/wp-includes/css/classic-themes.min.css */
+</style>
+
+<style id="global-styles-inline-css">
+:root{--wp--preset--aspect-ratio--square: 1;--wp--preset--aspect-ratio--4-3: 4/3;--wp--preset--aspect-ratio--3-4: 3/4;--wp--preset--aspect-ratio--3-2: 3/2;--wp--preset--aspect-ratio--2-3: 2/3;--wp--preset--aspect-ratio--16-9: 16/9;--wp--preset--aspect-ratio--9-16: 9/16;--wp--preset--color--black: #000000;--wp--preset--color--cyan-bluish-gray: #abb8c3;--wp--preset--color--white: #ffffff;--wp--preset--color--pale-pink: #f78da7;--wp--preset--color--vivid-red: #cf2e2e;--wp--preset--color--luminous-vivid-orange: #ff6900;--wp--preset--color--luminous-vivid-amber: #fcb900;--wp--preset--color--light-green-cyan: #7bdcb5;--wp--preset--color--vivid-green-cyan: #00d084;--wp--preset--color--pale-cyan-blue: #8ed1fc;--wp--preset--color--vivid-cyan-blue: #0693e3;--wp--preset--color--vivid-purple: #9b51e0;--wp--preset--gradient--vivid-cyan-blue-to-vivid-purple: linear-gradient(135deg,rgb(6,147,227) 0%,rgb(155,81,224) 100%);--wp--preset--gradient--light-green-cyan-to-vivid-green-cyan: linear-gradient(135deg,rgb(122,220,180) 0%,rgb(0,208,130) 100%);--wp--preset--gradient--luminous-vivid-amber-to-luminous-vivid-orange: linear-gradient(135deg,rgb(252,185,0) 0%,rgb(255,105,0) 100%);--wp--preset--gradient--luminous-vivid-orange-to-vivid-red: linear-gradient(135deg,rgb(255,105,0) 0%,rgb(207,46,46) 100%);--wp--preset--gradient--very-light-gray-to-cyan-bluish-gray: linear-gradient(135deg,rgb(238,238,238) 0%,rgb(169,184,195) 100%);--wp--preset--gradient--cool-to-warm-spectrum: linear-gradient(135deg,rgb(74,234,220) 0%,rgb(151,120,209) 20%,rgb(207,42,186) 40%,rgb(238,44,130) 60%,rgb(251,105,98) 80%,rgb(254,248,76) 100%);--wp--preset--gradient--blush-light-purple: linear-gradient(135deg,rgb(255,206,236) 0%,rgb(152,150,240) 100%);--wp--preset--gradient--blush-bordeaux: linear-gradient(135deg,rgb(254,205,165) 0%,rgb(254,45,45) 50%,rgb(107,0,62) 100%);--wp--preset--gradient--luminous-dusk: linear-gradient(135deg,rgb(255,203,112) 0%,rgb(199,81,192) 50%,rgb(65,88,208) 100%);--wp--preset--gradient--pale-ocean: linear-gradient(135deg,rgb(255,245,203) 0%,rgb(182,227,212) 50%,rgb(51,167,181) 100%);--wp--preset--gradient--electric-grass: linear-gradient(135deg,rgb(202,248,128) 0%,rgb(113,206,126) 100%);--wp--preset--gradient--midnight: linear-gradient(135deg,rgb(2,3,129) 0%,rgb(40,116,252) 100%);--wp--preset--font-size--small: 13px;--wp--preset--font-size--medium: 20px;--wp--preset--font-size--large: 36px;--wp--preset--font-size--x-large: 42px;--wp--preset--spacing--20: 0.44rem;--wp--preset--spacing--30: 0.67rem;--wp--preset--spacing--40: 1rem;--wp--preset--spacing--50: 1.5rem;--wp--preset--spacing--60: 2.25rem;--wp--preset--spacing--70: 3.38rem;--wp--preset--spacing--80: 5.06rem;--wp--preset--shadow--natural: 6px 6px 9px rgba(0, 0, 0, 0.2);--wp--preset--shadow--deep: 12px 12px 50px rgba(0, 0, 0, 0.4);--wp--preset--shadow--sharp: 6px 6px 0px rgba(0, 0, 0, 0.2);--wp--preset--shadow--outlined: 6px 6px 0px -3px rgb(255, 255, 255), 6px 6px rgb(0, 0, 0);--wp--preset--shadow--crisp: 6px 6px 0px rgb(0, 0, 0);}:where(body) { margin: 0; }:where(.is-layout-flex){gap: 0.5em;}:where(.is-layout-grid){gap: 0.5em;}body .is-layout-flex{display: flex;}.is-layout-flex{flex-wrap: wrap;align-items: center;}.is-layout-flex > :is(*, div){margin: 0;}body .is-layout-grid{display: grid;}.is-layout-grid > :is(*, div){margin: 0;}body{padding-top: 0px;padding-right: 0px;padding-bottom: 0px;padding-left: 0px;}:root :where(.wp-element-button, .wp-block-button__link){background-color: #32373c;border-width: 0;color: #fff;font-family: inherit;font-size: inherit;font-style: inherit;font-weight: inherit;letter-spacing: inherit;line-height: inherit;padding-top: calc(0.667em + 2px);padding-right: calc(1.333em + 2px);padding-bottom: calc(0.667em + 2px);padding-left: calc(1.333em + 2px);text-decoration: none;text-transform: inherit;}.has-black-color{color: var(--wp--preset--color--black) !important;}.has-cyan-bluish-gray-color{color: var(--wp--preset--color--cyan-bluish-gray) !important;}.has-white-color{color: var(--wp--preset--color--white) !important;}.has-pale-pink-color{color: var(--wp--preset--color--pale-pink) !important;}.has-vivid-red-color{color: var(--wp--preset--color--vivid-red) !important;}.has-luminous-vivid-orange-color{color: var(--wp--preset--color--luminous-vivid-orange) !important;}.has-luminous-vivid-amber-color{color: var(--wp--preset--color--luminous-vivid-amber) !important;}.has-light-green-cyan-color{color: var(--wp--preset--color--light-green-cyan) !important;}.has-vivid-green-cyan-color{color: var(--wp--preset--color--vivid-green-cyan) !important;}.has-pale-cyan-blue-color{color: var(--wp--preset--color--pale-cyan-blue) !important;}.has-vivid-cyan-blue-color{color: var(--wp--preset--color--vivid-cyan-blue) !important;}.has-vivid-purple-color{color: var(--wp--preset--color--vivid-purple) !important;}.has-black-background-color{background-color: var(--wp--preset--color--black) !important;}.has-cyan-bluish-gray-background-color{background-color: var(--wp--preset--color--cyan-bluish-gray) !important;}.has-white-background-color{background-color: var(--wp--preset--color--white) !important;}.has-pale-pink-background-color{background-color: var(--wp--preset--color--pale-pink) !important;}.has-vivid-red-background-color{background-color: var(--wp--preset--color--vivid-red) !important;}.has-luminous-vivid-orange-background-color{background-color: var(--wp--preset--color--luminous-vivid-orange) !important;}.has-luminous-vivid-amber-background-color{background-color: var(--wp--preset--color--luminous-vivid-amber) !important;}.has-light-green-cyan-background-color{background-color: var(--wp--preset--color--light-green-cyan) !important;}.has-vivid-green-cyan-background-color{background-color: var(--wp--preset--color--vivid-green-cyan) !important;}.has-pale-cyan-blue-background-color{background-color: var(--wp--preset--color--pale-cyan-blue) !important;}.has-vivid-cyan-blue-background-color{background-color: var(--wp--preset--color--vivid-cyan-blue) !important;}.has-vivid-purple-background-color{background-color: var(--wp--preset--color--vivid-purple) !important;}.has-black-border-color{border-color: var(--wp--preset--color--black) !important;}.has-cyan-bluish-gray-border-color{border-color: var(--wp--preset--color--cyan-bluish-gray) !important;}.has-white-border-color{border-color: var(--wp--preset--color--white) !important;}.has-pale-pink-border-color{border-color: var(--wp--preset--color--pale-pink) !important;}.has-vivid-red-border-color{border-color: var(--wp--preset--color--vivid-red) !important;}.has-luminous-vivid-orange-border-color{border-color: var(--wp--preset--color--luminous-vivid-orange) !important;}.has-luminous-vivid-amber-border-color{border-color: var(--wp--preset--color--luminous-vivid-amber) !important;}.has-light-green-cyan-border-color{border-color: var(--wp--preset--color--light-green-cyan) !important;}.has-vivid-green-cyan-border-color{border-color: var(--wp--preset--color--vivid-green-cyan) !important;}.has-pale-cyan-blue-border-color{border-color: var(--wp--preset--color--pale-cyan-blue) !important;}.has-vivid-cyan-blue-border-color{border-color: var(--wp--preset--color--vivid-cyan-blue) !important;}.has-vivid-purple-border-color{border-color: var(--wp--preset--color--vivid-purple) !important;}.has-vivid-cyan-blue-to-vivid-purple-gradient-background{background: var(--wp--preset--gradient--vivid-cyan-blue-to-vivid-purple) !important;}.has-light-green-cyan-to-vivid-green-cyan-gradient-background{background: var(--wp--preset--gradient--light-green-cyan-to-vivid-green-cyan) !important;}.has-luminous-vivid-amber-to-luminous-vivid-orange-gradient-background{background: var(--wp--preset--gradient--luminous-vivid-amber-to-luminous-vivid-orange) !important;}.has-luminous-vivid-orange-to-vivid-red-gradient-background{background: var(--wp--preset--gradient--luminous-vivid-orange-to-vivid-red) !important;}.has-very-light-gray-to-cyan-bluish-gray-gradient-background{background: var(--wp--preset--gradient--very-light-gray-to-cyan-bluish-gray) !important;}.has-cool-to-warm-spectrum-gradient-background{background: var(--wp--preset--gradient--cool-to-warm-spectrum) !important;}.has-blush-light-purple-gradient-background{background: var(--wp--preset--gradient--blush-light-purple) !important;}.has-blush-bordeaux-gradient-background{background: var(--wp--preset--gradient--blush-bordeaux) !important;}.has-luminous-dusk-gradient-background{background: var(--wp--preset--gradient--luminous-dusk) !important;}.has-pale-ocean-gradient-background{background: var(--wp--preset--gradient--pale-ocean) !important;}.has-electric-grass-gradient-background{background: var(--wp--preset--gradient--electric-grass) !important;}.has-midnight-gradient-background{background: var(--wp--preset--gradient--midnight) !important;}.has-small-font-size{font-size: var(--wp--preset--font-size--small) !important;}.has-medium-font-size{font-size: var(--wp--preset--font-size--medium) !important;}.has-large-font-size{font-size: var(--wp--preset--font-size--large) !important;}.has-x-large-font-size{font-size: var(--wp--preset--font-size--x-large) !important;}
+/*# sourceURL=global-styles-inline-css */
+</style>
+
+
+<script id="jquery-js" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6/jquery.min.js?ver=7.0"></script>
+<link rel="https://api.w.org/" href="../../wp-json/index.html" /><link rel="alternate" title="JSON" type="application/json" href="../../wp-json/wp/v2/posts/1034.json" /><link rel="EditURI" type="application/rsd+xml" title="RSD" href="../../xmlrpc0db0.php?rsd" />
+
+<link rel='shortlink' href='../../indexff6b.html?p=1034' />
+
+</head>
+
+<body class="clearfix">
+
+
+<!-- Include Facebook like button -->
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "http://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v2.5&appId=227683463924663";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));
+</script>
+
+	<header id="header">
+
+		<div class="row">
+
+			<div class="col-12">
+
+				<a id="logo" class="logo" href="../../index.html">Adham Dannaway</a>
+				<div class="icon-nav">navigation</div>
+				
+				<nav>
+
+					<ul id="nav"  >
+						<li class="page_item page-item-2"><a href="../../about">about</a></li>
+<li class="page_item page-item-1552"><a href="../../learn-ui-design.html">learn</a></li>
+<li class="page_item page-item-7"><a href="../../portfolio.html">portfolio</a></li>
+<li class="page_item page-item-9 current_page_parent"><a href="../../blog.html">blog</a></li>
+<li class="page_item page-item-11"><a href="../../contact.html">contact</a></li>
+ 
+
+						<li>
+							<ul class="social">
+								<!-- <li class="email"><span id="email-tooltip" tooltip="Click to copy my email address to your clipboard 😀"><a id="email" data-clipboard-text="email address goes here">email</a></span></li> -->
+								<li class="twitter"><a href="https://www.twitter.com/AdhamDannaway" title="Follow me on Twitter" target="_blank">twitter</a></li>
+								<li class="linkedin"><a href="https://au.linkedin.com/in/adhamdannaway" title="Connect with me on Linkedin" target="_blank">linkedin</a></li>
+								<li class="facebook"><a href="https://www.facebook.com/ilikeadham" title="Like me on Facebook" target="_blank">facebook</a></li>
+								<li class="instagram"><a href="https://www.instagram.com/adham.dannaway" title="Follow me on Instagram" target="_blank">instagram</a></li>
+								<!-- <li class="dribbble"><a href="https://www.dribbble.com/adhamdannaway" title="See my Dribbble shots" target="_blank">dribbble</a></li> -->
+							</ul>
+						</li>
+
+					</ul>
+
+				</nav>
+
+			</div>
+
+		</div>
+
+	</header>  
+  
+<div id="content-detail" class="content blog clearfix">
+
+		<div class="row">
+
+			<div class="col-8">
+
+			
+				<article>
+
+					<h1>How to build a design system</h1>
+					<p class="excerpt">A step by step guide to build a design system with predefined styles, a component library, and usage guidelines.</p>
+					<div class="author-profile">
+						<div class="avatar"></div>
+						<div class="author-description">
+							<span class="name">Adham Dannaway</span>
+							<span class="date">Last updated 1 January 2026</span>
+						</div>
+					</div>
+
+					<img src="../../wp-content/uploads/2024/07/figma-design-system-680x400.webp" class="preload wp-post-image" alt="Figma design system" decoding="async" fetchpriority="high" srcset="https://www.adhamdannaway.com/wp-content/uploads/2024/07/figma-design-system-680x400.webp 680w, https://www.adhamdannaway.com/wp-content/uploads/2024/07/figma-design-system-300x176.webp 300w, https://www.adhamdannaway.com/wp-content/uploads/2024/07/figma-design-system-768x452.webp 768w, https://www.adhamdannaway.com/wp-content/uploads/2024/07/figma-design-system.webp 1360w" sizes="(max-width: 680px) 100vw, 680px" />
+					
+<p class="wp-block-paragraph">Having endless design possibilities sounds great in theory, but in practice, it can be frustrating and time consuming. When designing an interface, there are so many options to choose from regarding layout, spacing, typography, and colour, it can quickly get overwhelming.&nbsp;That’s why having a system of predefined options and guidelines to help you efficiently make design decisions is crucial. This is known as a design system and in this guide you&#8217;ll learn how to build a design system in 3 steps.&nbsp;</p>
+
+
+
+<hr class="wp-block-separator has-alpha-channel-opacity"/>
+
+
+
+<h2 class="wp-block-heading">What is a design system?</h2>
+
+
+
+<p class="wp-block-paragraph">A <a href="https://www.practical-ui.com/design-system/" target="_blank" rel="noreferrer noopener">design system</a> is like a box of LEGO bricks for digital products. Just as LEGO bricks come in different shapes, sizes, and colours that you can snap together to build anything you can imagine, a design system provides a set of pre-made components, like buttons, icons, and form inputs, that you can combine to create consistent and cohesive user interfaces.</p>
+
+
+
+<p class="wp-block-paragraph">Just like with LEGO, where you have instructions to guide you in building a specific model, a design system comes with guidelines that show you how to use the components. This ensures that the website or application you&#8217;re building looks and works consistently.</p>
+
+
+
+<p class="wp-block-paragraph">A design system serves as a single source of truth that ensures that all design and development teams are aligned, enabling them to build unified products more efficiently.</p>
+
+
+
+<hr class="wp-block-separator has-alpha-channel-opacity"/>
+
+
+
+<h2 class="wp-block-heading">Benefits of a design system</h2>
+
+
+
+<p class="wp-block-paragraph">Whether you&#8217;re working on a small website or a complex web application, a design system is a must-have for many reasons:</p>
+
+
+
+<ul class="wp-block-list">
+<li><strong>Consistency:</strong> Ensures a uniform look and feel across all products, enhancing the user experience.</li>
+
+
+
+<li><strong>Efficiency:</strong> Speeds up the design and development process by providing ready-to-use components and design guidelines.</li>
+
+
+
+<li><strong>Scalability:</strong> Makes it easier to scale products by providing a foundation that can grow with the brand or product.</li>
+
+
+
+<li><strong>Collaboration:</strong> Enhances collaboration between design and development teams by providing a common language and set of tools.</li>
+
+
+
+<li><strong>Quality Control:</strong> Helps maintain high-quality standards across all designs, reducing the risk of errors and inconsistencies.</li>
+</ul>
+
+
+
+<hr class="wp-block-separator has-alpha-channel-opacity"/>
+
+
+
+<h2 class="wp-block-heading">How to create a design system</h2>
+
+
+
+<p class="wp-block-paragraph">Now that we know what a design system is and what the benefits are, let&#8217;s build a design system in 3 steps:</p>
+
+
+
+<ol class="wp-block-list">
+<li>Set predefined style options for colour, typography, and spacing.</li>
+
+
+
+<li>Create reusable modules known as a component library.</li>
+
+
+
+<li>Define usage guidelines.</li>
+</ol>
+
+
+
+<h3 class="wp-block-heading">1. Set predefined style options</h3>
+
+
+
+<p class="wp-block-paragraph">Rather than choosing from unlimited options for things like colour, typography, and spacing, create a small set of predefined options to choose from. Limiting your options in this way helps improve consistency and speeds up decision making. These predefined reusable options are often referred to as “tokens”.</p>
+
+
+
+<h4 class="wp-block-heading">Design system colour options</h4>
+
+
+
+<p class="wp-block-paragraph">Create a small set of predefined colour options called a colour palette. The following colour palette is made up of variations of the brand colour. Each colour has a purpose to help you quickly decide how and where to use it.</p>
+
+
+
+<p class="wp-block-paragraph">For example, actions like buttons and text links are often assigned the brand colour from the colour palette. Using a consistent colour for interactive elements helps teach people what’s interactive and what’s not.</p>
+
+
+
+<p class="wp-block-paragraph">Similarly, there’s no need to spend countless hours searching for different shades of grey for form input borders, checkbox borders, and radio button borders. Simply assign a colour variation from the colour palette to use for all interface element borders.</p>
+
+
+
+<p class="wp-block-paragraph">Here’s a simple yet powerful colour palette that works for most websites and apps. It’s made up of 5 variations of the brand colour. Use the main brand colour hue as a base and change the saturation and brightness to create the other variations. You’ll need to use the HSB (Hue, Saturation, Brightness) colour system to do this.&nbsp;</p>
+
+
+
+<figure class="wp-block-image size-full is-style-default"><img decoding="async" width="1360" height="388" src="../../wp-content/uploads/2024/07/design-system-colour-palette.webp" alt="Design system colour palette" class="wp-image-1037" srcset="https://www.adhamdannaway.com/wp-content/uploads/2024/07/design-system-colour-palette.webp 1360w, https://www.adhamdannaway.com/wp-content/uploads/2024/07/design-system-colour-palette-300x86.webp 300w, https://www.adhamdannaway.com/wp-content/uploads/2024/07/design-system-colour-palette-768x219.webp 768w" sizes="(max-width: 1360px) 100vw, 1360px" /></figure>
+
+
+
+<p class="wp-block-paragraph">Each colour has a purpose to help you quickly decide how and where to use it:</p>
+
+
+
+<ul class="wp-block-list">
+<li><strong>Brand</strong> &#8211; used to indicate interactive elements like text links and buttons.</li>
+
+
+
+<li><strong>Text strong</strong> &#8211; used for primary text, like headings, body content, and form labels to ensure they’re prominent and legible.</li>
+
+
+
+<li><strong>Text weak</strong> &#8211; used for supporting text to make it less prominent.</li>
+
+
+
+<li><strong>Stroke strong</strong> &#8211; used for non-decorative borders on interface elements like form input fields. Also used for icons.</li>
+
+
+
+<li><strong>Stroke weak</strong> &#8211; used for decorative borders, like dividing lines, that aren’t critical to identifying interface elements.&nbsp;</li>
+
+
+
+<li><strong>Fill</strong> &#8211; used as a secondary background to help differentiate elements, like tags or badges, that sit on the main white background.</li>
+</ul>
+
+
+
+<figure class="wp-block-image size-full"><img decoding="async" width="1360" height="1390" src="../../wp-content/uploads/2024/07/design-system-colour-palette-example-1.webp" alt="Design system colour palette example" class="wp-image-1051" srcset="https://www.adhamdannaway.com/wp-content/uploads/2024/07/design-system-colour-palette-example-1.webp 1360w, https://www.adhamdannaway.com/wp-content/uploads/2024/07/design-system-colour-palette-example-1-294x300.webp 294w, https://www.adhamdannaway.com/wp-content/uploads/2024/07/design-system-colour-palette-example-1-768x785.webp 768w" sizes="(max-width: 1360px) 100vw, 1360px" /></figure>
+
+
+
+<p class="wp-block-paragraph">In order to help ensure that people with low vision can clearly see interface details, aim to at least meet Web Content Accessibility Guidelines (WCAG) 2.1 level AA colour contrast requirements. Make sure that colours used for text (“Brand”, “Text strong”, and “Text weak”) have a 4.5:1 contrast ratio.&nbsp;</p>
+
+
+
+<p class="wp-block-paragraph">Colours used for interface elements, like “Stroke strong”, need at least a 3:1 contrast ratio. There are lots of tools to help you measure colour contrast, my favourites are the <a href="https://www.figma.com/community/plugin/748533339900865323/contrast" target="_blank" rel="noreferrer noopener nofollow">Contrast Figma plugin</a> and the <a href="https://webaim.org/resources/contrastchecker/" target="_blank" rel="noreferrer noopener nofollow">Web AIM online contrast check tool</a>.</p>
+
+
+
+<p class="wp-block-paragraph">To learn more about using colour in UI design, check out my <a href="https://www.practical-ui.com/" target="_blank" rel="noreferrer noopener">UI design book</a>. It contains everything I wish I knew when I started out as a designer 2 decades ago.</p>
+
+
+
+<figure class="wp-block-image size-full"><a href="https://www.practical-ui.com/" target="_blank" rel="noopener"><img loading="lazy" decoding="async" width="2400" height="1192" src="../../wp-content/uploads/2022/05/ui-design-book-pages-adham-dannaway.jpg" alt="ui design book" class="wp-image-822" srcset="https://www.adhamdannaway.com/wp-content/uploads/2022/05/ui-design-book-pages-adham-dannaway.jpg 2400w, https://www.adhamdannaway.com/wp-content/uploads/2022/05/ui-design-book-pages-adham-dannaway-300x149.jpg 300w, https://www.adhamdannaway.com/wp-content/uploads/2022/05/ui-design-book-pages-adham-dannaway-2000x993.jpg 2000w, https://www.adhamdannaway.com/wp-content/uploads/2022/05/ui-design-book-pages-adham-dannaway-768x381.jpg 768w, https://www.adhamdannaway.com/wp-content/uploads/2022/05/ui-design-book-pages-adham-dannaway-1536x763.jpg 1536w, https://www.adhamdannaway.com/wp-content/uploads/2022/05/ui-design-book-pages-adham-dannaway-2048x1017.jpg 2048w" sizes="(max-width: 2400px) 100vw, 2400px" /></a></figure>
+
+
+
+<h4 class="wp-block-heading">Design system typography options</h4>
+
+
+
+<p class="wp-block-paragraph">Create a small set of predefined typography options for different text types. Define the font sizes, line-heights and weights once and reuse them throughout an interface. This helps speed up decision making and improve consistency across your product.</p>
+
+
+
+<p class="wp-block-paragraph">Using a type scale is a simple and logical way to create a set of balanced font sizes that work well together. To create your set of font sizes, start with a base font size for body text, then keep multiplying it by a certain scale to create larger font sizes.&nbsp;</p>
+
+
+
+<p class="wp-block-paragraph">Here are some popular type scales, ordered from smallest to largest:</p>
+
+
+
+<ul class="wp-block-list">
+<li>1.067 – Minor Second</li>
+
+
+
+<li>1.125 – Major Second</li>
+
+
+
+<li>1.200 – Minor Third</li>
+
+
+
+<li>1.250 – Major Third</li>
+
+
+
+<li>1.333 – Perfect Fourth</li>
+
+
+
+<li>1.414 – Augmented Fourth</li>
+
+
+
+<li>1.500 – Perfect Fifth</li>
+
+
+
+<li>1.618 – Golden Ratio</li>
+</ul>
+
+
+
+<p class="wp-block-paragraph">For example, start with a base font size of 16px and use a “1.200 &#8211; Minor Third” scale. Multiply 16px by 1.2 to get the next font size of 19.2px. Round it to 20px for simplicity. Then take 20px and multiply it by 1.2 to get the next font size, and so on. The following is an example set of font sizes using a slightly modified Minor Third type scale.</p>
+
+
+
+<figure class="wp-block-image size-full"><img loading="lazy" decoding="async" width="1360" height="1128" src="../../wp-content/uploads/2024/07/design-system-typography-type-scale.webp" alt="Design system typography type scale" class="wp-image-1042" srcset="https://www.adhamdannaway.com/wp-content/uploads/2024/07/design-system-typography-type-scale.webp 1360w, https://www.adhamdannaway.com/wp-content/uploads/2024/07/design-system-typography-type-scale-300x249.webp 300w, https://www.adhamdannaway.com/wp-content/uploads/2024/07/design-system-typography-type-scale-768x637.webp 768w" sizes="(max-width: 1360px) 100vw, 1360px" /></figure>
+
+
+
+<p class="wp-block-paragraph">With most type scales, you’ll notice that the resulting font sizes have messy decimal values. Round font sizes to the nearest whole number for simplicity. It’s not crucial that font sizes are divisible by 4, but try to ensure that their line height is. This will align your text neatly to a 4pt vertical layout grid.</p>
+
+
+
+<p class="wp-block-paragraph">You don’t need to stick strictly to a scale. Once you get more confident with font sizes, you can adjust them to better suit the interface you’re designing.</p>
+
+
+
+<h4 class="wp-block-heading">Design system spacing options</h4>
+
+
+
+<p class="wp-block-paragraph">Deciding on the ideal spacing between interface elements can be a frustrating and time consuming process, as there are so many options to choose from. In my early days as a designer, I remember painstakingly pushing interface elements back and forth, a pixel at a time, until they looked perfect.&nbsp;</p>
+
+
+
+<p class="wp-block-paragraph">Creating a limited set of predefined spacing options (as seen below) can speed up your design process significantly, making you a much more efficient designer. Using consistent spacing options will also result in a neater, simpler interface design that’s faster to build.</p>
+
+
+
+<figure class="wp-block-image size-full"><img loading="lazy" decoding="async" width="1360" height="560" src="../../wp-content/uploads/2024/07/design-system-spacing-tokens.webp" alt="Design system spacing tokens" class="wp-image-1043" srcset="https://www.adhamdannaway.com/wp-content/uploads/2024/07/design-system-spacing-tokens.webp 1360w, https://www.adhamdannaway.com/wp-content/uploads/2024/07/design-system-spacing-tokens-300x124.webp 300w, https://www.adhamdannaway.com/wp-content/uploads/2024/07/design-system-spacing-tokens-768x316.webp 768w" sizes="(max-width: 1360px) 100vw, 1360px" /></figure>
+
+
+
+<p class="wp-block-paragraph">Create simple t-shirt sized spacing options based on increments of 8 points. Why 8? Many popular screen sizes are divisible by 8 and it provides a bit more spacing flexibility than using 10 points.</p>
+
+
+
+<p class="wp-block-paragraph">This is also known as using an 8 point grid, as all interface elements will end up aligning to a series of vertical and horizontal guidelines separated by 8 points. For more detailed interfaces, you could use 4 point increments for a bit more control.</p>
+
+
+
+<p class="wp-block-paragraph">Much like a typography scale, your spacing options should grow by larger amounts as they get bigger. This ensures that spacing is proportional for larger interface elements.&nbsp;</p>
+
+
+
+<h4 class="wp-block-heading">Predefine other style options</h4>
+
+
+
+<p class="wp-block-paragraph">Try to create sets of predefined options for any other styles you use too. You’ll generally need 2 shadow options (raised and overlay) to indicate the depth of interface elements.&nbsp;</p>
+
+
+
+<figure class="wp-block-image size-full"><img loading="lazy" decoding="async" width="1360" height="538" src="../../wp-content/uploads/2024/07/design-system-shadows.webp" alt="Design system shadows" class="wp-image-1044" srcset="https://www.adhamdannaway.com/wp-content/uploads/2024/07/design-system-shadows.webp 1360w, https://www.adhamdannaway.com/wp-content/uploads/2024/07/design-system-shadows-300x119.webp 300w, https://www.adhamdannaway.com/wp-content/uploads/2024/07/design-system-shadows-768x304.webp 768w" sizes="(max-width: 1360px) 100vw, 1360px" /></figure>
+
+
+
+<p class="wp-block-paragraph">Create 3 border radius options (8pt, 16pt, and 32pt) to use on small, medium, and large interface elements respectively.</p>
+
+
+
+<figure class="wp-block-image size-full"><img loading="lazy" decoding="async" width="1360" height="538" src="../../wp-content/uploads/2024/07/design-system-border-radius-1.webp" alt="Design system border radius" class="wp-image-1050" srcset="https://www.adhamdannaway.com/wp-content/uploads/2024/07/design-system-border-radius-1.webp 1360w, https://www.adhamdannaway.com/wp-content/uploads/2024/07/design-system-border-radius-1-300x119.webp 300w, https://www.adhamdannaway.com/wp-content/uploads/2024/07/design-system-border-radius-1-768x304.webp 768w" sizes="(max-width: 1360px) 100vw, 1360px" /></figure>
+
+
+
+<hr class="wp-block-separator has-alpha-channel-opacity"/>
+
+
+
+<h3 class="wp-block-heading">2. Create reusable modules</h3>
+
+
+
+<p class="wp-block-paragraph">Another key part of building a design system is creating reusable parts or modules. Modular design involves breaking things down into smaller, reusable, and replaceable parts called modules or components. Modular design has been used to create cars, machines, buildings, and computers for many years. It’s a great way to improve productivity, efficiency and consistency.&nbsp;</p>
+
+
+
+<p class="wp-block-paragraph">Always aim to design interfaces in a modular way by doing the following:</p>
+
+
+
+<ul class="wp-block-list">
+<li>Start by creating the smallest components such as <a href="../ui-design/button-design-tips.html" target="_blank" rel="noreferrer noopener">buttons</a>, avatars, and form input fields. These will be your building blocks.</li>
+
+
+
+<li>Combine small components to create larger, more complex ones.</li>
+
+
+
+<li>Arrange components in specific layouts to create reusable page templates.</li>
+</ul>
+
+
+
+<figure class="wp-block-image size-full"><img loading="lazy" decoding="async" width="1360" height="734" src="../../wp-content/uploads/2024/07/design-system-components-and-templates.webp" alt="Components being combined into templates" class="wp-image-1047" srcset="https://www.adhamdannaway.com/wp-content/uploads/2024/07/design-system-components-and-templates.webp 1360w, https://www.adhamdannaway.com/wp-content/uploads/2024/07/design-system-components-and-templates-300x162.webp 300w, https://www.adhamdannaway.com/wp-content/uploads/2024/07/design-system-components-and-templates-768x414.webp 768w" sizes="(max-width: 1360px) 100vw, 1360px" /></figure>
+
+
+
+<p class="wp-block-paragraph">The goal is to create a collection of all components, known as a component library or UI kit. This makes it easy to view, manage, and reuse components.</p>
+
+
+
+<p class="wp-block-paragraph">In the following example, an avatar component is used to create larger components. Firstly, the avatar is paired with text, then placed in a card, which is placed in a list of cards on a landing page template.</p>
+
+
+
+<figure class="wp-block-image size-full"><img loading="lazy" decoding="async" width="1360" height="1834" src="../../wp-content/uploads/2024/07/design-system-components.webp" alt="Design system components" class="wp-image-1053" srcset="https://www.adhamdannaway.com/wp-content/uploads/2024/07/design-system-components.webp 1360w, https://www.adhamdannaway.com/wp-content/uploads/2024/07/design-system-components-222x300.webp 222w, https://www.adhamdannaway.com/wp-content/uploads/2024/07/design-system-components-768x1036.webp 768w, https://www.adhamdannaway.com/wp-content/uploads/2024/07/design-system-components-1139x1536.webp 1139w" sizes="(max-width: 1360px) 100vw, 1360px" /></figure>
+
+
+
+<p class="wp-block-paragraph">In the following examples, the same button component is reused inside multiple larger components. In a similar way, each of the larger components can be reused across multiple interfaces or templates.</p>
+
+
+
+<figure class="wp-block-image size-full"><img loading="lazy" decoding="async" width="1360" height="1366" src="../../wp-content/uploads/2024/07/design-system-button-component.webp" alt="Button component being used in different larger components" class="wp-image-1054" srcset="https://www.adhamdannaway.com/wp-content/uploads/2024/07/design-system-button-component.webp 1360w, https://www.adhamdannaway.com/wp-content/uploads/2024/07/design-system-button-component-300x300.webp 300w, https://www.adhamdannaway.com/wp-content/uploads/2024/07/design-system-button-component-150x150.webp 150w, https://www.adhamdannaway.com/wp-content/uploads/2024/07/design-system-button-component-768x771.webp 768w" sizes="(max-width: 1360px) 100vw, 1360px" /></figure>
+
+
+
+<hr class="wp-block-separator has-alpha-channel-opacity"/>
+
+
+
+<h3 class="wp-block-heading">3. Define usage guidelines</h3>
+
+
+
+<p class="wp-block-paragraph">When you build a design system, don&#8217;t forget to include instructions on how to use the components and visual styles in the design system. Without clear usage guidelines, there’s little chance that a team of designers and developers will be able to design a consistent product experience.&nbsp;</p>
+
+
+
+<p class="wp-block-paragraph">Keep guidance concise so that it’s easy to consume and remember. Concise guidelines keep things flexible enough to allow for creative freedom while also maintaining an acceptable level of consistency.</p>
+
+
+
+<p class="wp-block-paragraph">Create specific usage guidelines for the following:</p>
+
+
+
+<ul class="wp-block-list">
+<li><strong>Colours</strong> &#8211; define how and where colours should be used e.g. indicate interactive elements using the brand colour.</li>
+
+
+
+<li><strong>Text</strong> &#8211; define overarching guidelines for using text e.g. use sentence case, left align text.</li>
+
+
+
+<li><strong>Components</strong> &#8211; define best practices for each component including dos and don’ts e.g. for the button component, ensure buttons are left aligned and avoid disabled buttons.</li>
+
+
+
+<li><strong>Templates</strong> &#8211; define how components should be used in different templates and any limitations.</li>
+
+
+
+<li><strong>Copywriting</strong> &#8211; define guidelines for grammar, punctuation, and writing style e.g. front-load text, be concise, and use plain and simple language.</li>
+</ul>
+
+
+
+<p class="wp-block-paragraph">Include any specific rules, do’s and don&#8217;ts, live examples, and code snippets. It’s also helpful to include a change log to record updates as well as a future roadmap.</p>
+
+
+
+<hr class="wp-block-separator has-alpha-channel-opacity"/>
+
+
+
+<h2 class="wp-block-heading">Design, code, or both?</h2>
+
+
+
+<p class="wp-block-paragraph">A design system can exist in a design tool like Figma, where it helps to speed up a design team’s workflow. It can also exist in code, where it helps to speed up development. Ideally, a design system will help both designers and developers build websites and apps faster.</p>
+
+
+
+<p class="wp-block-paragraph">For example, a common approach to build a design system is to create a <a href="https://www.practical-ui.com/design-system/">Figma design system</a> as a <a href="https://help.figma.com/hc/en-us/articles/360041051154-Guide-to-libraries-in-Figma" target="_blank" rel="noreferrer noopener nofollow">library</a> for designers to work from along with a coded version of the design system built in <a href="https://react.dev/" target="_blank" rel="noreferrer noopener nofollow">React</a> and documented in <a href="https://storybook.js.org/" target="_blank" rel="noreferrer noopener nofollow">Storybook</a>.</p>
+
+
+
+<figure class="wp-block-image size-full"><img loading="lazy" decoding="async" width="1360" height="746" src="../../wp-content/uploads/2024/07/design-system-storybook-1.webp" alt="Storybook screenshot" class="wp-image-1060" srcset="https://www.adhamdannaway.com/wp-content/uploads/2024/07/design-system-storybook-1.webp 1360w, https://www.adhamdannaway.com/wp-content/uploads/2024/07/design-system-storybook-1-300x165.webp 300w, https://www.adhamdannaway.com/wp-content/uploads/2024/07/design-system-storybook-1-768x421.webp 768w" sizes="(max-width: 1360px) 100vw, 1360px" /></figure>
+
+
+
+<p class="wp-block-paragraph">Depending on your skillset and resources, you can start off with design or code and gradually build the design system as you go.</p>
+
+
+
+<hr class="wp-block-separator has-alpha-channel-opacity"/>
+
+
+
+<h2 class="wp-block-heading">Design systems for existing websites and apps</h2>
+
+
+
+<p class="wp-block-paragraph">What if you have an existing website or app but don’t yet have a design system? The basic process is the same, but you’ll need to do an initial audit to see what you’ve got, what you need, and what you can get rid of.&nbsp;</p>
+
+
+
+<ul class="wp-block-list">
+<li><strong>Initial audit</strong> &#8211; identify and document all components and styles present in your website or app. Simply taking screenshots is a quick and easy approach.<br></li>
+
+
+
+<li><strong>Group items into categories</strong> &#8211; group similar items together into categories including: text styles, colours, icons, buttons, navigation, headers, footers, cards, lists, and forms.<br></li>
+
+
+
+<li><strong>Merge similar items</strong> &#8211; try to cut down the number of different components and styles in your system. For example, if you have 2 different button styles that are very similar, consider using 1 of them and removing the other. Map unneeded styles or components to new ones.&nbsp;</li>
+</ul>
+
+
+
+<p class="wp-block-paragraph">It can be a large and difficult process to move an existing website or app to a new design system. I find it best to take an iterative approach, where you do it bit by bit. Start with the most impactful items like colours and typography, then move onto components one at a time. The following example of a <a href="../../portfolio/creating-a-lean-design-system.html" target="_blank" rel="noreferrer noopener">button audit</a> demonstrates how having too many similar options can greatly increase complexity. If you&#8217;re currently working on buttons, here are some <a href="../ui-design/button-design-tips.html" target="_blank" rel="noreferrer noopener">common button mistakes</a> you should avoid.</p>
+
+
+
+<figure class="wp-block-image size-full"><img loading="lazy" decoding="async" width="1360" height="598" src="../../wp-content/uploads/2024/07/design-system-button-audit.webp" alt="Button audit" class="wp-image-1058" srcset="https://www.adhamdannaway.com/wp-content/uploads/2024/07/design-system-button-audit.webp 1360w, https://www.adhamdannaway.com/wp-content/uploads/2024/07/design-system-button-audit-300x132.webp 300w, https://www.adhamdannaway.com/wp-content/uploads/2024/07/design-system-button-audit-768x338.webp 768w" sizes="(max-width: 1360px) 100vw, 1360px" /></figure>
+
+
+
+<p class="wp-block-paragraph">If you&#8217;re updating a page or feature that touches certain components, update those components as part of the feature release. Incorporating the cleanup into your general business will take more time initially, but it will save a lot more time in the long run.</p>
+
+
+
+<p class="wp-block-paragraph">Before you know it, you’ll be well on your way to replacing your old website or app with newly built design system components. During the interim period, both the old and new website or app will exist, before the old one is eventually decommissioned.</p>
+
+
+
+<hr class="wp-block-separator has-alpha-channel-opacity"/>
+
+
+
+<h2 class="wp-block-heading">Design system team structure</h2>
+
+
+
+<p class="wp-block-paragraph">The many advantages of a design system are only realised if it’s used and contributed to by everyone working on the website or app. If you’re a solo creator, it’s easy to ensure a design system is used and updated regularly. If you’re part of a team in a larger organisation, it can be more complicated.&nbsp;</p>
+
+
+
+<p class="wp-block-paragraph">An approach that generally works well is to have a dedicated centralised design system team. This team serves other product teams by maintaining and managing the design system on a day to day basis. A centralised design system team doesn’t work well unless there’s collaboration with the product teams that are building product features for customers.&nbsp;</p>
+
+
+
+<p class="wp-block-paragraph">Each product team should have at least one design system ambassador that’s responsible for collaborating with the centralised design system team. Their job is to ensure their team is aligned to the design system guidelines and to contribute customer feedback, insights, and even new components to the design system team. This collaborative approach helps to ensure the design system better services both the team’s and customer’s needs.</p>
+
+
+
+<figure class="wp-block-image size-full"><img loading="lazy" decoding="async" width="1360" height="900" src="../../wp-content/uploads/2024/07/design-system-team-structure.webp" alt="Design system centralised team structure" class="wp-image-1063" srcset="https://www.adhamdannaway.com/wp-content/uploads/2024/07/design-system-team-structure.webp 1360w, https://www.adhamdannaway.com/wp-content/uploads/2024/07/design-system-team-structure-300x199.webp 300w, https://www.adhamdannaway.com/wp-content/uploads/2024/07/design-system-team-structure-768x508.webp 768w" sizes="(max-width: 1360px) 100vw, 1360px" /></figure>
+
+
+
+<p class="wp-block-paragraph">If you don’t have the budget for a dedicated centralised team, the ambassadors from each product team could form a team to build and manage the design system on a part time basis. Where there’s a will, there’s a way.</p>
+
+
+
+<hr class="wp-block-separator has-alpha-channel-opacity"/>
+
+
+
+<h2 class="wp-block-heading">Practical UI Figma Design System</h2>
+
+
+
+<p class="wp-block-paragraph">If you’re strapped for time and need a Figma design system that’s ready to go, you should definitely check out my Practical UI <a href="https://www.practical-ui.com/design-system/" target="_blank" rel="noreferrer noopener">Figma Design System</a>. I’ve been pushing pixels since 2005 and have studied hundreds of design systems over the years, even before they were called design systems.</p>
+
+
+
+<p class="wp-block-paragraph">I wanted to share what I’ve learned by building a lean and powerful design system that’s intuitive, accessible, and beautiful. Creating this design system has been a labour of love and I&#8217;ve spent thousands of hours crafting it. I’m confident it will help you design better products faster.</p>
+
+
+
+<figure class="wp-block-image size-full"><a href="https://www.practical-ui.com/design-system/" target="_blank" rel="noreferrer noopener"><img loading="lazy" decoding="async" width="1360" height="972" src="../../wp-content/uploads/2024/07/figma-design-system-practical-ui.webp" alt="Practical UI Figma design system" class="wp-image-1061" srcset="https://www.adhamdannaway.com/wp-content/uploads/2024/07/figma-design-system-practical-ui.webp 1360w, https://www.adhamdannaway.com/wp-content/uploads/2024/07/figma-design-system-practical-ui-300x214.webp 300w, https://www.adhamdannaway.com/wp-content/uploads/2024/07/figma-design-system-practical-ui-768x549.webp 768w" sizes="(max-width: 1360px) 100vw, 1360px" /></a></figure>
+
+
+
+<p class="wp-block-paragraph">I hope this step by step guide has helped you understand how to build a design system for your website or app. Setting predefined styles, creating a component library, and defining usage guidelines is a necessary way to speed up your design and development process and maintain consistency throughout your product. All the best on your journey to create your design system.</p>
+
+
+
+<p class="wp-block-paragraph">PS If you found this article helpful, share it with others and follow me on <a href="https://www.twitter.com/AdhamDannaway" target="_blank" rel="noreferrer noopener">Twitter</a> and <a href="https://au.linkedin.com/in/adhamdannaway" target="_blank" rel="noreferrer noopener">LinkedIn</a> for daily design tips, tools, resources, and inspiration.</p>
+
+				</article>
+
+				<div class="recent-posts">
+					<h2>Recent articles</h2>
+					<ul class="recent">
+					<li><a href="../ui-design/ui-design-tips-14.html" title="Look 14 logic-driven UI design tips to improve any interface" >14 logic-driven UI design tips to improve any interface</a> </li> <li><a href="../ui-design/ui-design-tips.html" title="Look 16 little UI design tips that make a big impact" >16 little UI design tips that make a big impact</a> </li> <li><a href="../ux-design/ux-design-books.html" title="Look UX design books you should read in 2026" >UX design books you should read in 2026</a> </li> <li><a href="../ui-design/ui-design-books.html" title="Look UI design books you should read in 2026" >UI design books you should read in 2026</a> </li> <li><a href="how-to-build-a-design-system.html" title="Look How to build a design system" >How to build a design system</a> </li> 					</ul>
+				</div>
+
+				<!-- <div class="comments"> -->
+
+	<!-- <h2>Have your say</h2> -->
+
+	
+			
+		<!-- New FB comments plugin -->
+		<!-- <div id="fb-root"></div>
+		<script async defer crossorigin="anonymous" src="https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v9.0&appId=106516322773733&autoLogAppEvents=1" nonce="SOjZycwr"></script>
+		<div class="fb-comments" data-href="" data-width="680px" data-numposts="5"></div>-->
+
+		<!-- Old FB comments plugin -->
+		<!-- <div id="fbcomments"><div id="fb-root"></div>
+		<script src="http://connect.facebook.net/en_US/all.js#xfbml=1"></script>
+		<fb:comments href="" width="680px"></fb:comments></div> -->
+	
+	
+<!-- </div> -->
+			
+			</div>
+
+			
+
+		</div>
+		
+</div>
+
+
+<footer id="footer" role="contentinfo">
+
+	<div class="row">
+
+		<div class="col-12">
+
+			<div class="left"><a class="transition" href="../../index.html">&copy; 2026 Adham Dannaway</a></div>
+			
+			<nav id="nav-footer">
+
+				<ul>
+					<li class="page_item page-item-2"><a href="../../about">about</a></li>
+<li class="page_item page-item-1552"><a href="../../learn-ui-design.html">learn</a></li>
+<li class="page_item page-item-7"><a href="../../portfolio.html">portfolio</a></li>
+<li class="page_item page-item-9 current_page_parent"><a href="../../blog.html">blog</a></li>
+<li class="page_item page-item-11"><a href="../../contact.html">contact</a></li>
+				</ul>
+
+			</nav>
+
+		</div>
+
+	</div>
+
+	<div class="gradient-white">
+		<a class="top" href="#top">Back to top</a>
+	</div>
+
+</footer>
+
+<script type="speculationrules">
+{"prefetch":[{"source":"document","where":{"and":[{"href_matches":"/*"},{"not":{"href_matches":["/wp-*.php","/wp-admin/*","/wp-content/uploads/*","/wp-content/*","/wp-content/plugins/*","/wp-content/themes/dannaway/*","/*\\?(.+)"]}},{"not":{"selector_matches":"a[rel~=\"nofollow\"]"}},{"not":{"selector_matches":".no-prefetch, .no-prefetch a"}}]},"eagerness":"conservative"}]}
+</script>
+<script id="wp-hooks-js" src="../../wp-includes/js/dist/hooks.min394d.js?ver=7496969728ca0f95732d"></script>
+<script id="wp-i18n-js" src="../../wp-includes/js/dist/i18n.mineca5.js?ver=781d11515ad3d91786ec"></script>
+<script id="wp-i18n-js-after">
+wp.i18n.setLocaleData( { 'text direction\u0004ltr': [ 'ltr' ] } );
+wp.i18n.setLocaleData( { 'text direction\u0004ltr': [ 'ltr' ] } );
+//# sourceURL=wp-i18n-js-after
+</script>
+<script id="swv-js" src="../../wp-content/uploads/siteground-optimizer-assets/swv.minc098.js?ver=6.1.6"></script>
+<script id="contact-form-7-js-before">
+var wpcf7 = {
+    "api": {
+        "root": "https:\/\/www.adhamdannaway.com\/wp-json\/",
+        "namespace": "contact-form-7\/v1"
+    }
+};
+//# sourceURL=contact-form-7-js-before
+</script>
+<script id="contact-form-7-js" src="../../wp-content/uploads/siteground-optimizer-assets/contact-form-7.minc098.js?ver=6.1.6"></script>
+<script id="wp-emoji-settings" type="application/json">
+{"baseUrl":"https://s.w.org/images/core/emoji/17.0.2/72x72/","ext":".png","svgUrl":"https://s.w.org/images/core/emoji/17.0.2/svg/","svgExt":".svg","source":{"concatemoji":"https://www.adhamdannaway.com/wp-includes/js/wp-emoji-release.min.js?ver=7.0"}}
+</script>
+<script type="module">
+/*! This file is auto-generated */
+const a=JSON.parse(document.getElementById("wp-emoji-settings").textContent),o=(window._wpemojiSettings=a,"wpEmojiSettingsSupports"),s=["flag","emoji"];function i(e){try{var t={supportTests:e,timestamp:(new Date).valueOf()};sessionStorage.setItem(o,JSON.stringify(t))}catch(e){}}function c(e,t,n){e.clearRect(0,0,e.canvas.width,e.canvas.height),e.fillText(t,0,0);t=new Uint32Array(e.getImageData(0,0,e.canvas.width,e.canvas.height).data);e.clearRect(0,0,e.canvas.width,e.canvas.height),e.fillText(n,0,0);const a=new Uint32Array(e.getImageData(0,0,e.canvas.width,e.canvas.height).data);return t.every((e,t)=>e===a[t])}function p(e,t){e.clearRect(0,0,e.canvas.width,e.canvas.height),e.fillText(t,0,0);var n=e.getImageData(16,16,1,1);for(let e=0;e<n.data.length;e++)if(0!==n.data[e])return!1;return!0}function u(e,t,n,a){switch(t){case"flag":return n(e,"\ud83c\udff3\ufe0f\u200d\u26a7\ufe0f","\ud83c\udff3\ufe0f\u200b\u26a7\ufe0f")?!1:!n(e,"\ud83c\udde8\ud83c\uddf6","\ud83c\udde8\u200b\ud83c\uddf6")&&!n(e,"\ud83c\udff4\udb40\udc67\udb40\udc62\udb40\udc65\udb40\udc6e\udb40\udc67\udb40\udc7f","\ud83c\udff4\u200b\udb40\udc67\u200b\udb40\udc62\u200b\udb40\udc65\u200b\udb40\udc6e\u200b\udb40\udc67\u200b\udb40\udc7f");case"emoji":return!a(e,"\ud83e\u1fac8")}return!1}function f(e,t,n,a){let r;const o=(r="undefined"!=typeof WorkerGlobalScope&&self instanceof WorkerGlobalScope?new OffscreenCanvas(300,150):document.createElement("canvas")).getContext("2d",{willReadFrequently:!0}),s=(o.textBaseline="top",o.font="600 32px Arial",{});return e.forEach(e=>{s[e]=t(o,e,n,a)}),s}function r(e){var t=document.createElement("script");t.src=e,t.defer=!0,document.head.appendChild(t)}a.supports={everything:!0,everythingExceptFlag:!0},new Promise(t=>{let n=function(){try{var e=JSON.parse(sessionStorage.getItem(o));if("object"==typeof e&&"number"==typeof e.timestamp&&(new Date).valueOf()<e.timestamp+604800&&"object"==typeof e.supportTests)return e.supportTests}catch(e){}return null}();if(!n){if("undefined"!=typeof Worker&&"undefined"!=typeof OffscreenCanvas&&"undefined"!=typeof URL&&URL.createObjectURL&&"undefined"!=typeof Blob)try{var e="postMessage("+f.toString()+"("+[JSON.stringify(s),u.toString(),c.toString(),p.toString()].join(",")+"));",a=new Blob([e],{type:"text/javascript"});const r=new Worker(URL.createObjectURL(a),{name:"wpTestEmojiSupports"});return void(r.onmessage=e=>{i(n=e.data),r.terminate(),t(n)})}catch(e){}i(n=f(s,u,c,p))}t(n)}).then(e=>{for(const n in e)a.supports[n]=e[n],a.supports.everything=a.supports.everything&&a.supports[n],"flag"!==n&&(a.supports.everythingExceptFlag=a.supports.everythingExceptFlag&&a.supports[n]);var t;a.supports.everythingExceptFlag=a.supports.everythingExceptFlag&&!a.supports.flag,a.supports.everything||((t=a.source||{}).concatemoji?r(t.concatemoji):t.wpemoji&&t.twemoji&&(r(t.twemoji),r(t.wpemoji)))});
+//# sourceURL=https://www.adhamdannaway.com/wp-includes/js/wp-emoji-loader.min.js
+</script>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script> 
+<script>window.jQuery || document.write('<script src="js/jquery-1.7.2.min.html"><\/script>')</script> 
+<script src="../../wp-content/themes/dannaway/js/clipboard.js-master/dist/clipboard.min.js"></script>
+<script src="../../wp-content/themes/dannaway/js/script.js"></script>
+<script type="text/javascript">
+<!--
+
+//If browser is IE8 or older we show IE specific page
+if(ie < 9){
+	ieMessage();
+}
+
+/*
+* Call functions when dom is ready
+*/
+$(document).ready(function() {
+
+	// Hide browser top bar in mobiles
+	$('body').scrollTop(1);
+
+	// Toggle Navigation for mobile devices
+	$('.icon-nav').on('click', function(){
+		$('header nav').slideToggle();
+		$(this).toggleClass('active');
+	});
+
+	// Function to scroll to top
+	$('a[href=#top]').click(function(){
+
+        $('html, body').animate({scrollTop:0}, 1000, 'easeInOutQuad');
+        return false;
+    });
+
+	// Function to fade in image sprites
+  	$('.sprite').fadeSprite();
+
+    //Function for thumbnail hover effect
+    $('.thumbs li').hoverThumb();
+
+	// Function to animate when leaving page
+	$('.transition, #nav .page_item a, #nav-footer a, #thumbs a, #next a, #prev a, #logo, #face a').leavePage();	
+
+	// Animate the header on first			
+	$('#header').stop().animate({'opacity': '1', 'top':'0'}, 1000);
+
+
+	// Copy email address to clipboard	
+	var clipboard = new ClipboardJS('#email');
+
+	clipboard.on('success', function(e) {
+	    $('#email-tooltip').attr("tooltip", "Yay! My email address has been copied to your clipboard ✅");
+	    $('#email-tooltip').addClass('success');
+
+	    // Reset
+	    $('#email-tooltip').mouseleave(function() {
+
+		    setTimeout( function(){
+				$('#email-tooltip').attr("tooltip", "Click to copy my email address to your clipboard 😀");
+		    	$('#email-tooltip').removeClass('success');
+			}, 300);
+		});
+
+	    e.clearSelection();
+	});
+
+	clipboard.on('error', function(e) {
+	    $('#email-tooltip').attr("tooltip", "Sorry, there was a technical glitch. Please try again.");
+	    $('#email-tooltip').toggleClass('fail');
+	});
+
+
+	// Preload the page with jPreLoader
+	$('body').jpreLoader({
+
+		showSplash: true
+
+	}, function() {	
+
+		//Show the page once images are loaded	
+		
+			animateContent();				
+
+			
+	});
+
+});
+-->
+</script>
+
+
+</body>
+
+<!-- Mirrored from www.adhamdannaway.com/blog/design-systems/how-to-build-a-design-system by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 29 Jun 2026 13:34:33 GMT -->
+</html> 

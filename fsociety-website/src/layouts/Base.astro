@@ -1,0 +1,62 @@
+---
+import Nav from '../components/Nav.astro';
+import '../styles/global.css';
+interface Props { title?: string; }
+const { title = 'MR5OBOT' } = Astro.props;
+---
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark" />
+  <title>{title}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Merienda:wght@700&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <Nav />
+  <slot />
+
+  <script>
+    // gated by .js so all content still shows if JS is off
+    document.documentElement.classList.add('js');
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // binary decode: real text resolves left→right out of 0/1 noise on entry
+    const GLYPHS = '01';
+    function decode(el) {
+      const text = el.dataset.decode || el.textContent;
+      el.dataset.decode = text;                 // cache the real text
+      if (reduce) { el.textContent = text; return; }
+      el.classList.add('decoding');
+      const dur = 650 + text.length * 12;
+      const start = performance.now();
+      (function frame(now) {
+        const t = Math.min(1, (now - start) / dur);
+        let out = '';
+        for (let i = 0; i < text.length; i++) {
+          const ch = text[i];
+          out = out + ((ch === ' ' || t * text.length >= i + 1)
+            ? ch
+            : GLYPHS[(Math.random() * GLYPHS.length) | 0]);
+        }
+        el.textContent = out;
+        if (t < 1) requestAnimationFrame(frame);
+        else { el.textContent = text; el.classList.remove('decoding'); }
+      })(start);
+    }
+
+    // one observer drives both: scroll-reveal position (.reveal-up) + text decode ([data-decode])
+    const io = new IntersectionObserver((entries) => {
+      for (const e of entries) {
+        if (!e.isIntersecting) continue;
+        if (e.target.classList.contains('reveal-up')) e.target.classList.add('in');
+        if (e.target.hasAttribute('data-decode')) decode(e.target);
+        io.unobserve(e.target);
+      }
+    }, { threshold: 0.3 });
+    document.querySelectorAll('.reveal-up, [data-decode]').forEach((el) => io.observe(el));
+  </script>
+</body>
+</html>

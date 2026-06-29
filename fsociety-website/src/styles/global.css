@@ -1,0 +1,117 @@
+:root{ --bg:#0e0e0e; --ink:#fff; --grey:#555; }
+*{ box-sizing:border-box; margin:0; }
+html{ scroll-behavior:smooth; scroll-snap-type:y proximity; scroll-padding-top:96px; }
+body{ font-family:'Space Grotesk',sans-serif; background:var(--bg); color:#eee;
+      padding:40px; display:flex; flex-direction:column; gap:60px; min-height:100vh; }
+
+/* ---------- 1. navbar with "selection box" corners ---------- */
+.nav{ position:sticky; top:14px; z-index:50; background:var(--bg);
+      border:1.5px solid var(--ink);
+      max-width:720px; margin:0 auto; padding:18px 34px;
+      display:flex; align-items:center; gap:32px; }
+.logo{ font-family:'Merienda',cursive; letter-spacing:.15em; font-size:20px; margin-right:auto; }
+.nav a{ color:#ddd; text-decoration:none; font-weight:500; font-size:20px;  /* Framer nav size */
+        transition:color .2s; }
+.nav a:hover{ color:#b18cff; }                 /* simple link hover */
+.corner{ position:absolute; width:8px; height:8px; background:var(--bg);
+         border:1.5px solid var(--ink); }
+.tl{top:-5px;left:-5px}  .tr{top:-5px;right:-5px}
+.bl{bottom:-5px;left:-5px} .br{bottom:-5px;right:-5px}
+
+/* ---------- 2. hero ---------- */
+.hero{ --sq:clamp(220px, calc(100dvh - 270px), 520px); /* 520px = Framer's square image; shrinks so hero always fits */
+       position:relative; max-width:1120px; margin:0 auto;       /* Framer content width */
+       display:flex; gap:80px; align-items:center; flex-wrap:wrap;
+       justify-content:center; min-height:calc(100dvh - 160px); }
+.hero > *{ position:relative; z-index:1; }
+h1{ display:inline-block; width:fit-content;
+    font-size:clamp(40px,6vw,64px); line-height:1.05; letter-spacing:-2px;  /* Framer headline */
+    cursor:default; transition:text-shadow .18s ease, transform .18s ease; }
+h1:hover{ text-shadow:3px 3px 0 #8a0f0f; transform:translate(-1px,-1px); } /* neo-brutalist hard shadow */
+.sub{ color:#aaa; margin-top:18px; max-width:360px; line-height:1.5em; font-size:20px; }  /* Framer body */
+
+/* ---------- 3. hand-drawn frame (real Framer SVG, see .frame-svg) ---------- */
+.frame{ position:relative; display:inline-block; padding:44px; align-self:flex-start;
+        transform:translateY(-40px) rotate(-1.1deg); }            /* tiny tilt = hand-drawn vibe */
+.photo-wrap{ display:block; position:relative; z-index:1;
+             width:var(--sq); height:var(--sq); overflow:hidden; }
+.photo{ display:block; width:100%; height:100%;
+        object-fit:cover; transform:scale(1.05); } /* crops baked-in black margin */
+
+/* ---------- 4. hover reveals — the good part ---------- */
+.reveal{ opacity:0; transform:scale(.6) translateY(10px);
+         transition:opacity .35s ease,
+                    transform .4s cubic-bezier(.4,1.56,.64,1); } /* springy overshoot */
+.frame:hover .reveal{ opacity:1; transform:scale(1) translateY(0); }
+
+.bulb{ position:absolute; z-index:2; top:33px; left:35px; width:75px; height:75px; }
+.cloud{ position:absolute; z-index:2; top:-58px; right:-85px; width:245px; }
+.tag{ position:absolute; z-index:2; bottom:56px; left:50%; transform-origin:center;
+      color:#fff; font-family:'Merienda',cursive; font-size:22px;
+      font-weight:700; letter-spacing:.12em; white-space:nowrap;
+      /* override the base reveal transform for centering */
+      opacity:0; transform:translate(-50%,10px) scale(.6);
+      transition:opacity .35s ease, transform .4s cubic-bezier(.34,1.56,.64,1); }
+.frame:hover .tag{ opacity:1; transform:translate(-50%,0) scale(1); }
+
+.hint{ text-align:center; color:#999; font-size:13px; }
+
+/* ---------- works section: project cards (sketch-frame style) ---------- */
+#works{ padding:30px 24px 90px; min-height:100vh; scroll-snap-align:start; }
+.works-title{ text-align:center; font-size:clamp(40px,6vw,64px);
+              font-weight:700; letter-spacing:-2px; margin-bottom:50px;
+              transition:opacity .6s ease, translate .6s cubic-bezier(.22,1,.36,1); }
+
+/* binary decode: text resolves out of 0/1 noise on entry (see Base.astro script) */
+[data-decode]{ font-variant-numeric:tabular-nums; }  /* steadies width while 0/1 flicker */
+.decoding{ color:#b18cff; text-shadow:0 0 8px rgba(177,140,255,.45); }
+
+/* scroll reveal: drop in from above (uses `translate` prop so card tilt is untouched) */
+.js .reveal-up{ opacity:0; translate:0 -32px; }
+.js .reveal-up.in{ opacity:1; translate:0 0; }
+@media (prefers-reduced-motion:reduce){ .js .reveal-up{ opacity:1; translate:0; } }
+.cards{ display:grid; gap:46px; max-width:980px; margin:0 auto;
+        grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); }
+.card{ position:relative; background:var(--bg); padding:48px 46px 42px;
+       text-decoration:none; color:inherit; display:block;
+       transform:rotate(-.5deg);
+       transition:transform .35s cubic-bezier(.34,1.56,.64,1),
+                  opacity .6s ease, translate .6s cubic-bezier(.22,1,.36,1); }
+.card:nth-child(even){ transform:rotate(.5deg); }
+.card:hover{ transform:rotate(0) translate(-3px,-3px); }
+.card > *:not(.frame-svg){ position:relative; z-index:1; }
+.frame-svg{ position:absolute; inset:0; width:100%; height:100%;
+            overflow:visible; pointer-events:none; z-index:0;
+            filter:drop-shadow(-8px 9px 0 #5a5a5a); } /* the grey offset double-line */
+.frame-svg path{ fill:none; stroke:#fff; stroke-width:2.8;
+                 stroke-linecap:round; stroke-linejoin:round;
+                 vector-effect:non-scaling-stroke; }
+.card-thumb{ aspect-ratio:16/10; background:#1a1a1a; overflow:hidden;
+             display:grid; place-items:center; margin-bottom:18px; }
+.card-thumb img{ width:100%; height:100%; object-fit:cover; }
+.card-thumb .ph{ color:#666; font-size:13px; letter-spacing:.12em; }
+.card h3{ font-size:24px; font-weight:700; margin-bottom:10px; }
+.card p{ color:#aaa; line-height:1.5; font-size:15px; }
+
+/* ---------- blog (Leaks) ---------- */
+.blog-list{ max-width:720px; margin:0 auto; width:100%; }
+.blog-list ul{ list-style:none; padding:0; display:flex; flex-direction:column; gap:4px; }
+.blog-list li{ display:flex; align-items:baseline; justify-content:space-between;
+               gap:20px; padding:18px 4px; border-bottom:1px solid #222; }
+.blog-list a{ color:#eee; text-decoration:none; font-size:22px; font-weight:500;
+              transition:color .2s; }
+.blog-list a:hover{ color:#b18cff; }
+.blog-list time{ color:#666; font-size:14px; white-space:nowrap; }
+
+.post{ max-width:680px; margin:0 auto; width:100%; line-height:1.7; }
+.post h1{ font-size:clamp(34px,5vw,52px); letter-spacing:-1.5px; }
+.post > time{ display:block; color:#666; font-size:14px; margin:10px 0 36px; }
+.post h2{ font-size:28px; margin:34px 0 12px; letter-spacing:-1px; }
+.post p{ color:#cfcfcf; margin:16px 0; }
+.post a{ color:#b18cff; }
+.post code{ background:#1a1a1a; padding:2px 6px; border-radius:4px; font-size:.9em; }
+.post pre{ background:#161616; padding:18px; overflow:auto; border:1px solid #222; }
+.post pre code{ background:none; padding:0; }
+.back{ display:inline-block; max-width:680px; margin:0 auto; width:100%;
+       color:#777; text-decoration:none; font-size:15px; }
+.back:hover{ color:#b18cff; }
