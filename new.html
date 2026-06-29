@@ -18,31 +18,26 @@
     -webkit-font-smoothing: antialiased;
   }
 
+  /* three tracks: text gutter | face | text gutter.
+     side text aligns toward the face, so any heading overflow runs inward, never off-screen */
   .hero {
     min-height: 100vh;
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
     align-items: center;
-    justify-content: center;
-    padding: 40px 24px;
-    border-bottom: 1px solid #eee;
+    gap: clamp(16px, 4vw, 72px);
+    padding: 40px clamp(24px, 4vw, 72px);
   }
 
-  /* The face image sits centered; the two text columns float over the side margins */
-  .face {
-    position: relative;
-    width: 100%;
-    max-width: 1040px;
-    display: flex;
-    justify-content: center;
-  }
+  .face { display: flex; justify-content: center; }
   .face-img {
     display: block;
-    max-height: 86vh;
+    max-height: 78vh;
     max-width: 100%;
     width: auto;
     height: auto;
   }
-  /* fallback box shown if hero.png is missing/corrupt */
+  /* fallback box if the image is missing/corrupt */
   .face-fallback {
     display: none;
     width: min(420px, 60vw);
@@ -58,16 +53,9 @@
   .face.broken .face-img { display: none; }
   .face.broken .face-fallback { display: flex; }
 
-  .designer, .coder {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    max-width: 290px;
-    z-index: 2;
-    transition: opacity .4s ease;
-  }
-  .designer { left: 0; }
-  .coder    { right: 0; }
+  .designer { justify-self: end; }
+  .coder    { justify-self: start; }
+  .designer, .coder { transition: opacity .4s ease; }
 
   .designer h1, .coder h1 {
     margin: 0 0 .35em;
@@ -75,29 +63,25 @@
     font-weight: 700;
     line-height: 1;
     letter-spacing: -.01em;
-    font-size: clamp(40px, 6.4vw, 82px);
+    white-space: nowrap;
+    font-size: clamp(40px, 5.4vw, 78px);
   }
-  .coder h1 .chev { color: var(--ink); }
   .designer p, .coder p {
     margin: 0;
+    max-width: 290px;
     font-size: clamp(15px, 1.4vw, 18px);
     line-height: 1.45;
   }
   .designer a, .coder a { color: inherit; text-decoration: none; display: block; }
 
   /* hover cross-fade: focus one side, dim the other (CSS-only, no sprites) */
-  .face:has(.designer a:hover) .coder,
-  .face:has(.coder a:hover) .designer { opacity: .25; }
+  .hero:has(.designer a:hover) .coder,
+  .hero:has(.coder a:hover) .designer { opacity: .25; }
 
-  /* Stack the copy on small screens so it never sits on top of the face */
+  /* Stack on small screens so the copy never collides with the face */
   @media (max-width: 860px) {
-    .hero { flex-direction: column; gap: 28px; }
-    .designer, .coder {
-      position: static;
-      transform: none;
-      max-width: 420px;
-      text-align: center;
-    }
+    .hero { grid-template-columns: 1fr; justify-items: center; gap: 28px; }
+    .designer, .coder { justify-self: center; text-align: center; }
     .designer p, .coder p { margin: 0 auto; }
     .face { order: -1; }
   }
@@ -122,7 +106,7 @@
 
     <div class="coder">
       <a href="#">
-        <h1><span class="chev">&lt;</span>coder<span class="chev">&gt;</span></h1>
+        <h1>&lt;coder&gt;</h1>
         <p>Front end developer who writes clean, elegant and efficient code.</p>
       </a>
     </div>
