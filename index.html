@@ -103,7 +103,7 @@
     const L = document.getElementById('halfL'), R = document.getElementById('halfR');
     const dL = document.getElementById('descLeft'), dR = document.getElementById('descRight');
     const REST = 0.525;           // seam at the middle man's nose
-    const GAIN = 3;               // small move off the nose = big wipe
+    const GAIN = 1;               // seam tracks the cursor 1:1 (no overshoot)
     const mq = matchMedia('(min-width: 1140px)');
     let imgL = 0, imgW = 1;       // cached image-box geometry
     let target, xp;              // seam px within the image box (damped)
