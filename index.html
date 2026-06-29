@@ -6,7 +6,7 @@
 <title>MR5OBOT</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Merienda:wght@700&display=swap" rel="stylesheet">
 <style>
   * { box-sizing: border-box; }
   html, body { height: 100%; }
@@ -19,6 +19,21 @@
     align-items: center;
     justify-content: center;
   }
+
+  /* Navbar with "selection box" corners — cloned from fsociety-website */
+  .nav {
+    position: fixed; top: 24px; left: 20px; right: 20px;
+    max-width: 720px; margin: 0 auto; z-index: 50;
+    background: #000; border: 1.5px solid #fff;
+    padding: 18px 34px;
+    display: flex; align-items: center; gap: 32px;
+  }
+  .nav .logo { font-family: 'Merienda', cursive; letter-spacing: .15em; font-size: 20px; margin-right: auto; color: #fff; }
+  .nav a { color: #ddd; text-decoration: none; font-weight: 500; font-size: 20px; transition: color .2s; }
+  .nav a:hover { color: #b18cff; }
+  .nav .corner { position: absolute; width: 8px; height: 8px; background: #000; border: 1.5px solid #fff; }
+  .nav .tl { top: -5px; left: -5px; }  .nav .tr { top: -5px; right: -5px; }
+  .nav .bl { bottom: -5px; left: -5px; } .nav .br { bottom: -5px; right: -5px; }
 
   /* Stage — full-screen hero, the image is the leader */
   .face {
@@ -86,6 +101,13 @@
 </style>
 </head>
 <body>
+
+  <nav class="nav">
+    <a class="logo" href="/">MR5OBOT</a>
+    <a href="#jankyards">Jankyards</a><a href="#gems">Gems</a><a href="#">Contact</a>
+    <span class="corner tl"></span><span class="corner tr"></span>
+    <span class="corner bl"></span><span class="corner br"></span>
+  </nav>
 
   <div class="face" id="face">
     <!-- ponytail: copy is placeholder, on-theme. Swap freely. -->
