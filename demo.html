@@ -17,10 +17,10 @@
   /* ---------- 1. navbar with "selection box" corners ---------- */
   .nav{ position:sticky; top:14px; z-index:50; background:var(--bg);
         border:1.5px solid var(--ink);
-        max-width:640px; margin:0 auto; padding:16px 28px;
-        display:flex; align-items:center; gap:28px; }
+        max-width:720px; margin:0 auto; padding:18px 34px;
+        display:flex; align-items:center; gap:32px; }
   .logo{ font-family:'Merienda',cursive; letter-spacing:.15em; font-size:20px; margin-right:auto; }
-  .nav a{ color:#ddd; text-decoration:none; font-weight:500;
+  .nav a{ color:#ddd; text-decoration:none; font-weight:500; font-size:20px;  /* Framer nav size */
           transition:color .2s; }
   .nav a:hover{ color:#b18cff; }                 /* simple link hover */
   .corner{ position:absolute; width:8px; height:8px; background:var(--bg);
@@ -29,19 +29,22 @@
   .bl{bottom:-5px;left:-5px} .br{bottom:-5px;right:-5px}
 
   /* ---------- 2. hero ---------- */
-  .hero{ display:flex; gap:60px; align-items:center; flex-wrap:wrap;
-         justify-content:center; min-height:100vh; scroll-snap-align:start; }
+  .hero{ --sq:clamp(220px, calc(100dvh - 270px), 520px); /* 520px = Framer's square image; shrinks so hero always fits */
+         position:relative; max-width:1120px; margin:0 auto;       /* Framer content width */
+         display:flex; gap:80px; align-items:center; flex-wrap:wrap;
+         justify-content:center; min-height:calc(100dvh - 160px); }
+  .hero > *{ position:relative; z-index:1; }
   h1{ display:inline-block; width:fit-content;
-      font-size:clamp(34px,5vw,58px); line-height:1.05; letter-spacing:-.02em;
+      font-size:clamp(40px,6vw,64px); line-height:1.05; letter-spacing:-2px;  /* Framer headline */
       cursor:default; transition:text-shadow .18s ease, transform .18s ease; }
   h1:hover{ text-shadow:3px 3px 0 #8a0f0f; transform:translate(-1px,-1px); } /* neo-brutalist hard shadow */
-  .sub{ color:#aaa; margin-top:18px; max-width:340px; line-height:1.5; }
+  .sub{ color:#aaa; margin-top:18px; max-width:360px; line-height:1.5em; font-size:20px; }  /* Framer body */
 
   /* ---------- 3. hand-drawn frame (real Framer SVG, see .frame-svg) ---------- */
-  .frame{ position:relative; display:inline-block; padding:44px;
-          transform:rotate(-1.1deg); }            /* tiny tilt = hand-drawn vibe */
+  .frame{ position:relative; display:inline-block; padding:44px; align-self:flex-start;
+          transform:translateY(-40px) rotate(-1.1deg); }            /* tiny tilt = hand-drawn vibe */
   .photo-wrap{ display:block; position:relative; z-index:1;
-               width:430px; height:430px; overflow:hidden; }
+               width:var(--sq); height:var(--sq); overflow:hidden; }
   .photo{ display:block; width:100%; height:100%;
           object-fit:cover; transform:scale(1.05); } /* crops baked-in black margin */
 
@@ -65,8 +68,8 @@
 
   /* ---------- works section: project cards (sketch-frame style) ---------- */
   #works{ padding:30px 24px 90px; min-height:100vh; scroll-snap-align:start; }
-  .works-title{ text-align:center; font-size:clamp(32px,5vw,52px);
-                font-weight:700; letter-spacing:-.02em; margin-bottom:50px;
+  .works-title{ text-align:center; font-size:clamp(40px,6vw,64px);
+                font-weight:700; letter-spacing:-2px; margin-bottom:50px;
                 transition:opacity .6s ease, translate .6s cubic-bezier(.22,1,.36,1); }
 
   /* scroll reveal: drop in from above (uses `translate` prop so card tilt is untouched) */
