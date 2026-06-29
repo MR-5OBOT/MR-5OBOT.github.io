@@ -121,11 +121,11 @@
       target = xp = imgW * REST;
       face.classList.add('ready');
       addEventListener('resize', measure);
-      // small move right of the nose wipes to colour, left wipes to line-art
+      // hover a side, keep that side: left reveals colour, right reveals line-art
       const SNAP = imgW * 0.05;   // close the wipe fully near the ends (no leftover sliver)
       face.addEventListener('mousemove', e => {
         const d = e.clientX - (imgL + imgW * REST);
-        let t = Math.max(0, Math.min(imgW, imgW * REST + d * GAIN));
+        let t = Math.max(0, Math.min(imgW, imgW * REST - d * GAIN));
         if (t < SNAP) t = 0;
         else if (t > imgW - SNAP) t = imgW;
         target = t;
