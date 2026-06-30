@@ -87,6 +87,8 @@
     transform: translateX(0);
     transition: transform 1s cubic-bezier(.16,1,.3,1), opacity 1s ease;
   }
+  /* drop the colourful (left) half a touch so the glasses line up with the line-art side */
+  .face.loaded .half.left { transform: translateY(1.2%); }
   /* Once mouse-tracking takes over, JS drives transform every frame */
   .face.ready .half,
   .face.ready .desc { transition: none; }
@@ -139,7 +141,7 @@
 
   <nav class="nav">
     <a class="logo" href="/">MR5OBOT</a>
-    <a href="#jankyard">Jankyard</a><a href="gems.html">Gems</a><a href="#">Contact</a>
+    <a href="#jankyard">Jankyard</a><a href="Knowledge.html">Knowledge</a><a href="#">Contact</a>
     <span class="corner tl"></span><span class="corner tr"></span>
     <span class="corner bl"></span><span class="corner br"></span>
   </nav>

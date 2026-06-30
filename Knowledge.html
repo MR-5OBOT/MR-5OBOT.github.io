@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MR5OBOT // GEMS</title>
+<title>MR5OBOT // Knowledge</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Space+Mono:wght@400;700&family=Merienda:wght@700&display=swap" rel="stylesheet">
@@ -42,9 +42,11 @@
   .nav a:hover { color: #a280ea; filter: url(#pixelate); }
   .nav a.active { color: #b18cff; }
   /* scroll position lives inside the nav box: a dark-purple pixel thumb behind the links */
+  /* clip the thumb's glow to the nav interior so nothing bleeds past the border */
+  .nav-thumb-wrap { position: absolute; inset: 0; z-index: 1; overflow: hidden; pointer-events: none; }
   .nav-thumb {
-    position: absolute; top: 5px; left: 0; width: 52px; height: calc(100% - 10px); z-index: 1;
-    display: block; pointer-events: none; filter: blur(2px);
+    position: absolute; top: 0; left: 0; width: 52px; height: 100%;
+    display: block; filter: blur(2px);
   }
   .nav .corner { position: absolute; width: 8px; height: 8px; background: #000; border: 1.5px solid #fff; z-index: 3; }
   .nav .tl { top: -5px; left: -5px; }  .nav .tr { top: -5px; right: -5px; }
@@ -96,9 +98,9 @@
   <div class="hero-bg"></div>
 
   <nav class="nav">
-    <canvas class="nav-thumb"></canvas>
+    <span class="nav-thumb-wrap"><canvas class="nav-thumb"></canvas></span>
     <a class="logo" href="index.html">MR5OBOT</a>
-    <a href="#">Jankyard</a><a class="active" href="gems.html">Gems</a><a href="#">Contact</a>
+    <a href="#">Jankyard</a><a class="active" href="Knowledge.html">Knowledge</a><a href="#">Contact</a>
     <span class="corner tl"></span><span class="corner tr"></span>
     <span class="corner bl"></span><span class="corner br"></span>
   </nav>
@@ -203,17 +205,25 @@
     feed.replaceChildren();
     const mk = g => { const s = document.createElement('div'); s.className = 'slide'; s.appendChild(g); return s; };
     for (let c = 0; c < 3; c++) base.forEach(g => feed.appendChild(mk(c ? g.cloneNode(true) : g)));
-    const slides = [...feed.children], gems = slides.map(s => s.firstElementChild), per = base.length;
+    const slides = [...feed.children], knowledge = slides.map(s => s.firstElementChild), per = base.length;
 
-    function pix() {                                          // chaotic purple pixel cells (re-randomised each tick = twinkle)
-      const w = thumb.width, h = thumb.height, C = 4;
+    function pix() {                                          // fine purple pixel texture, soft centre, dark-purple top/bottom shadow
+      const w = thumb.width, h = thumb.height, C = 3;
       tctx.clearRect(0, 0, w, h);
-      tctx.fillStyle = '#b18cff';
+      tctx.fillStyle = '#9a6cff';
       for (let y = 0; y < h; y += C) for (let x = 0; x < w; x += C) {
-        tctx.globalAlpha = 0.06 + Math.random() * 0.42;
+        const f = 1 - Math.abs(y / h - 0.5) * 2;             // 1 centre -> 0 top/bottom
+        tctx.globalAlpha = (0.14 + Math.random() * 0.28) * (0.25 + 0.75 * f * f);
         tctx.fillRect(x, y, C - 1, C - 1);
       }
-      tctx.globalAlpha = 1;
+      tctx.globalAlpha = 1;                                   // dark-purple shadow washes the top + bottom
+      const g = tctx.createLinearGradient(0, 0, 0, h);
+      g.addColorStop(0,    'rgba(34,14,66,0.95)');
+      g.addColorStop(0.45, 'rgba(34,14,66,0)');
+      g.addColorStop(0.55, 'rgba(34,14,66,0)');
+      g.addColorStop(1,    'rgba(34,14,66,0.95)');
+      tctx.fillStyle = g;
+      tctx.fillRect(0, 0, w, h);
     }
     function sizeThumb() { const r = thumb.getBoundingClientRect(); thumb.width = Math.max(1, r.width | 0); thumb.height = Math.max(1, r.height | 0); pix(); }
 
@@ -225,14 +235,14 @@
       pair = innerWidth >= 760 ? 1 : 0;                       // two-up on desktop, one-up on phones
       slideW = pair ? Math.min(560, innerWidth * 0.46) : Math.min(560, innerWidth - 40);
       slides.forEach(s => s.style.width = slideW + 'px');
-      gems.forEach(g => g.style.width = (slideW - 40) + 'px'); // 40px gutter between cards
+      knowledge.forEach(g => g.style.width = (slideW - 40) + 'px'); // 40px gutter between cards
       render();
     }
     function render() {
       const mid = (cur + 0.5 + 0.5 * pair) * slideW;          // straddle the gap (two-up) or center the card
       feed.style.transform = `translate(${innerWidth / 2 - mid}px, -50%)`;
       const aD = 0.5 * pair;
-      for (let i = 0; i < gems.length; i++) {
+      for (let i = 0; i < knowledge.length; i++) {
         const k = Math.max(0, Math.abs(i - (cur + aD)) - aD); // 0 for the active card(s), grows outward
         const op = Math.max(0, 1 - k * 0.5);
         slides[i].style.transform = `scale(${1 - k * 0.12})`; // scale the wrapper, not .gem, so the ::before frame stays behind
