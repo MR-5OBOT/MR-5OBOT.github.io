@@ -20,20 +20,11 @@
   /* pixel-heatmap texture, same as the home hero bg */
   #bg { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; opacity: .17; }
 
-  /* the home hero, blurred + dark-mode, ghosting behind the feed (fixed = parallax) */
-  .hero-bg {
-    position: fixed; inset: 0; z-index: 0; pointer-events: none;
-    background: url(assets/hero.png) center / auto 180vh no-repeat;
-    filter: invert(1) hue-rotate(180deg) blur(34px) brightness(.8);
-    opacity: .32;
-    transform: translateZ(0);   /* own GPU layer: blur won't repaint while the feed scrolls */
-  }
-
   /* Navbar — cloned from index.html */
   .nav {
     position: fixed; top: 24px; left: 20px; right: 20px;
     max-width: 720px; margin: 0 auto; z-index: 50;
-    background: #000; border: 1.5px solid #fff;
+    background: transparent; border: 1.5px solid #fff;
     padding: 18px 34px;
     display: flex; align-items: center; gap: 32px;
   }
@@ -41,12 +32,19 @@
   .nav a { color: #ddd; text-decoration: none; font-weight: 500; font-size: 20px; transition: color .2s; position: relative; z-index: 2; }
   .nav a:hover { color: #a280ea; filter: url(#pixelate); }
   .nav a.active { color: #b18cff; }
-  /* scroll position lives inside the nav box: a dark-purple pixel thumb behind the links */
-  /* clip the thumb's glow to the nav interior so nothing bleeds past the border */
-  .nav-thumb-wrap { position: absolute; inset: 0; z-index: 1; overflow: hidden; pointer-events: none; }
-  .nav-thumb {
-    position: absolute; top: 0; left: 0; width: 52px; height: 100%;
-    display: block; filter: blur(2px);
+  /* horizontal scroll-position line, sitting below the nav (over the carousel) */
+  .scrollbar {
+    position: fixed; top: 104px; left: 20px; right: 20px;
+    max-width: 720px; margin: 0 auto; height: 20px; z-index: 49; pointer-events: none;
+  }
+  .scrollbar::before {                                   /* faint full-width track */
+    content: ""; position: absolute; left: 0; right: 0; top: 50%;
+    height: 2px; transform: translateY(-50%); background: rgba(255,255,255,.06);
+  }
+  .nav-thumb {                                           /* bright big-pixel purple bar, slides along the track (starts centred) */
+    position: absolute; top: 50%; left: 0; width: 150px; height: 16px;
+    transform: translateY(-50%);
+    display: block; filter: blur(1.5px) drop-shadow(0 0 8px rgba(86,48,160,.5));
   }
   .nav .corner { position: absolute; width: 8px; height: 8px; background: #000; border: 1.5px solid #fff; z-index: 3; }
   .nav .tl { top: -5px; left: -5px; }  .nav .tr { top: -5px; right: -5px; }
@@ -95,15 +93,14 @@
   </svg>
 
   <canvas id="bg"></canvas>
-  <div class="hero-bg"></div>
 
   <nav class="nav">
-    <span class="nav-thumb-wrap"><canvas class="nav-thumb"></canvas></span>
     <a class="logo" href="index.html">MR5OBOT</a>
     <a href="#">Jankyard</a><a class="active" href="Knowledge.html">Knowledge</a><a href="#">Contact</a>
     <span class="corner tl"></span><span class="corner tr"></span>
     <span class="corner bl"></span><span class="corner br"></span>
   </nav>
+  <div class="scrollbar"><canvas class="nav-thumb"></canvas></div>
 
 
   <main class="feed">
@@ -207,23 +204,16 @@
     for (let c = 0; c < 3; c++) base.forEach(g => feed.appendChild(mk(c ? g.cloneNode(true) : g)));
     const slides = [...feed.children], knowledge = slides.map(s => s.firstElementChild), per = base.length;
 
-    function pix() {                                          // fine purple pixel texture, soft centre, dark-purple top/bottom shadow
-      const w = thumb.width, h = thumb.height, C = 3;
+    function pix() {                                          // bright big-pixel purple bar, soft only at the ends -> a straight line
+      const w = thumb.width, h = thumb.height, C = 6;
       tctx.clearRect(0, 0, w, h);
-      tctx.fillStyle = '#9a6cff';
+      tctx.fillStyle = '#5630a0';
       for (let y = 0; y < h; y += C) for (let x = 0; x < w; x += C) {
-        const f = 1 - Math.abs(y / h - 0.5) * 2;             // 1 centre -> 0 top/bottom
-        tctx.globalAlpha = (0.14 + Math.random() * 0.28) * (0.25 + 0.75 * f * f);
+        const fx = Math.min(1, (1 - Math.abs(x / w - 0.5) * 2) * 2.5); // full across, taper the two ends
+        const fy = 0.6 + 0.4 * (1 - Math.abs(y / h - 0.5) * 2);        // gentle top/bottom fade
+        tctx.globalAlpha = (0.55 + Math.random() * 0.35) * fx * fy;
         tctx.fillRect(x, y, C - 1, C - 1);
       }
-      tctx.globalAlpha = 1;                                   // dark-purple shadow washes the top + bottom
-      const g = tctx.createLinearGradient(0, 0, 0, h);
-      g.addColorStop(0,    'rgba(34,14,66,0.95)');
-      g.addColorStop(0.45, 'rgba(34,14,66,0)');
-      g.addColorStop(0.55, 'rgba(34,14,66,0)');
-      g.addColorStop(1,    'rgba(34,14,66,0.95)');
-      tctx.fillStyle = g;
-      tctx.fillRect(0, 0, w, h);
     }
     function sizeThumb() { const r = thumb.getBoundingClientRect(); thumb.width = Math.max(1, r.width | 0); thumb.height = Math.max(1, r.height | 0); pix(); }
 
@@ -249,8 +239,9 @@
         slides[i].style.opacity = op;
         slides[i].inert = op < 0.5;                           // off-screen clones drop out of tab order + a11y tree
       }
-      const f = (((cur % per) + per) % per) / per;            // position within the set -> nav thumb
-      thumb.style.left = f * (thumb.parentElement.clientWidth - thumb.offsetWidth) + 'px';
+      const f = (((cur % per) + per) % per) / per;            // 0..1 position within the set
+      const fc = (f + 0.5) % 1;                                // start centred, then scroll moves it from the middle
+      thumb.style.left = fc * (thumb.parentElement.clientWidth - thumb.offsetWidth) + 'px';
     }
     function tick() {
       cur += (target - cur) / (reduce ? 1 : 6);
