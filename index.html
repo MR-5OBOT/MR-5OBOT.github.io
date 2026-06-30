@@ -30,10 +30,13 @@
   }
   .nav .logo { font-family: 'Merienda', cursive; letter-spacing: .15em; font-size: 20px; margin-right: auto; color: #fff; }
   .nav a { color: #ddd; text-decoration: none; font-weight: 500; font-size: 20px; transition: color .2s; }
-  .nav a:hover { color: #b18cff; }
+  .nav a:hover { color: #a280ea; filter: url(#pixelate); }   /* text breaks into soft pixels */
   .nav .corner { position: absolute; width: 8px; height: 8px; background: #000; border: 1.5px solid #fff; }
   .nav .tl { top: -5px; left: -5px; }  .nav .tr { top: -5px; right: -5px; }
   .nav .bl { bottom: -5px; left: -5px; } .nav .br { bottom: -5px; right: -5px; }
+
+  /* Pixel-heatmap background, grey on black */
+  #bg { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; opacity: .18; }
 
   /* Stage — full-screen hero, the image is the leader */
   .face {
@@ -42,6 +45,7 @@
     height: 100vh;
     margin: auto;
     overflow: hidden;
+    z-index: 1;          /* sit above #bg */
   }
 
   /* Two halves of one image, clipped at the centre seam */
@@ -81,8 +85,8 @@
     pointer-events: none;
   }
   .face.loaded .desc { opacity: 1; }
-  .desc.left  { left: 1.5%; }
-  .desc.right { right: 1.5%; text-align: right; }
+  .desc.left  { left: 1.5%; text-align: right; }   /* face the hero */
+  .desc.right { right: 1.5%; text-align: left; }   /* face the hero */
   .desc h1 {
     margin: 0 0 .35em;
     white-space: nowrap;        /* keep the label on one line, like the reference */
@@ -102,6 +106,20 @@
 </head>
 <body>
 
+  <canvas id="bg"></canvas>
+
+  <!-- Pixelate filter: sample 1 dot per cell, dilate into blocks, soften -->
+  <svg width="0" height="0" style="position:absolute">
+    <filter id="pixelate" x="0" y="0" width="100%" height="100%">
+      <feFlood x="1" y="1" width="1" height="1"/>
+      <feComposite width="2" height="2"/>
+      <feTile result="grid"/>
+      <feComposite in="SourceGraphic" in2="grid" operator="in"/>
+      <feMorphology operator="dilate" radius="0.7"/>
+      <feGaussianBlur stdDeviation="0.5"/>
+    </filter>
+  </svg>
+
   <nav class="nav">
     <a class="logo" href="/">MR5OBOT</a>
     <a href="#jankyards">Jankyards</a><a href="#gems">Gems</a><a href="#">Contact</a>
@@ -120,11 +138,42 @@
       <p>Full of ideas no LLM can turn into working code.</p>
     </div>
 
-    <img class="half left"  id="halfL" src="assets/hero-2-reg.png" alt="">
+    <img class="half left"  id="halfL" src="assets/hero-2.png" alt="">
     <img class="half right" id="halfR" src="assets/hero.png" alt="">
   </div>
 
   <script>
+    /* Pixel-heatmap: grid of grey cells, brightness from a slow blobby field. */
+    (() => {
+      const cv = document.getElementById('bg'), ctx = cv.getContext('2d');
+      const CELL = 96, MAX = 95, GAP = 0;      // px size, top grey (0-255), black grout
+      let cols, rows, grain, dpr;
+
+      function resize() {
+        dpr = Math.min(devicePixelRatio || 1, 2);
+        cv.width = innerWidth * dpr; cv.height = innerHeight * dpr;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        cols = Math.ceil(innerWidth / CELL); rows = Math.ceil(innerHeight / CELL);
+        grain = Float32Array.from({ length: cols * rows }, () => (Math.random() - 0.5) * 0.7);
+      }
+
+      function draw() {
+        const cx = (cols - 1) / 2, cy = (rows - 1) / 2, maxd = Math.hypot(cx, cy);
+        for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) {
+          const n = Math.sin(x * 0.4) + Math.sin(y * 0.35)
+                  + Math.sin((x + y) * 0.3) + Math.sin((x - y) * 0.32);
+          let v = 0.45 + grain[y * cols + x] + (n / 4) * 0.25;   // per-tile random, gentle field bias
+          v = Math.max(0, Math.min(1, v));
+          const vig = 0.2 + 0.8 * (Math.hypot(x - cx, y - cy) / maxd);   // dark centre, bright edges
+          const g = (v ** 1.3 * MAX * vig) | 0;
+          ctx.fillStyle = `rgb(${g},${g},${g})`;
+          ctx.fillRect(x * CELL, y * CELL, CELL - GAP, CELL - GAP);
+        }
+      }
+
+      addEventListener('resize', () => { resize(); draw(); }); resize(); draw();
+    })();
+
     const face = document.getElementById('face');
     const L = document.getElementById('halfL'), R = document.getElementById('halfR');
     const dL = document.getElementById('descLeft'), dR = document.getElementById('descRight');
