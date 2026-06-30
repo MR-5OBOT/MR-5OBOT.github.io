@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1366 768" font-family="'Space Grotesk','Helvetica Neue',Arial,sans-serif">
+  <defs>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="45"/>
+    </filter>
+  </defs>
+
+  <!-- dark backdrop, focal tint lifted slightly off pure black -->
+  <rect width="1366" height="768" fill="#000"/>
+  <ellipse cx="683" cy="400" rx="360" ry="150" fill="#b18cff" opacity="0.06" filter="url(#glow)"/>
+
+  <!-- giant faded watermark behind the post column -->
+  <text x="683" y="460" text-anchor="middle" font-size="180" font-weight="800"
+        letter-spacing="-6" fill="#ffffff" opacity="0.045">GEMS</text>
+
+  <!-- ===== fixed top nav (unchanged) — Gems active ===== -->
+  <g>
+    <rect x="323" y="24" width="720" height="58" fill="#000" stroke="#fff" stroke-width="1.5"/>
+    <text x="357" y="61" font-family="'Merienda',cursive" font-size="22" letter-spacing="3" fill="#fff">MR5OBOT</text>
+    <text x="812" y="60" text-anchor="end" font-size="18" font-weight="500" fill="#dddddd">Jankyards</text>
+    <text x="916" y="60" text-anchor="end" font-size="18" font-weight="500" fill="#b18cff">Gems</text>
+    <text x="1009" y="60" text-anchor="end" font-size="18" font-weight="500" fill="#dddddd">Contact</text>
+    <rect x="319" y="20" width="8" height="8" fill="#000" stroke="#fff" stroke-width="1.5"/>
+    <rect x="1039" y="20" width="8" height="8" fill="#000" stroke="#fff" stroke-width="1.5"/>
+    <rect x="319" y="78" width="8" height="8" fill="#000" stroke="#fff" stroke-width="1.5"/>
+    <rect x="1039" y="78" width="8" height="8" fill="#000" stroke="#fff" stroke-width="1.5"/>
+  </g>
+
+  <!-- feed-order hints -->
+  <text x="683" y="104" text-anchor="middle" font-size="11" letter-spacing="2" fill="#555">&#8593; NEWER</text>
+  <text x="683" y="668" text-anchor="middle" font-size="11" letter-spacing="2" fill="#555">OLDER &#8595;</text>
+
+  <!-- ===== newer post (scrolled past): small + dim ===== -->
+  <g opacity="0.4">
+    <rect x="533" y="116" width="300" height="82" fill="#0c0c14" stroke="#262626"/>
+    <rect x="549" y="130" width="4" height="52" fill="#b18cff"/>
+    <text x="567" y="150" font-size="16" font-weight="700" fill="#ddd">i rugged myself, on-chain</text>
+    <text x="567" y="172" font-size="12" fill="#777">jun 28 &#183; 4 min</text>
+  </g>
+
+  <!-- ===== FOCAL post (viewport centre): full, bright, sharp ===== -->
+  <g transform="rotate(-0.6 683 380)">
+    <!-- sketch double-line frame: grey offset + white stroke, NO rounding -->
+    <rect x="375" y="244" width="600" height="290" fill="none" stroke="#5a5a5a" stroke-width="2.5"/>
+    <rect x="383" y="235" width="600" height="290" fill="#0c0c16" stroke="#fff" stroke-width="2.5"/>
+
+    <text x="407" y="272" font-size="13" letter-spacing="2" fill="#b18cff">// LEAK 03</text>
+    <text x="951" y="272" text-anchor="end" font-size="20" fill="#b18cff">&#8599;</text>
+
+    <text x="407" y="322" font-size="32" font-weight="700" letter-spacing="-1" fill="#ededed">shorted my own stop-loss</text>
+    <text x="407" y="350" font-size="13" letter-spacing="1.5" fill="#6f6f6f">JUN 26 &#183; 6 MIN &#183; PURE COPE</text>
+
+    <text x="407" y="394" font-size="16" fill="#9a9a9a">wrote a bot to guard my position. it found the</text>
+    <text x="407" y="420" font-size="16" fill="#9a9a9a">deepest liquidity on the book &#8212; my own stop.</text>
+    <text x="407" y="446" font-size="16" fill="#9a9a9a">we're not so different, the market and i.</text>
+
+    <line x1="407" y1="478" x2="951" y2="478" stroke="#1f1f26" stroke-width="1"/>
+    <text x="407" y="508" font-size="14" letter-spacing="1" fill="#b18cff">READ THE COPE &#8594;</text>
+  </g>
+
+  <!-- ===== older post (next): small + dim ===== -->
+  <g opacity="0.4">
+    <rect x="493" y="566" width="380" height="82" fill="#0c0c14" stroke="#262626"/>
+    <rect x="509" y="580" width="4" height="52" fill="#b18cff"/>
+    <text x="525" y="600" font-size="16" font-weight="700" fill="#ddd">let an LLM touch prod</text>
+    <text x="525" y="622" font-size="12" fill="#777">jun 22 &#183; 3 min &#183; it's gone</text>
+  </g>
+
+  <!-- scroll progress rail (sharp) -->
+  <rect x="1341" y="110" width="3" height="540" fill="#1e1e1e"/>
+  <rect x="1339" y="300" width="7" height="78" fill="#b18cff"/>
+
+  <!-- ===== fixed bottom status bar ===== -->
+  <g font-family="'Space Mono','Courier New',monospace">
+    <rect x="24" y="702" width="1318" height="46" fill="#000" stroke="#fff" stroke-width="1.5"/>
+    <line x1="463" y1="702" x2="463" y2="748" stroke="#fff" stroke-width="1"/>
+    <line x1="902" y1="702" x2="902" y2="748" stroke="#fff" stroke-width="1"/>
+    <text x="243" y="730" text-anchor="middle" font-size="13" letter-spacing="1.5" fill="#9a9a9a">DEGEN OPERATOR</text>
+    <text x="683" y="730" text-anchor="middle" font-size="13" letter-spacing="1.5" fill="#cfcfcf">GEMS // 12 LEAKS</text>
+    <text x="1122" y="730" text-anchor="middle" font-size="13" letter-spacing="1.5" fill="#9a9a9a">MR5OBOT&#8482; v0.1</text>
+  </g>
+</svg>
