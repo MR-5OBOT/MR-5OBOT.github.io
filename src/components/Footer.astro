@@ -1,0 +1,75 @@
+---
+import Github from '../icons/Github-Logo.svg';
+import X from '../icons/X-Twitter.svg';
+import Telegram from '../icons/Telegram.svg';
+import Youtube from '../icons/Youtube-Logo.svg';
+import Email from '../icons/Email-Logo.svg';
+
+const links = [
+  { Icon: Github, href: 'https://github.com/MR-5OBOT', label: 'GitHub' },
+  { Icon: X, href: 'https://x.com/MR_5OBOT', label: 'X' },
+  { Icon: Telegram, href: 'https://t.me/MR_5OBOT', label: 'Telegram' },
+  { Icon: Youtube, href: 'https://youtube.com/@mr5obot', label: 'YouTube' },
+  { Icon: Email, href: 'mailto:yassir7m7@gmail.com', label: 'Email' },
+];
+---
+
+<footer class="social">
+  {links.map(({ Icon, href, label }) => (
+    <a
+      class="soc"
+      href={href}
+      aria-label={label}
+      target={href.startsWith('mailto') ? undefined : '_blank'}
+      rel={href.startsWith('mailto') ? undefined : 'noopener noreferrer'}
+    >
+      <span class="box"></span>
+      <Icon class="ico" />
+      <span class="lbl">{label}</span>
+    </a>
+  ))}
+</footer>
+
+<style>
+  /* fixed bottom-centre social row; the bar itself ignores the pointer so it never blocks the page */
+  .social {
+    position: fixed; left: 0; right: 0; bottom: 18px; z-index: 60;
+    display: flex; justify-content: center; gap: 6px;
+    pointer-events: none;
+  }
+  .soc {
+    pointer-events: auto;
+    position: relative;
+    display: grid; place-items: center;
+    width: 40px; height: 40px;
+    color: #8a8a8a;
+    text-decoration: none;
+  }
+  .soc .ico { width: 20px; height: 20px; color: inherit; transition: color .2s, transform .2s; }
+  .soc:hover { color: #b18cff; }
+  .soc:hover .ico { filter: url(#pixelate); transform: translateY(-2px); }  /* pixel-burst like the nav links */
+
+  /* selection-box corner brackets on hover — same language as the nav box, drawn with one element */
+  .soc .box {
+    position: absolute; inset: 4px; opacity: 0; transition: opacity .18s;
+    --c: #fff; --t: 1.5px; --l: 7px;
+    background:
+      linear-gradient(var(--c), var(--c)) top left / var(--l) var(--t) no-repeat,
+      linear-gradient(var(--c), var(--c)) top left / var(--t) var(--l) no-repeat,
+      linear-gradient(var(--c), var(--c)) top right / var(--l) var(--t) no-repeat,
+      linear-gradient(var(--c), var(--c)) top right / var(--t) var(--l) no-repeat,
+      linear-gradient(var(--c), var(--c)) bottom left / var(--l) var(--t) no-repeat,
+      linear-gradient(var(--c), var(--c)) bottom left / var(--t) var(--l) no-repeat,
+      linear-gradient(var(--c), var(--c)) bottom right / var(--l) var(--t) no-repeat,
+      linear-gradient(var(--c), var(--c)) bottom right / var(--t) var(--l) no-repeat;
+  }
+  .soc:hover .box { opacity: 1; }
+
+  /* mono label fades in below, no layout shift */
+  .soc .lbl {
+    position: absolute; bottom: -9px; left: 50%; transform: translateX(-50%);
+    font-family: "Space Mono", monospace; font-size: 8.5px; letter-spacing: 1.5px; text-transform: uppercase;
+    color: #b18cff; white-space: nowrap; opacity: 0; transition: opacity .18s; pointer-events: none;
+  }
+  .soc:hover .lbl { opacity: 1; }
+</style>
