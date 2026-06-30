@@ -1,0 +1,37 @@
+---
+interface Props {
+  active?: string;
+  transparent?: boolean;
+}
+const { active = '', transparent = false } = Astro.props;
+const links = [
+  { href: '#jankyard', key: 'jankyard', label: 'Jankyard' },
+  { href: '/knowledge', key: 'knowledge', label: 'Knowledge' },
+  { href: '#contact', key: 'contact', label: 'Contact' },
+];
+---
+<nav class:list={['nav', { transparent }]}>
+  <a class="logo" href="/">MR5OBOT</a>
+  {links.map((l) => <a href={l.href} class:list={{ active: active === l.key }}>{l.label}</a>)}
+  <span class="corner tl"></span><span class="corner tr"></span>
+  <span class="corner bl"></span><span class="corner br"></span>
+</nav>
+
+<style>
+  /* Navbar with "selection box" corners — cloned from fsociety-website */
+  .nav {
+    position: fixed; top: 24px; left: 20px; right: 20px;
+    max-width: 720px; margin: 0 auto; z-index: 50;
+    background: #000; border: 1.5px solid #fff;
+    padding: 18px 34px;
+    display: flex; align-items: center; gap: 32px;
+  }
+  .nav.transparent { background: transparent; }
+  .nav .logo { font-family: 'Merienda', cursive; letter-spacing: .15em; font-size: 20px; margin-right: auto; color: #fff; }
+  .nav a { color: #ddd; text-decoration: none; font-weight: 500; font-size: 20px; transition: color .2s; }
+  .nav a:hover { color: #a280ea; filter: url(#pixelate); }   /* text breaks into soft pixels */
+  .nav a.active { color: #b18cff; }
+  .nav .corner { position: absolute; width: 8px; height: 8px; background: #000; border: 1.5px solid #fff; }
+  .nav .tl { top: -5px; left: -5px; }  .nav .tr { top: -5px; right: -5px; }
+  .nav .bl { bottom: -5px; left: -5px; } .nav .br { bottom: -5px; right: -5px; }
+</style>

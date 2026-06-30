@@ -1,1 +1,4 @@
 clones/
+node_modules/
+dist/
+.astro/

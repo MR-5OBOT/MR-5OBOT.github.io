@@ -1,0 +1,39 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getCollection, render } from 'astro:content';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('posts', ({ data }) => !data.draft);
+  return posts.map((post) => ({ params: { id: post.id }, props: { post } }));
+}
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+const dateStr = post.data.date
+  .toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  .toUpperCase();
+---
+
+<Base title={`MR5OBOT // ${post.data.title}`} active="knowledge" transparentNav vig={0.4} bodyClass="post">
+  <article class="post">
+    <p class="meta">{dateStr} · {post.data.read} · {post.data.tag}</p>
+    <h1>{post.data.title}</h1>
+    <div class="prose"><Content /></div>
+    <a class="back" href="/knowledge">← back to leaks</a>
+  </article>
+
+  <style is:global>
+    html, body { min-height: 100%; }
+    body.post {
+      background: #000 radial-gradient(ellipse 700px 320px at 50% 22%, rgba(177,140,255,.07), transparent 70%) fixed;
+    }
+    .post { position: relative; z-index: 1; max-width: 680px; margin: 0 auto; padding: 160px 24px 120px; color: #c8c8c8; }
+    .post .meta { font-family: "Space Mono", monospace; font-size: 13px; letter-spacing: 1.5px; color: #b18cff; margin: 0; }
+    .post h1 { font-size: clamp(30px, 5vw, 46px); color: #f2f2f2; letter-spacing: -1px; margin: 12px 0 30px; line-height: 1.1; }
+    .post .prose { font-size: 17px; line-height: 1.75; }
+    .post .prose img { max-width: 100%; height: auto; border: 1.5px solid #2a2a2a; margin: 1.4em 0; }
+    .post .prose a { color: #b18cff; }
+    .post .back { display: inline-block; margin-top: 48px; font-family: "Space Mono", monospace; color: #b18cff; text-decoration: none; letter-spacing: 1px; }
+    .post .back:hover { filter: url(#pixelate); }
+  </style>
+</Base>

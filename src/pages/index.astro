@@ -1,0 +1,118 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base title="MR5OBOT" active="home" vig={0.2} bodyClass="home">
+  <div class="face" id="face">
+    <!-- ponytail: copy is placeholder, on-theme. Swap freely. -->
+    <div class="desc left" id="descLeft">
+      <h1>ohlc trader</h1>
+      <p>Automates losing money so I can lose it in my sleep.</p>
+    </div>
+    <div class="desc right" id="descRight">
+      <h1><span class="chev">&lt;</span>token burner<span class="chev">&gt;</span></h1>
+      <p>Full of ideas no LLM can turn into working code.</p>
+    </div>
+
+    <img class="half left" id="halfL" src="/assets/hero-2-aligned.png" alt="" />
+    <img class="half right" id="halfR" src="/assets/hero.png" alt="" />
+    <div class="seam" id="seam"></div>
+  </div>
+
+  <style is:global>
+    html, body { height: 100%; }
+    body.home { background: #000; display: flex; align-items: center; justify-content: center; }
+
+    /* Stage — full-screen hero, the image is the leader */
+    .face { position: relative; width: 100vw; height: 100vh; margin: auto; overflow: hidden; z-index: 1; }
+    /* top + bottom shadow: fade the hero into black at the edges */
+    .face::after {
+      content: ""; position: absolute; inset: 0; z-index: 3; pointer-events: none;
+      background: linear-gradient(to bottom, #000 0%, transparent 20%, transparent 80%, #000 100%);
+    }
+    /* soft seam: frost the two halves together where they meet */
+    .seam {
+      position: absolute; top: 0; bottom: 0; left: 51.3%;
+      width: 16px; transform: translateX(-50%);
+      z-index: 2; pointer-events: none;
+      backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px);
+      -webkit-mask: linear-gradient(90deg, transparent, #000 35%, #000 65%, transparent);
+              mask: linear-gradient(90deg, transparent, #000 35%, #000 65%, transparent);
+    }
+    /* Two halves of one image, clipped at the centre seam */
+    .half {
+      position: absolute; top: -16%; left: 24%; width: 52%; height: auto; z-index: 1;
+      opacity: 0; filter: invert(1) hue-rotate(180deg);
+      will-change: transform, clip-path; backface-visibility: hidden;
+    }
+    .half.left  { clip-path: inset(0 47.5% 0 0); transform: translateX(-120%); }
+    .half.right { clip-path: inset(0 0 0 52.5%); transform: translateX(120%); }
+    /* Load: slide in and assemble (easeOutExpo) */
+    .face.loaded .half {
+      opacity: 1; transform: translateX(0);
+      transition: transform 1s cubic-bezier(.16,1,.3,1), opacity 1s ease;
+    }
+    .face.loaded .half.left { transform: translateY(1.2%); }
+    .face.ready .half, .face.ready .desc { transition: none; }
+
+    /* Flanking labels */
+    .desc { position: absolute; top: 38%; width: 21%; z-index: 2; opacity: 0; transition: opacity .6s ease .9s; pointer-events: none; }
+    .face.loaded .desc { opacity: 1; }
+    .desc.left  { left: 1.5%; text-align: right; }
+    .desc.right { right: 1.5%; text-align: left; }
+    .desc h1 { margin: 0 0 .35em; white-space: nowrap; color: #ededed; font-weight: 700; font-size: clamp(22px, 2.7vw, 38px); line-height: 1.05; letter-spacing: -.03em; }
+    .desc h1 .chev { color: #5a5a5a; }
+    .desc p { margin: 0; font-size: clamp(14px, 1.55vw, 20px); line-height: 1.45; }
+  </style>
+
+  <script>
+    const face = document.getElementById('face')!;
+    const L = document.getElementById('halfL') as HTMLImageElement;
+    const R = document.getElementById('halfR') as HTMLImageElement;
+    const dL = document.getElementById('descLeft')!;
+    const dR = document.getElementById('descRight')!;
+    const seam = document.getElementById('seam')!;
+    const REST = 0.525;           // seam at the middle man's nose
+    const GAIN = 1;               // seam tracks the cursor 1:1
+    const mq = matchMedia('(min-width: 1140px)');
+    let imgL = 0, imgW = 1;       // cached image-box geometry
+    let target = 0, xp = 0;       // seam px within the image box (damped)
+
+    const measure = () => { const r = L.getBoundingClientRect(); imgL = r.left; imgW = r.width; };
+
+    window.addEventListener('load', () => {
+      requestAnimationFrame(() => face.classList.add('loaded'));
+      if (!mq.matches) return;     // desktop showpiece only
+      setTimeout(start, 1200);     // after the slide-in finishes
+    });
+
+    function start() {
+      measure();
+      target = xp = imgW * REST;
+      face.classList.add('ready');
+      addEventListener('resize', measure);
+      const SNAP = imgW * 0.05;   // close the wipe fully near the ends
+      face.addEventListener('mousemove', (e) => {
+        const d = e.clientX - (imgL + imgW * REST);
+        let t = Math.max(0, Math.min(imgW, imgW * REST - d * GAIN));
+        if (t < SNAP) t = 0;
+        else if (t > imgW - SNAP) t = imgW;
+        target = t;
+      });
+      face.addEventListener('mouseleave', () => (target = imgW * REST));
+      loop();
+    }
+
+    function loop() {
+      xp += (target - xp) / 12;    // zeno damping
+      if (Math.abs(target - xp) < 0.5) xp = target;
+      L.style.clipPath = 'inset(0 ' + (imgW - xp) + 'px 0 0)';
+      R.style.clipPath = 'inset(0 0 0 ' + xp + 'px)';
+      seam.style.left = (imgL + xp) + 'px';
+      const h = imgW / 2;
+      dL.style.opacity = String(Math.min(1, xp / h));
+      dR.style.opacity = String(Math.min(1, (imgW - xp) / h));
+      requestAnimationFrame(loop);
+    }
+  </script>
+</Base>

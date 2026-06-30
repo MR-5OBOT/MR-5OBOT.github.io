@@ -1,0 +1,17 @@
+import { defineCollection, z } from 'astro:content';
+import { glob } from 'astro/loaders';
+
+const posts = defineCollection({
+  loader: glob({ pattern: '**/*.md', base: './src/content/posts' }),
+  schema: z.object({
+    title: z.string(),
+    date: z.coerce.date(),
+    read: z.string().default('5 MIN'),
+    tag: z.string().default('LEAK'),
+    description: z.string(), // the teaser shown on the Knowledge card
+    cta: z.string().default('READ'),
+    draft: z.boolean().default(false),
+  }),
+});
+
+export const collections = { posts };
