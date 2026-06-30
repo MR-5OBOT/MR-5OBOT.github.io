@@ -47,6 +47,23 @@
     overflow: hidden;
     z-index: 1;          /* sit above #bg */
   }
+  /* top + bottom shadow: fade the hero into black at the edges */
+  .face::after {
+    content: "";
+    position: absolute; inset: 0; z-index: 3; pointer-events: none;
+    background: linear-gradient(to bottom, #000 0%, transparent 20%, transparent 80%, #000 100%);
+  }
+  /* soft seam: frost the two halves together where they meet, hiding the slight misalignment.
+     JS slides it to track the cursor wipe; 51.3% is the rest position for non-desktop. */
+  .seam {
+    position: absolute; top: 0; bottom: 0; left: 51.3%;
+    width: 16px; transform: translateX(-50%);
+    z-index: 2; pointer-events: none;
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    -webkit-mask: linear-gradient(90deg, transparent, #000 35%, #000 65%, transparent);
+            mask: linear-gradient(90deg, transparent, #000 35%, #000 65%, transparent);
+  }
 
   /* Two halves of one image, clipped at the centre seam */
   .half {
@@ -140,6 +157,7 @@
 
     <img class="half left"  id="halfL" src="assets/hero-2-aligned.png" alt="">
     <img class="half right" id="halfR" src="assets/hero.png" alt="">
+    <div class="seam" id="seam"></div>
   </div>
 
   <script>
@@ -178,6 +196,7 @@
     const face = document.getElementById('face');
     const L = document.getElementById('halfL'), R = document.getElementById('halfR');
     const dL = document.getElementById('descLeft'), dR = document.getElementById('descRight');
+    const seam = document.getElementById('seam');
     const REST = 0.525;           // seam at the middle man's nose
     const GAIN = 1;               // seam tracks the cursor 1:1 (no overshoot)
     const mq = matchMedia('(min-width: 1140px)');
@@ -215,6 +234,7 @@
       if (Math.abs(target - xp) < 0.5) xp = target;   // settle exactly, no hairline
       L.style.clipPath = 'inset(0 ' + (imgW - xp) + 'px 0 0)';
       R.style.clipPath = 'inset(0 0 0 ' + xp + 'px)';
+      seam.style.left = (imgL + xp) + 'px';   // frosted divider rides the wipe boundary
       const h = imgW / 2;          // labels brighten with the self being revealed
       dL.style.opacity = Math.min(1, xp / h);
       dR.style.opacity = Math.min(1, (imgW - xp) / h);
