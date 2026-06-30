@@ -1,0 +1,85 @@
+---
+import Base from '../layouts/Base.astro';
+import Carousel, { type CarouselItem } from '../components/Carousel.astro';
+
+// Projects lifted from the old stuff.html (main branch). Newest / proudest first.
+const projects = [
+  {
+    title: 'TJ_ANALYSER',
+    meta: 'CODE · PYTHON · GITHUB',
+    cta: 'OPEN REPO',
+    href: 'https://github.com/MR-5OBOT/Tj_analyser',
+    body: 'Feeds on my trading journal and spits out stats, charts, and the occasional hard truth. Turns "I feel like I\'m profitable" into a number I can\'t argue with.',
+  },
+  {
+    title: 'RISK_MODEL_TESTER',
+    meta: 'CODE · MONTE CARLO · GITHUB',
+    cta: 'OPEN REPO',
+    href: 'https://github.com/MR-5OBOT/risk-model-tester',
+    body: 'Throws your risk model into Monte Carlo simulations and shows you the thousand ways it can die — before the market demonstrates one for free.',
+  },
+  {
+    title: 'PROBABILITY_SIM',
+    meta: 'CODE · SIMULATION · GITHUB',
+    cta: 'OPEN REPO',
+    href: 'https://github.com/MR-5OBOT/probability-simulator',
+    body: 'Simulates trading systems across different inputs, probabilities, and market moods — so the strategy can blow up in theory instead of in production.',
+  },
+  {
+    title: 'MT5COMPILE',
+    meta: 'CODE · MQL5 · WINE',
+    cta: 'OPEN REPO',
+    href: 'https://github.com/MR-5OBOT/jankyard/blob/main/mt5compile',
+    body: 'Compiles MQL5 via MetaEditor under Wine, auto-deploys the .ex5 to the right MT5 folder, and rebuilds on save. MetaTrader on Linux — held together with pure spite.',
+  },
+  {
+    title: 'POSITION DEALER EA',
+    meta: 'MQL5 MARKET · SHIPPED',
+    cta: 'VIEW ON MQL5',
+    href: 'https://www.mql5.com/en/market/product/182273?source=Site+Profile+Seller',
+    body: 'A trading assistant built around one idea: never place a trade that breaks your risk rules. Size by risk, set stops/targets on the chart, enforce a hard max-risk limit, and fire orders in one click — no lot math.',
+  },
+  {
+    title: 'MR-NV',
+    meta: 'CONFIG · NEOVIM · GITHUB',
+    cta: 'OPEN REPO',
+    href: 'https://github.com/MR-5OBOT/MR-NV',
+    body: 'My Neovim config. Took longer to tune than most of my actual projects, and I regret nothing. Yes, I edit the config more than I edit code — that\'s the lifestyle.',
+  },
+  {
+    title: 'DOTROBOT',
+    meta: 'CONFIG · ARCH + HYPRLAND',
+    cta: 'OPEN REPO',
+    href: 'https://github.com/MR-5OBOT/DotRobot',
+    body: 'My dotfiles. Arch + Hyprland, because I enjoy saying "I use Arch" more than I enjoy stability. Clone at your own risk — these are load-bearing.',
+  },
+  {
+    title: 'TJ_ANALYSER MOBILE',
+    meta: 'WIP · 90% IDEA, 10% CODE',
+    cta: 'SOON',
+    href: 'https://github.com/MR-5OBOT',
+    body: 'A trading journal for your phone, so you can log the loss the moment it happens instead of pretending it didn\'t. Ships whenever the will to live returns.',
+  },
+];
+
+const items: CarouselItem[] = projects.map((p, i) => ({
+  label: `// JANK ${String(i + 1).padStart(2, '0')}`,
+  title: p.title,
+  meta: p.meta,
+  body: p.body,
+  cta: p.cta,
+  href: p.href,
+  external: true,
+}));
+---
+
+<Base title="MR5OBOT // Jankyard" active="jankyard" transparentNav vig={0.4} bodyClass="jankyard">
+  <Carousel items={items} big />
+
+  <style is:global>
+    html, body { height: 100%; overflow: hidden; }   /* transform carousel, no native scroll */
+    body.jankyard {
+      background: #000 radial-gradient(ellipse 760px 340px at 50% 45%, rgba(177,140,255,.07), transparent 70%) fixed;
+    }
+  </style>
+</Base>

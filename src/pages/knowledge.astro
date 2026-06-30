@@ -1,5 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
+import Carousel, { type CarouselItem } from '../components/Carousel.astro';
 import { getCollection } from 'astro:content';
 
 const posts = (await getCollection('posts', ({ data }) => !data.draft)).sort(
@@ -7,168 +8,24 @@ const posts = (await getCollection('posts', ({ data }) => !data.draft)).sort(
 );
 const fmt = (d: Date) =>
   d.toLocaleString('en-US', { month: 'short', day: 'numeric' }).toUpperCase();
+
+const items: CarouselItem[] = posts.map((post, i) => ({
+  label: `// LEAK ${String(i + 1).padStart(2, '0')}`,
+  title: post.data.title,
+  meta: `${fmt(post.data.date)} · ${post.data.read} · ${post.data.tag}`,
+  body: post.data.description,
+  cta: post.data.cta,
+  href: `/posts/${post.id}`,
+}));
 ---
 
 <Base title="MR5OBOT // Knowledge" active="knowledge" transparentNav vig={0.4} bodyClass="knowledge">
-  <div class="scrollbar"><canvas class="nav-thumb"></canvas></div>
-
-  <main class="feed">
-    {posts.map((post, i) => (
-      <article class="gem">
-        <header>
-          <span class="leak">// LEAK {String(i + 1).padStart(2, '0')}</span>
-          <span class="arr">↗</span>
-        </header>
-        <h2>{post.data.title}</h2>
-        <p class="meta">{fmt(post.data.date)} · {post.data.read} · {post.data.tag}</p>
-        <p class="body">{post.data.description}</p>
-        <hr />
-        <a class="cta" href={`/posts/${post.id}`}>{post.data.cta} →</a>
-      </article>
-    ))}
-  </main>
+  <Carousel items={items} />
 
   <style is:global>
     html, body { height: 100%; overflow: hidden; }   /* transform carousel, no native scroll */
     body.knowledge {
       background: #000 radial-gradient(ellipse 700px 320px at 50% 45%, rgba(177,140,255,.07), transparent 70%) fixed;
     }
-
-    /* horizontal scroll-position line, sitting below the nav (over the carousel) */
-    .scrollbar {
-      position: fixed; top: 104px; left: 20px; right: 20px;
-      max-width: 720px; margin: 0 auto; height: 20px; z-index: 49; pointer-events: none;
-    }
-    .scrollbar::before {                                   /* faint full-width track */
-      content: ""; position: absolute; left: 0; right: 0; top: 50%;
-      height: 2px; transform: translateY(-50%); background: rgba(255,255,255,.06);
-    }
-    .nav-thumb {                                           /* bright big-pixel purple bar, slides along the track (starts centred) */
-      position: absolute; top: 50%; left: 0; width: 150px; height: 16px;
-      transform: translateY(-50%);
-      display: block; filter: blur(1.5px) drop-shadow(0 0 8px rgba(58,31,112,.45));
-    }
-
-    /* the feed */
-    .feed { position: absolute; top: 50%; left: 0; display: flex; align-items: center; z-index: 1; will-change: transform; }
-    .slide { flex: 0 0 auto; display: flex; align-items: center; justify-content: center; box-sizing: border-box; will-change: transform, opacity; }
-
-    /* one gem — hand-drawn frame (Framer template asset), 9-sliced so the line stays even on any card size */
-    .gem {
-      position: relative;
-      width: min(620px, 92vw); margin: 0 auto;
-      background: #000;
-      background-clip: padding-box;                          /* keep the black inside the frame, not bleeding past the line */
-      border: 22px solid transparent;
-      border-image: url(/knowledge-frame.svg) 40 stretch;
-      padding: 10px 16px 8px;
-      filter: drop-shadow(-5px 7px 4px rgba(140,140,140,.35)); /* soft offset shadow, no wobbly tick artifacts */
-      transition: transform .3s cubic-bezier(.2,.7,.3,1), filter .3s ease;
-    }
-    .gem header { display: flex; justify-content: space-between; align-items: baseline; }
-    .gem .leak { font-family: "Space Mono", monospace; font-size: 13px; letter-spacing: 2px; color: #ededed; }
-    .gem .arr  { color: #ededed; font-size: 20px; }
-    .gem h2 { margin: 14px 0 6px; font-size: 32px; font-weight: 700; letter-spacing: -1px; color: #f5f5f5; line-height: 1.1; }
-    .gem .meta { font-family: "Space Mono", monospace; margin: 0; font-size: 13px; letter-spacing: 1.5px; color: #888; }
-    .gem .body { margin: 22px 0 0; font-size: 16px; line-height: 1.6; color: #9a9a9a; }
-    .gem hr { border: 0; border-top: 1px solid #2a2a2a; margin: 22px 0 16px; }
-    .gem .cta { font-family: "Space Mono", monospace; font-size: 14px; letter-spacing: 1px; color: #ededed; text-decoration: none; }
-    .gem .cta:hover { filter: url(#pixelate); }
-    /* casual placement: tilt each card a hair so the row isn't dead-straight */
-    .slide:nth-child(odd)  .gem { transform: rotate(-1.4deg); }
-    .slide:nth-child(even) .gem { transform: rotate(1.2deg); }
-    /* hover: straighten, lift, deepen the shadow */
-    .slide:hover .gem { transform: translateY(-8px) rotate(0deg) scale(1.02); filter: drop-shadow(-5px 8px 5px rgba(140,140,140,.3)); }
   </style>
-
-  <script>
-    /* Horizontal two-up gallery: left + right card centered, dim neighbors peeking.
-       Wheel/key/swipe accumulates into an integer target; cur eases toward it each frame and
-       wraps a whole set (per) mid-glide -> infinite + seamless. */
-    (() => {
-      const feed = document.querySelector('.feed');
-      const thumb = document.querySelector('.nav-thumb'), tctx = thumb.getContext('2d');
-      const base = [...feed.children];
-      feed.replaceChildren();
-      const mk = g => { const s = document.createElement('div'); s.className = 'slide'; s.appendChild(g); return s; };
-      for (let c = 0; c < 3; c++) base.forEach(g => feed.appendChild(mk(c ? g.cloneNode(true) : g)));
-      const slides = [...feed.children], knowledge = slides.map(s => s.firstElementChild), per = base.length;
-
-      function pix() {                                          // bright big-pixel purple bar, soft only at the ends -> a straight line
-        const w = thumb.width, h = thumb.height, C = 6;
-        tctx.clearRect(0, 0, w, h);
-        tctx.fillStyle = '#3a1f72';
-        for (let y = 0; y < h; y += C) for (let x = 0; x < w; x += C) {
-          const fx = Math.min(1, (1 - Math.abs(x / w - 0.5) * 2) * 2.5); // full across, taper the two ends
-          const fy = 0.6 + 0.4 * (1 - Math.abs(y / h - 0.5) * 2);        // gentle top/bottom fade
-          tctx.globalAlpha = (0.55 + Math.random() * 0.35) * fx * fy;
-          tctx.fillRect(x, y, C - 1, C - 1);
-        }
-      }
-      function sizeThumb() { const r = thumb.getBoundingClientRect(); thumb.width = Math.max(1, r.width | 0); thumb.height = Math.max(1, r.height | 0); pix(); }
-
-      const reduce = matchMedia('(prefers-reduced-motion:reduce)').matches;
-      let cur = per, target = per, slideW = 0, pair = 1, raf = 0;
-
-      function layout() {
-        sizeThumb();
-        pair = innerWidth >= 760 ? 1 : 0;                       // two-up on desktop, one-up on phones
-        slideW = pair ? Math.min(560, innerWidth * 0.46) : Math.min(560, innerWidth - 40);
-        slides.forEach(s => s.style.width = slideW + 'px');
-        knowledge.forEach(g => g.style.width = (slideW - 40) + 'px'); // 40px gutter between cards
-        render();
-      }
-      function render() {
-        const mid = (cur + 0.5 + 0.5 * pair) * slideW;          // straddle the gap (two-up) or center the card
-        feed.style.transform = `translate(${innerWidth / 2 - mid}px, -50%)`;
-        const aD = 0.5 * pair;
-        for (let i = 0; i < knowledge.length; i++) {
-          const k = Math.max(0, Math.abs(i - (cur + aD)) - aD); // 0 for the active card(s), grows outward
-          const op = Math.max(0, 1 - k * 0.5);
-          slides[i].style.transform = `scale(${1 - k * 0.12})`; // scale the wrapper, not .gem, so the frame stays put
-          slides[i].style.opacity = op;
-          slides[i].inert = op < 0.5;                           // off-screen clones drop out of tab order + a11y tree
-        }
-        const f = (((cur % per) + per) % per) / per;            // 0..1 position within the set
-        const fc = (f + 0.5) % 1;                                // start centred, then scroll moves it from the middle
-        thumb.style.left = fc * (thumb.parentElement.clientWidth - thumb.offsetWidth) + 'px';
-      }
-      function tick() {
-        cur += (target - cur) / (reduce ? 1 : 6);
-        if (cur < per)            { cur += per; target += per; }    // seamless wrap mid-glide
-        else if (cur >= 2 * per)  { cur -= per; target -= per; }
-        if (Math.abs(target - cur) < 0.001) { cur = target; render(); raf = 0; return; }
-        render(); raf = requestAnimationFrame(tick);
-      }
-      const MAX = 4;                                             // cap look-ahead so a fling never runs away
-      function step(n) {
-        target += n;
-        if (target - cur > MAX) target = Math.ceil(cur) + MAX;
-        else if (cur - target > MAX) target = Math.floor(cur) - MAX;
-        if (!raf) raf = requestAnimationFrame(tick);
-      }
-
-      let acc = 0;
-      addEventListener('wheel', e => {
-        e.preventDefault();
-        const d = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;  // vertical wheel or sideways trackpad
-        acc += d * (e.deltaMode === 1 ? 16 : 1);                // normalise line-mode wheels to px
-        const n = acc / 100 | 0;                                // ~100px per card
-        if (n) { acc -= n * 100; step(n); }
-      }, { passive: false });
-
-      addEventListener('keydown', e => {
-        if (['ArrowDown', 'ArrowRight', 'PageDown', ' '].includes(e.key)) { e.preventDefault(); step(1); }
-        else if (['ArrowUp', 'ArrowLeft', 'PageUp'].includes(e.key))      { e.preventDefault(); step(-1); }
-      });
-
-      let tx = 0;
-      addEventListener('touchstart', e => tx = e.touches[0].clientX, { passive: true });
-      addEventListener('touchend',  e => { const d = tx - e.changedTouches[0].clientX; if (Math.abs(d) > 40) step(Math.sign(d)); }, { passive: true });
-
-      addEventListener('resize', layout);
-      layout();
-      if (document.fonts) document.fonts.ready.then(layout);
-    })();
-  </script>
 </Base>
