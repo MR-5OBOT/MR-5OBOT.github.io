@@ -7,31 +7,34 @@ const { active = '', transparent = false } = Astro.props;
 const links = [
   { href: '/jankyard', key: 'jankyard', label: 'Jankyard' },
   { href: '/knowledge', key: 'knowledge', label: 'Knowledge' },
-  { href: '#contact', key: 'contact', label: 'Contact' },
 ];
 ---
 <nav class:list={['nav', { transparent }]}>
-  <a class="logo" href="/">MR5OBOT</a>
+  <a class="logo" href="/">
+    <span class="logo-box"><img class="logo-img" src="/assets/mr5obot-logo.png" alt="" /></span>
+    <span class="logo-name">MR5OBOT</span>
+  </a>
   {links.map((l) => <a href={l.href} class:list={{ active: active === l.key }}>{l.label}</a>)}
-  <span class="corner tl"></span><span class="corner tr"></span>
-  <span class="corner bl"></span><span class="corner br"></span>
 </nav>
 
 <style>
-  /* Navbar with "selection box" corners — cloned from fsociety-website */
+  /* Navbar wearing the same hand-drawn frame as the cards, on a #101010 fill */
   .nav {
     position: fixed; top: 24px; left: 20px; right: 20px;
     max-width: 720px; margin: 0 auto; z-index: 50;
-    background: #000; border: 1.5px solid #fff;
-    padding: 18px 34px;
+    background: transparent;                                /* fill is baked into the frame SVG, clipped to the drawn line */
+    border: 18px solid transparent;
+    border-image: url(/nav-frame.svg) 40 fill stretch;
+    padding: 4px 18px;
     display: flex; align-items: center; gap: 32px;
   }
-  .nav.transparent { background: transparent; }
-  .nav .logo { font-family: 'Merienda', cursive; letter-spacing: .15em; font-size: 20px; margin-right: auto; color: #fff; }
+  .nav .logo { display: flex; align-items: center; gap: 12px; margin-right: auto; }
+  .nav .logo:hover { filter: none; }                  /* keep the avatar clean... */
+  .nav .logo:hover .logo-name { color: #a280ea; filter: url(#pixelate); }  /* ...but pixel-burst the wordmark */
+  .nav .logo-name { font-family: 'Merienda', cursive; letter-spacing: .15em; font-size: 20px; color: #fff; }
+  .logo-img { display: block; width: 48px; height: 48px; image-rendering: pixelated; }
+  .logo-box { flex: none; line-height: 0; }
   .nav a { color: #ddd; text-decoration: none; font-weight: 500; font-size: 20px; transition: color .2s; }
   .nav a:hover { color: #a280ea; filter: url(#pixelate); }   /* text breaks into soft pixels */
   .nav a.active { color: #b18cff; }
-  .nav .corner { position: absolute; width: 8px; height: 8px; background: #000; border: 1.5px solid #fff; }
-  .nav .tl { top: -5px; left: -5px; }  .nav .tr { top: -5px; right: -5px; }
-  .nav .bl { bottom: -5px; left: -5px; } .nav .br { bottom: -5px; right: -5px; }
 </style>

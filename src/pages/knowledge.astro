@@ -9,8 +9,7 @@ const posts = (await getCollection('posts', ({ data }) => !data.draft)).sort(
 const fmt = (d: Date) =>
   d.toLocaleString('en-US', { month: 'short', day: 'numeric' }).toUpperCase();
 
-const items: CarouselItem[] = posts.map((post, i) => ({
-  label: `// LEAK ${String(i + 1).padStart(2, '0')}`,
+const items: CarouselItem[] = posts.map((post) => ({
   title: post.data.title,
   meta: `${fmt(post.data.date)} · ${post.data.read} · ${post.data.tag}`,
   body: post.data.description,

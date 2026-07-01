@@ -1,7 +1,6 @@
 ---
 // Shared infinite two-up card carousel used by Knowledge (posts) and Jankyard (projects).
 export interface CarouselItem {
-  label: string;   // "// LEAK 01" / "// JANK 01"
   title: string;
   meta: string;    // mono sub-line
   body: string;
@@ -11,18 +10,18 @@ export interface CarouselItem {
 }
 interface Props {
   items: CarouselItem[];
-  big?: boolean;   // larger cards (Jankyard)
+  big?: boolean;       // larger cards (Jankyard)
+  vertical?: boolean;  // same infinite carousel, axis flipped to vertical (Jankyard)
 }
-const { items, big = false } = Astro.props;
+const { items, big = false, vertical = false } = Astro.props;
 ---
 
-<div class="scrollbar"><canvas class="nav-thumb"></canvas></div>
+<div class:list={['scrollbar', { v: vertical }]}><canvas class="nav-thumb"></canvas></div>
 
-<main class:list={['feed', { big }]}>
+<main class:list={['feed', { big, vertical }]}>
   {items.map((it) => (
     <article class="gem">
-      <header><span class="leak">{it.label}</span><span class="arr">↗</span></header>
-      <h2>{it.title}</h2>
+      <header><h2>{it.title}</h2><span class="arr">↗</span></header>
       <p class="meta">{it.meta}</p>
       <p class="body">{it.body}</p>
       <hr />
@@ -37,9 +36,9 @@ const { items, big = false } = Astro.props;
 </main>
 
 <style is:global>
-  /* horizontal scroll-position line, sitting below the nav (over the carousel) */
+  /* horizontal scroll-position line, near the bottom just above the social footer */
   .scrollbar {
-    position: fixed; top: 104px; left: 20px; right: 20px;
+    position: fixed; bottom: 90px; left: 20px; right: 20px;
     max-width: 720px; margin: 0 auto; height: 20px; z-index: 49; pointer-events: none;
   }
   .scrollbar::before {                                   /* faint full-width track */
@@ -52,8 +51,17 @@ const { items, big = false } = Astro.props;
     display: block; filter: blur(1.5px) drop-shadow(0 0 8px rgba(58,31,112,.45));
   }
 
+  /* vertical variant (Jankyard): same pixel bar, stood up on the right edge */
+  .scrollbar.v { top: 120px; bottom: 120px; left: auto; right: 14px; width: 20px; height: auto; max-width: none; margin: 0; }
+  .scrollbar.v::before { left: 50%; right: auto; top: 0; bottom: 0; width: 2px; height: auto; transform: translateX(-50%); }
+  .scrollbar.v .nav-thumb { top: 0; left: 50%; width: 16px; height: 150px; transform: translateX(-50%); }
+
   /* the feed */
-  .feed { position: absolute; top: 50%; left: 0; display: flex; align-items: center; z-index: 1; will-change: transform; }
+  .feed { position: absolute; top: 50%; left: 0; display: flex; align-items: center; z-index: 1; will-change: transform; cursor: grab; user-select: none; }
+  .feed.dragging { cursor: grabbing; }
+  .feed.vertical { top: 0; left: 50%; flex-direction: column; }   /* stand the same carousel up: translate on Y instead of X */
+  .feed.vertical .slide { gap: 40px; }            /* two cards side by side inside each vertical row */
+  .feed.vertical .gem { margin: 0; }              /* don't let auto-margins shove the pair apart */
   .slide { flex: 0 0 auto; display: flex; align-items: center; justify-content: center; box-sizing: border-box; will-change: transform, opacity; }
 
   /* one gem — hand-drawn frame (Framer template asset), 9-sliced so the line stays even on any card size */
@@ -69,10 +77,9 @@ const { items, big = false } = Astro.props;
     transition: transform .3s cubic-bezier(.2,.7,.3,1), filter .3s ease;
   }
   .feed.big .gem { padding: 16px 24px 14px; }              /* roomier bigger cards (Jankyard) */
-  .gem header { display: flex; justify-content: space-between; align-items: baseline; }
-  .gem .leak { font-family: "Space Mono", monospace; font-size: 13px; letter-spacing: 2px; color: #ededed; }
-  .gem .arr  { color: #ededed; font-size: 20px; }
-  .gem h2 { margin: 14px 0 6px; font-size: 32px; font-weight: 700; letter-spacing: -1px; color: #f5f5f5; line-height: 1.1; }
+  .gem header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+  .gem .arr  { flex: none; color: #ededed; font-size: 20px; margin-top: 4px; }
+  .gem h2 { margin: 0 0 6px; flex: 1; font-size: 32px; font-weight: 700; letter-spacing: -1px; color: #f5f5f5; line-height: 1.1; }
   .feed.big .gem h2 { font-size: 38px; }
   .gem .meta { font-family: "Space Mono", monospace; margin: 0; font-size: 13px; letter-spacing: 1.5px; color: #888; }
   .gem .body { margin: 22px 0 0; font-size: 16px; line-height: 1.6; color: #9a9a9a; }
@@ -88,49 +95,67 @@ const { items, big = false } = Astro.props;
 </style>
 
 <script>
-  /* Horizontal two-up gallery: left + right card centered, dim neighbors peeking.
+  /* Infinite gallery: active card(s) centered, dim neighbors peeking. Horizontal two-up by default;
+     Jankyard flips the axis to vertical via the `vertical` class (same math, X<->Y), two cards per row.
      Wheel/key/swipe accumulates into an integer target; cur eases toward it each frame and
      wraps a whole set (per) mid-glide -> infinite + seamless. */
   (() => {
     const feed = document.querySelector('.feed');
     if (!feed) return;
     const thumb = document.querySelector('.nav-thumb'), tctx = thumb.getContext('2d');
+    const V = feed.classList.contains('vertical');            // axis flip: Jankyard stands the carousel up
     const bigCards = feed.classList.contains('big');
     const base = [...feed.children];
     feed.replaceChildren();
-    const mk = g => { const s = document.createElement('div'); s.className = 'slide'; s.appendChild(g); return s; };
-    for (let c = 0; c < 3; c++) base.forEach(g => feed.appendChild(mk(c ? g.cloneNode(true) : g)));
-    const slides = [...feed.children], cards = slides.map(s => s.firstElementChild), per = base.length;
+    // a "unit" gets its own slide: one card horizontally, a row of two cards vertically
+    const groups = [];
+    if (V) for (let i = 0; i < base.length; i += 2) groups.push(base.slice(i, i + 2));
+    else   base.forEach(g => groups.push([g]));
+    const mk = gems => { const s = document.createElement('div'); s.className = 'slide'; gems.forEach(g => s.appendChild(g)); return s; };
+    for (let c = 0; c < 3; c++) groups.forEach(gm => feed.appendChild(mk(c ? gm.map(g => g.cloneNode(true)) : gm)));
+    const slides = [...feed.children], cards = slides.map(s => s.firstElementChild), per = groups.length;
+    const everyCard = slides.flatMap(s => [...s.children]);
 
     function pix() {                                          // bright big-pixel purple bar, soft only at the ends -> a straight line
       const w = thumb.width, h = thumb.height, C = 6;
       tctx.clearRect(0, 0, w, h);
       tctx.fillStyle = '#3a1f72';
       for (let y = 0; y < h; y += C) for (let x = 0; x < w; x += C) {
-        const fx = Math.min(1, (1 - Math.abs(x / w - 0.5) * 2) * 2.5); // full across, taper the two ends
-        const fy = 0.6 + 0.4 * (1 - Math.abs(y / h - 0.5) * 2);        // gentle top/bottom fade
-        tctx.globalAlpha = (0.55 + Math.random() * 0.35) * fx * fy;
+        const along = V ? y / h : x / w, across = V ? x / w : y / h;
+        const fa = Math.min(1, (1 - Math.abs(along - 0.5) * 2) * 2.5);  // full across, taper the two ends
+        const fb = 0.6 + 0.4 * (1 - Math.abs(across - 0.5) * 2);        // gentle side fade
+        tctx.globalAlpha = (0.55 + Math.random() * 0.35) * fa * fb;
         tctx.fillRect(x, y, C - 1, C - 1);
       }
     }
     function sizeThumb() { const r = thumb.getBoundingClientRect(); thumb.width = Math.max(1, r.width | 0); thumb.height = Math.max(1, r.height | 0); pix(); }
 
     const reduce = matchMedia('(prefers-reduced-motion:reduce)').matches;
-    let cur = per, target = per, slideW = 0, pair = 1, raf = 0;
+    let cur = per, target = per, size = 0, pair = 1, raf = 0;
 
     function layout() {
       sizeThumb();
-      pair = innerWidth >= 760 ? 1 : 0;                       // two-up on desktop, one-up on phones
-      slideW = pair
-        ? Math.min(bigCards ? 700 : 560, innerWidth * (bigCards ? 0.48 : 0.46))
-        : Math.min(bigCards ? 720 : 560, innerWidth - 40);
-      slides.forEach(s => s.style.width = slideW + 'px');
-      cards.forEach(g => g.style.width = (slideW - 40) + 'px');   // 40px gutter between cards
+      if (V) {                                                // vertical: each row holds two cards; rows peek above/below
+        pair = 0;                                             // one row centred
+        slides.forEach(s => { s.style.height = ''; s.style.width = ''; });
+        everyCard.forEach(g => g.style.width = Math.min(bigCards ? 500 : 460, (innerWidth - 120) / 2) + 'px');
+        size = Math.max(...slides.map(s => s.offsetHeight)) + 28;   // stride = row height + gap
+        slides.forEach(s => s.style.height = size + 'px');
+      } else {
+        pair = innerWidth >= 760 ? 1 : 0;                     // two-up on desktop, one-up on phones
+        size = pair
+          ? Math.min(bigCards ? 700 : 560, innerWidth * (bigCards ? 0.48 : 0.46))
+          : Math.min(bigCards ? 720 : 560, innerWidth - 40);
+        slides.forEach(s => { s.style.width = size + 'px'; s.style.height = ''; });
+        cards.forEach(g => g.style.width = (size - 40) + 'px'); // 40px gutter between cards
+      }
       render();
     }
     function render() {
-      const mid = (cur + 0.5 + 0.5 * pair) * slideW;          // straddle the gap (two-up) or center the card
-      feed.style.transform = `translate(${innerWidth / 2 - mid}px, -50%)`;
+      const mid = (cur + 0.5 + 0.5 * pair) * size;            // straddle the gap (two-up) or center the card
+      feed.style.transform = V
+        ? `translate(-50%, ${innerHeight / 2 - mid}px)`
+        : `translate(${innerWidth / 2 - mid}px, -50%)`;
       const aD = 0.5 * pair;
       for (let i = 0; i < cards.length; i++) {
         const k = Math.max(0, Math.abs(i - (cur + aD)) - aD); // 0 for the active card(s), grows outward
@@ -141,7 +166,9 @@ const { items, big = false } = Astro.props;
       }
       const f = (((cur % per) + per) % per) / per;            // 0..1 position within the set
       const fc = (f + 0.5) % 1;                                // start centred, then scroll moves it from the middle
-      thumb.style.left = fc * (thumb.parentElement.clientWidth - thumb.offsetWidth) + 'px';
+      const rail = thumb.parentElement;
+      if (V) thumb.style.top = fc * (rail.clientHeight - thumb.offsetHeight) + 'px';
+      else   thumb.style.left = fc * (rail.clientWidth - thumb.offsetWidth) + 'px';
     }
     function tick() {
       cur += (target - cur) / (reduce ? 1 : 6);
@@ -172,9 +199,30 @@ const { items, big = false } = Astro.props;
       else if (['ArrowUp', 'ArrowLeft', 'PageUp'].includes(e.key))      { e.preventDefault(); step(-1); }
     });
 
-    let tx = 0;
-    addEventListener('touchstart', e => tx = e.touches[0].clientX, { passive: true });
-    addEventListener('touchend',  e => { const d = tx - e.changedTouches[0].clientX; if (Math.abs(d) > 40) step(Math.sign(d)); }, { passive: true });
+    let tp = 0;
+    const tpos = t => V ? t.clientY : t.clientX;
+    addEventListener('touchstart', e => tp = tpos(e.touches[0]), { passive: true });
+    addEventListener('touchend',  e => { const d = tp - tpos(e.changedTouches[0]); if (Math.abs(d) > 40) step(Math.sign(d)); }, { passive: true });
+
+    /* click-and-drag to scroll (mouse/pen; touch already swipes above) */
+    let dragging = false, dragPrev = 0;
+    addEventListener('pointerdown', e => {
+      if (e.pointerType === 'touch' || e.button || e.target.closest('a')) return;  // left-drag only, let links click
+      dragging = true; dragPrev = V ? e.clientY : e.clientX;
+      feed.classList.add('dragging');
+    });
+    addEventListener('pointermove', e => {
+      if (!dragging) return;
+      const p = V ? e.clientY : e.clientX;
+      target -= (p - dragPrev) / size;                       // 1 card per stride, follows the pointer
+      dragPrev = p; cur = target;
+      if (cur < per)           { cur += per; target += per; } // same seamless wrap as tick()
+      else if (cur >= 2 * per) { cur -= per; target -= per; }
+      render();
+    });
+    function endDrag() { if (!dragging) return; dragging = false; feed.classList.remove('dragging'); step(Math.round(target) - target); }
+    addEventListener('pointerup', endDrag);
+    addEventListener('pointercancel', endDrag);
 
     addEventListener('resize', layout);
     layout();
