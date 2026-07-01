@@ -4,6 +4,7 @@ import Footer from '../components/Footer.astro';
 
 interface Props {
   title?: string;
+  description?: string; // shown in Google results + link-preview cards; pages can override
   active?: string;
   transparentNav?: boolean;
   vig?: number; // heatmap centre floor: 0.2 dark home, 0.4 lighter inner pages
@@ -11,11 +12,15 @@ interface Props {
 }
 const {
   title = 'MR5OBOT',
+  description = 'OHLC trader and token burner. Trading tools, automation experiments, and honest logs of losing money.',
   active = '',
   transparentNav = false,
   vig = 0.2,
   bodyClass = '',
 } = Astro.props;
+// Social scrapers need absolute URLs, not /paths.
+const ogImage = new URL('/assets/profile-2.png', Astro.site).href;
+const canonical = new URL(Astro.url.pathname, Astro.site).href;
 ---
 
 <!doctype html>
@@ -25,6 +30,17 @@ const {
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/png" href="/assets/profile-2.png" />
     <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:url" content={canonical} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link

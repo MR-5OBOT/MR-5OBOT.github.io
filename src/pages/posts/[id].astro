@@ -14,7 +14,7 @@ const dateStr = post.data.date
   .toUpperCase();
 ---
 
-<Base title={`MR5OBOT // ${post.data.title}`} active="knowledge" transparentNav vig={0.4} bodyClass="post">
+<Base title={`MR5OBOT // ${post.data.title}`} description={post.data.description} active="knowledge" transparentNav vig={0.4} bodyClass="post">
   <article class="post">
     <p class="meta">{dateStr} · {post.data.read} · {post.data.tag}</p>
     <h1>{post.data.title}</h1>
