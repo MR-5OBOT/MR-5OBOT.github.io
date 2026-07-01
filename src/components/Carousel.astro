@@ -62,6 +62,9 @@ const { items, big = false, vertical = false } = Astro.props;
   .feed.vertical { top: 0; left: 50%; flex-direction: column; }   /* stand the same carousel up: translate on Y instead of X */
   .feed.vertical .slide { gap: 40px; }            /* two cards side by side inside each vertical row */
   .feed.vertical .gem { margin: 0; }              /* don't let auto-margins shove the pair apart */
+  @media (max-width: 759px) {
+    .feed.vertical .slide { flex-direction: column; gap: 24px; }  /* phones: stack the pair, full-width cards */
+  }
   .slide { flex: 0 0 auto; display: flex; align-items: center; justify-content: center; box-sizing: border-box; will-change: transform, opacity; }
 
   /* one gem — hand-drawn frame (Framer template asset), 9-sliced so the line stays even on any card size */
@@ -86,7 +89,7 @@ const { items, big = false, vertical = false } = Astro.props;
   .feed.big .gem .body { font-size: 17px; }
   .gem hr { border: 0; border-top: 1px solid #2a2a2a; margin: 22px 0 16px; }
   .gem .cta { font-family: "Space Mono", monospace; font-size: 14px; letter-spacing: 1px; color: #ededed; text-decoration: none; }
-  .gem .cta:hover { filter: url(#pixelate); }
+  .gem .cta:hover { color: #b18cff; }
   /* casual placement: tilt each card a hair so the row isn't dead-straight */
   .slide:nth-child(odd)  .gem { transform: rotate(-1.4deg); }
   .slide:nth-child(even) .gem { transform: rotate(1.2deg); }
@@ -99,9 +102,11 @@ const { items, big = false, vertical = false } = Astro.props;
      Jankyard flips the axis to vertical via the `vertical` class (same math, X<->Y), two cards per row.
      Wheel/key/swipe accumulates into an integer target; cur eases toward it each frame and
      wraps a whole set (per) mid-glide -> infinite + seamless. */
-  (() => {
+  function initCarousel() {
     const feed = document.querySelector('.feed');
     if (!feed) return;
+    const ac = new AbortController(), { signal } = ac;   // drop every listener + rAF when we navigate away
+    document.addEventListener('astro:before-swap', () => ac.abort(), { once: true });
     const thumb = document.querySelector('.nav-thumb'), tctx = thumb.getContext('2d');
     const V = feed.classList.contains('vertical');            // axis flip: Jankyard stands the carousel up
     const bigCards = feed.classList.contains('big');
@@ -132,13 +137,16 @@ const { items, big = false, vertical = false } = Astro.props;
 
     const reduce = matchMedia('(prefers-reduced-motion:reduce)').matches;
     let cur = per, target = per, size = 0, pair = 1, raf = 0;
+    signal.addEventListener('abort', () => cancelAnimationFrame(raf));
 
     function layout() {
       sizeThumb();
       if (V) {                                                // vertical: each row holds two cards; rows peek above/below
         pair = 0;                                             // one row centred
         slides.forEach(s => { s.style.height = ''; s.style.width = ''; });
-        everyCard.forEach(g => g.style.width = Math.min(bigCards ? 500 : 460, (innerWidth - 120) / 2) + 'px');
+        everyCard.forEach(g => g.style.width = (innerWidth >= 760
+          ? Math.min(bigCards ? 500 : 460, (innerWidth - 120) / 2)   // two per row on desktop
+          : Math.min(520, innerWidth - 90)) + 'px');                 // phones: one column, room for social strip + rail
         size = Math.max(...slides.map(s => s.offsetHeight)) + 28;   // stride = row height + gap
         slides.forEach(s => s.style.height = size + 'px');
       } else {
@@ -192,17 +200,17 @@ const { items, big = false, vertical = false } = Astro.props;
       acc += d * (e.deltaMode === 1 ? 16 : 1);                // normalise line-mode wheels to px
       const n = acc / 100 | 0;                                // ~100px per card
       if (n) { acc -= n * 100; step(n); }
-    }, { passive: false });
+    }, { passive: false, signal });
 
     addEventListener('keydown', e => {
       if (['ArrowDown', 'ArrowRight', 'PageDown', ' '].includes(e.key)) { e.preventDefault(); step(1); }
       else if (['ArrowUp', 'ArrowLeft', 'PageUp'].includes(e.key))      { e.preventDefault(); step(-1); }
-    });
+    }, { signal });
 
     let tp = 0;
     const tpos = t => V ? t.clientY : t.clientX;
-    addEventListener('touchstart', e => tp = tpos(e.touches[0]), { passive: true });
-    addEventListener('touchend',  e => { const d = tp - tpos(e.changedTouches[0]); if (Math.abs(d) > 40) step(Math.sign(d)); }, { passive: true });
+    addEventListener('touchstart', e => tp = tpos(e.touches[0]), { passive: true, signal });
+    addEventListener('touchend',  e => { const d = tp - tpos(e.changedTouches[0]); if (Math.abs(d) > 40) step(Math.sign(d)); }, { passive: true, signal });
 
     /* click-and-drag to scroll (mouse/pen; touch already swipes above) */
     let dragging = false, dragPrev = 0;
@@ -210,7 +218,7 @@ const { items, big = false, vertical = false } = Astro.props;
       if (e.pointerType === 'touch' || e.button || e.target.closest('a')) return;  // left-drag only, let links click
       dragging = true; dragPrev = V ? e.clientY : e.clientX;
       feed.classList.add('dragging');
-    });
+    }, { signal });
     addEventListener('pointermove', e => {
       if (!dragging) return;
       const p = V ? e.clientY : e.clientX;
@@ -219,13 +227,14 @@ const { items, big = false, vertical = false } = Astro.props;
       if (cur < per)           { cur += per; target += per; } // same seamless wrap as tick()
       else if (cur >= 2 * per) { cur -= per; target -= per; }
       render();
-    });
+    }, { signal });
     function endDrag() { if (!dragging) return; dragging = false; feed.classList.remove('dragging'); step(Math.round(target) - target); }
-    addEventListener('pointerup', endDrag);
-    addEventListener('pointercancel', endDrag);
+    addEventListener('pointerup', endDrag, { signal });
+    addEventListener('pointercancel', endDrag, { signal });
 
-    addEventListener('resize', layout);
+    addEventListener('resize', layout, { signal });
     layout();
-    if (document.fonts) document.fonts.ready.then(layout);
-  })();
+    if (document.fonts) document.fonts.ready.then(() => { if (!signal.aborted) layout(); });
+  }
+  document.addEventListener('astro:page-load', initCarousel);
 </script>

@@ -22,18 +22,89 @@ const dateStr = post.data.date
     <a class="back" href="/knowledge">← back to leaks</a>
   </article>
 
+  <div class="scrollbar v"><canvas class="nav-thumb"></canvas></div>
+
+  <script>
+    // Pixel scroll rail: same painting as the carousels', thumb tracks the page scroll.
+    function initRail() {
+      const rail = document.querySelector<HTMLElement>('.scrollbar.v');
+      if (!rail) return;
+      const thumb = rail.querySelector('canvas')!;
+      const tctx = thumb.getContext('2d')!;
+      const ac = new AbortController(), { signal } = ac;
+      document.addEventListener('astro:before-swap', () => ac.abort(), { once: true });
+
+      function pix() {                                     // big purple pixels, tapered ends, gentle side fade
+        const w = thumb.width, h = thumb.height, C = 6;
+        tctx.clearRect(0, 0, w, h);
+        tctx.fillStyle = '#3a1f72';
+        for (let y = 0; y < h; y += C) for (let x = 0; x < w; x += C) {
+          const fa = Math.min(1, (1 - Math.abs(y / h - 0.5) * 2) * 2.5);
+          const fb = 0.6 + 0.4 * (1 - Math.abs(x / w - 0.5) * 2);
+          tctx.globalAlpha = (0.55 + Math.random() * 0.35) * fa * fb;
+          tctx.fillRect(x, y, C - 1, C - 1);
+        }
+      }
+      function size() {
+        const r = thumb.getBoundingClientRect();
+        thumb.width = Math.max(1, r.width | 0); thumb.height = Math.max(1, r.height | 0);
+        pix();
+      }
+      function move() {
+        const max = document.documentElement.scrollHeight - innerHeight;
+        const f = max > 0 ? scrollY / max : 0;
+        thumb.style.top = f * (rail.clientHeight - thumb.offsetHeight) + 'px';
+      }
+      addEventListener('scroll', move, { passive: true, signal });
+      addEventListener('resize', () => { size(); move(); }, { signal });
+      size(); move();
+    }
+    document.addEventListener('astro:page-load', initRail);
+  </script>
+
   <style is:global>
     html, body { min-height: 100%; }
+    /* hide the native scrollbar — the site's pixel rail (below) replaces it */
+    html { scrollbar-width: none; }
+    ::-webkit-scrollbar { display: none; }
+    /* same pixel rail as the carousels, stood up on the right edge */
+    .scrollbar.v {
+      position: fixed; top: 120px; bottom: 120px; right: 14px; width: 20px;
+      z-index: 49; pointer-events: none;
+    }
+    .scrollbar.v::before {                                 /* faint full-height track */
+      content: ""; position: absolute; left: 50%; top: 0; bottom: 0;
+      width: 2px; transform: translateX(-50%); background: rgba(255,255,255,.06);
+    }
+    .scrollbar.v .nav-thumb {                              /* bright big-pixel purple bar */
+      position: absolute; top: 0; left: 50%; width: 16px; height: 150px; transform: translateX(-50%);
+      display: block; filter: blur(1.5px) drop-shadow(0 0 8px rgba(58,31,112,.45));
+    }
     body.post {
       background: #000 radial-gradient(ellipse 700px 320px at 50% 22%, rgba(177,140,255,.07), transparent 70%) fixed;
     }
-    .post { position: relative; z-index: 1; max-width: 680px; margin: 0 auto; padding: 160px 24px 120px; color: #c8c8c8; }
+    /* social row -> vertical strip pinned left, same as jankyard, so it never sits over the text */
+    body.post .social {
+      flex-direction: column; left: 14px; right: auto; top: 50%; bottom: auto;
+      transform: translateY(-50%); gap: 8px;
+    }
+    /* article only — body also carries the .post class, and matching it doubled the top gap */
+    article.post { position: relative; z-index: 1; max-width: 860px; margin: 0 auto; padding: 130px 28px 100px; color: #c8c8c8; }
     .post .meta { font-family: "Space Mono", monospace; font-size: 13px; letter-spacing: 1.5px; color: #b18cff; margin: 0; }
     .post h1 { font-size: clamp(30px, 5vw, 46px); color: #f2f2f2; letter-spacing: -1px; margin: 12px 0 30px; line-height: 1.1; }
     .post .prose { font-size: 17px; line-height: 1.75; }
     .post .prose img { max-width: 100%; height: auto; border: 1.5px solid #2a2a2a; margin: 1.4em 0; }
     .post .prose a { color: #b18cff; }
+    .post .prose h2 { color: #f2f2f2; font-size: 24px; letter-spacing: -.5px; margin: 1.8em 0 .6em; }
+    .post .prose strong { color: #e8e8e8; }
+    .post .prose code { font-family: "Space Mono", monospace; font-size: 15px; }
+    .post .prose :not(pre) > code { background: #161616; border: 1px solid #262626; border-radius: 3px; padding: 1px 6px; color: #cbb7f5; }
+    .post .prose pre { border: 1.5px solid #2a2a2a; padding: 16px 18px; overflow-x: auto; margin: 1.4em 0; }
+    .post .prose blockquote { border-left: 3px solid #b18cff; margin: 1.4em 0; padding: 2px 0 2px 18px; color: #b0b0b0; }
+    .post .prose table { border-collapse: collapse; margin: 1.4em 0; width: 100%; }
+    .post .prose th { font-family: "Space Mono", monospace; font-size: 13px; letter-spacing: 1.5px; text-transform: uppercase; color: #b18cff; text-align: left; }
+    .post .prose th, .post .prose td { border: 1px solid #2a2a2a; padding: 8px 14px; }
     .post .back { display: inline-block; margin-top: 48px; font-family: "Space Mono", monospace; color: #b18cff; text-decoration: none; letter-spacing: 1px; }
-    .post .back:hover { filter: url(#pixelate); }
+    .post .back:hover { color: #cbb7f5; text-decoration: underline; }
   </style>
 </Base>

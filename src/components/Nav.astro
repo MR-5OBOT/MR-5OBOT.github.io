@@ -11,7 +11,6 @@ const links = [
 ---
 <nav class:list={['nav', { transparent }]}>
   <a class="logo" href="/">
-    <span class="logo-box"><img class="logo-img" src="/assets/mr5obot-logo.png" alt="" /></span>
     <span class="logo-name">MR5OBOT</span>
   </a>
   {links.map((l) => <a href={l.href} class:list={{ active: active === l.key }}>{l.label}</a>)}
@@ -28,13 +27,14 @@ const links = [
     padding: 4px 18px;
     display: flex; align-items: center; gap: 32px;
   }
-  .nav .logo { display: flex; align-items: center; gap: 12px; margin-right: auto; }
-  .nav .logo:hover { filter: none; }                  /* keep the avatar clean... */
-  .nav .logo:hover .logo-name { color: #a280ea; filter: url(#pixelate); }  /* ...but pixel-burst the wordmark */
-  .nav .logo-name { font-family: 'Merienda', cursive; letter-spacing: .15em; font-size: 20px; color: #fff; }
-  .logo-img { display: block; width: 48px; height: 48px; image-rendering: pixelated; }
-  .logo-box { flex: none; line-height: 0; }
+  .nav .logo { margin-right: auto; text-decoration: none; }
+  .nav .logo:hover .logo-name { color: #a280ea; filter: url(#pixelate); }  /* pixel-burst the wordmark */
+  .logo-name { font-family: 'Merienda', cursive; letter-spacing: .15em; font-size: 20px; color: #fff; }
   .nav a { color: #ddd; text-decoration: none; font-weight: 500; font-size: 20px; transition: color .2s; }
   .nav a:hover { color: #a280ea; filter: url(#pixelate); }   /* text breaks into soft pixels */
   .nav a.active { color: #b18cff; }
+  @media (max-width: 560px) {
+    .nav { top: 12px; left: 12px; right: 12px; gap: 18px; padding: 2px 10px; }
+    .nav a, .logo-name { font-size: 16px; }
+  }
 </style>

@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="260" viewBox="0 0 900 260">
+  <rect width="900" height="260" fill="#0a0a0a"/>
+  <rect x="1" y="1" width="898" height="258" fill="none" stroke="#2a2a2a" stroke-width="2"/>
+  <text x="60" y="58" font-family="monospace" font-size="15" letter-spacing="3" fill="#6f6f6f">// THE ONLY FORMULA THAT MATTERS</text>
+  <text x="60" y="130" font-family="monospace" font-size="30" fill="#ededed">expectancy =</text>
+  <text x="290" y="130" font-family="monospace" font-size="30" fill="#b18cff">(win% × avg win)</text>
+  <text x="588" y="130" font-family="monospace" font-size="30" fill="#ededed">−</text>
+  <text x="625" y="130" font-family="monospace" font-size="30" fill="#8a8a8a">(loss% × avg loss)</text>
+  <text x="60" y="200" font-family="monospace" font-size="16" fill="#6f6f6f">&gt; 0  you have an edge.   &lt; 0  the market has you.</text>
+</svg>

@@ -4,4 +4,5 @@ import { defineConfig } from 'astro/config';
 // User site -> served at the domain root, no base path.
 export default defineConfig({
   site: 'https://mr-5obot.github.io',
+  prefetch: { prefetchAll: true }, // fetch linked pages on hover -> near-instant nav
 });

@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="480" viewBox="0 0 900 480">
+  <rect width="900" height="480" fill="#0a0a0a"/>
+  <rect x="1" y="1" width="898" height="478" fill="none" stroke="#2a2a2a" stroke-width="2"/>
+  <text x="60" y="52" font-family="monospace" font-size="15" letter-spacing="3" fill="#6f6f6f">// SAME WIN RATE. DIFFERENT MATH.</text>
+  <!-- grid -->
+  <g stroke="#1c1c1c" stroke-width="1">
+    <line x1="60" y1="120" x2="850" y2="120"/>
+    <line x1="60" y1="200" x2="850" y2="200"/>
+    <line x1="60" y1="280" x2="850" y2="280"/>
+    <line x1="60" y1="360" x2="850" y2="360"/>
+    <line x1="60" y1="440" x2="850" y2="440"/>
+  </g>
+  <!-- zero line -->
+  <line x1="60" y1="280" x2="850" y2="280" stroke="#3a3a3a" stroke-width="1.5" stroke-dasharray="6 6"/>
+  <text x="62" y="272" font-family="monospace" font-size="12" fill="#5a5a5a">0</text>
+  <!-- positive expectancy: jagged but up -->
+  <polyline fill="none" stroke="#b18cff" stroke-width="3" stroke-linejoin="round"
+    points="60,280 130,262 200,272 270,238 340,250 410,208 480,222 550,178 620,192 690,148 760,158 850,112"/>
+  <!-- negative expectancy: jagged and down -->
+  <polyline fill="none" stroke="#6f6f6f" stroke-width="3" stroke-linejoin="round"
+    points="60,280 130,292 200,282 270,308 340,300 410,330 480,322 550,352 620,344 690,376 760,370 850,404"/>
+  <text x="600" y="100" font-family="monospace" font-size="15" fill="#b18cff">expectancy &gt; 0 : survives</text>
+  <text x="600" y="440" font-family="monospace" font-size="15" fill="#8a8a8a">expectancy &lt; 0 : donates</text>
+  <text x="60" y="470" font-family="monospace" font-size="12" fill="#5a5a5a">1000 trades →</text>
+</svg>

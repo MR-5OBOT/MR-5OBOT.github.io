@@ -14,8 +14,8 @@ import Base from '../layouts/Base.astro';
       <p>Full of ideas no LLM can turn into working code.</p>
     </div>
 
-    <img class="half left" id="halfL" src="/assets/hero-2-aligned.png" alt="" />
-    <img class="half right" id="halfR" src="/assets/hero.png" alt="" />
+    <img class="half left" id="halfL" src="/assets/hero-2-aligned.webp" alt="" fetchpriority="high" decoding="async" />
+    <img class="half right" id="halfR" src="/assets/hero.webp" alt="" fetchpriority="high" decoding="async" />
     <div class="seam" id="seam"></div>
   </div>
 
@@ -63,56 +63,66 @@ import Base from '../layouts/Base.astro';
     .desc h1 { margin: 0 0 .35em; white-space: nowrap; color: #ededed; font-weight: 700; font-size: clamp(22px, 2.7vw, 38px); line-height: 1.05; letter-spacing: -.03em; }
     .desc h1 .chev { color: #5a5a5a; }
     .desc p { margin: 0; font-size: clamp(14px, 1.55vw, 20px); line-height: 1.45; }
+    @media (max-width: 1139px) {
+      .desc { width: 30%; }
+      .desc h1 { white-space: normal; }   /* phones/tablets: let the headline wrap instead of running off-screen */
+    }
   </style>
 
   <script>
-    const face = document.getElementById('face')!;
-    const L = document.getElementById('halfL') as HTMLImageElement;
-    const R = document.getElementById('halfR') as HTMLImageElement;
-    const dL = document.getElementById('descLeft')!;
-    const dR = document.getElementById('descRight')!;
-    const seam = document.getElementById('seam')!;
-    const REST = 0.525;           // seam at the middle man's nose
-    const GAIN = 1;               // seam tracks the cursor 1:1
-    const mq = matchMedia('(min-width: 1140px)');
-    let imgL = 0, imgW = 1;       // cached image-box geometry
-    let target = 0, xp = 0;       // seam px within the image box (damped)
+    // Re-inits on each View-Transitions navigation (astro:page-load); tears down on leave (astro:before-swap).
+    function initHero() {
+      const face = document.getElementById('face');
+      if (!face) return;            // only the home page has it
+      const L = document.getElementById('halfL') as HTMLImageElement;
+      const R = document.getElementById('halfR') as HTMLImageElement;
+      const dL = document.getElementById('descLeft')!;
+      const dR = document.getElementById('descRight')!;
+      const seam = document.getElementById('seam')!;
+      const REST = 0.525;           // seam at the middle man's nose
+      const GAIN = 1;               // seam tracks the cursor 1:1
+      const mq = matchMedia('(min-width: 1140px)');
+      const ac = new AbortController(), { signal } = ac;   // one handle to drop every listener + the loop on leave
+      let imgL = 0, imgW = 1, target = 0, xp = 0, raf = 0;
+      document.addEventListener('astro:before-swap', () => ac.abort(), { once: true });
+      signal.addEventListener('abort', () => cancelAnimationFrame(raf));
 
-    const measure = () => { const r = L.getBoundingClientRect(); imgL = r.left; imgW = r.width; };
+      const measure = () => { const r = L.getBoundingClientRect(); imgL = r.left; imgW = r.width; };
 
-    window.addEventListener('load', () => {
       requestAnimationFrame(() => face.classList.add('loaded'));
-      if (!mq.matches) return;     // desktop showpiece only
-      setTimeout(start, 1200);     // after the slide-in finishes
-    });
+      if (!mq.matches) return;      // desktop showpiece only
+      setTimeout(() => { if (!signal.aborted) start(); }, 1200);   // after the slide-in finishes
 
-    function start() {
-      measure();
-      target = xp = imgW * REST;
-      face.classList.add('ready');
-      addEventListener('resize', measure);
-      const SNAP = imgW * 0.05;   // close the wipe fully near the ends
-      face.addEventListener('mousemove', (e) => {
-        const d = e.clientX - (imgL + imgW * REST);
-        let t = Math.max(0, Math.min(imgW, imgW * REST - d * GAIN));
-        if (t < SNAP) t = 0;
-        else if (t > imgW - SNAP) t = imgW;
-        target = t;
-      });
-      face.addEventListener('mouseleave', () => (target = imgW * REST));
-      loop();
-    }
+      function start() {
+        measure();
+        target = xp = imgW * REST;
+        face!.classList.add('ready');
+        addEventListener('resize', measure, { signal });
+        const SNAP = imgW * 0.05;   // close the wipe fully near the ends
+        face!.addEventListener('mousemove', (e) => {
+          const d = e.clientX - (imgL + imgW * REST);
+          let t = Math.max(0, Math.min(imgW, imgW * REST - d * GAIN));
+          if (t < SNAP) t = 0;
+          else if (t > imgW - SNAP) t = imgW;
+          target = t;
+        }, { signal });
+        face!.addEventListener('mouseleave', () => (target = imgW * REST), { signal });
+        loop();
+      }
 
-    function loop() {
-      xp += (target - xp) / 12;    // zeno damping
-      if (Math.abs(target - xp) < 0.5) xp = target;
-      L.style.clipPath = 'inset(0 ' + (imgW - xp) + 'px 0 0)';
-      R.style.clipPath = 'inset(0 0 0 ' + xp + 'px)';
-      seam.style.left = (imgL + xp) + 'px';
-      const h = imgW / 2;
-      dL.style.opacity = String(Math.min(1, xp / h));
-      dR.style.opacity = String(Math.min(1, (imgW - xp) / h));
-      requestAnimationFrame(loop);
+      function loop() {
+        if (signal.aborted) return;
+        xp += (target - xp) / 12;   // zeno damping
+        if (Math.abs(target - xp) < 0.5) xp = target;
+        L.style.clipPath = 'inset(0 ' + (imgW - xp) + 'px 0 0)';
+        R.style.clipPath = 'inset(0 0 0 ' + xp + 'px)';
+        seam.style.left = (imgL + xp) + 'px';
+        const h = imgW / 2;
+        dL.style.opacity = String(Math.min(1, xp / h));
+        dR.style.opacity = String(Math.min(1, (imgW - xp) / h));
+        raf = requestAnimationFrame(loop);
+      }
     }
+    document.addEventListener('astro:page-load', initHero);
   </script>
 </Base>
