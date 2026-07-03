@@ -86,15 +86,16 @@
         const x = c.getContext('2d', { willReadFrequently: true });
         x.drawImage(img, 0, 0, c.width, c.height);
         const d = x.getImageData(0, 0, c.width, c.height).data;
-        const pts = [];
+        const pts = []; // triplets: x, y, darkness 0..1
         let minX = 1e9, maxX = -1e9, minY = 1e9, maxY = -1e9;
         for (let py = 0; py < c.height; py++)
           for (let px = 0; px < c.width; px++) {
             const i4 = (py * c.width + px) * 4;
             const lum = (d[i4] + d[i4 + 1] + d[i4 + 2]) / 3;
-            // darker pixels spawn points more often; white/transparent almost never
-            if (d[i4 + 3] > 128 && Math.random() * 255 < 250 - lum) {
-              pts.push(px, py);
+            const dark = (250 - lum) / 250;
+            // quadratic weighting: linework gets far more points than grey fills
+            if (d[i4 + 3] > 128 && Math.random() < dark * dark) {
+              pts.push(px, py, dark);
               if (px < minX) minX = px;
               if (px > maxX) maxX = px;
               if (py < minY) minY = py;
@@ -103,7 +104,7 @@
           }
         // normalize to the drawing's bounding box so the cloud sits centered
         const w = Math.max(1, maxX - minX), h = Math.max(1, maxY - minY);
-        for (let i = 0; i < pts.length; i += 2) {
+        for (let i = 0; i < pts.length; i += 3) {
           pts[i] = (pts[i] - minX) / w;
           pts[i + 1] = (pts[i + 1] - minY) / h;
         }
@@ -111,23 +112,31 @@
       }
 
       function imageCloud({ pts, aspect }, count, width, depth) {
-        const n = pts.length / 2;
+        const n = pts.length / 3;
         const pos = new Float32Array(count * 3);
+        const col = new Float32Array(count * 3);
         for (let i = 0; i < count; i++) {
-          const j = (Math.random() * n) | 0;
-          pos[i * 3] = (pts[j * 2] - 0.5) * width + (Math.random() - 0.5) * 0.03;
-          pos[i * 3 + 1] = (0.5 - pts[j * 2 + 1]) * width * aspect + (Math.random() - 0.5) * 0.03;
-          pos[i * 3 + 2] = (Math.random() + Math.random() - 1) * depth; // denser at the core
+          const j = ((Math.random() * n) | 0) * 3;
+          const dark = pts[j + 2];
+          pos[i * 3] = (pts[j] - 0.5) * width + (Math.random() - 0.5) * 0.02;
+          pos[i * 3 + 1] = (0.5 - pts[j + 1]) * width * aspect + (Math.random() - 0.5) * 0.02;
+          // dark linework sits proud of the fills -> relief instead of a flat slab
+          pos[i * 3 + 2] = dark * depth + (Math.random() + Math.random() - 1) * depth * 0.3;
+          const b = 0.25 + 0.75 * dark; // per-point brightness carries the shading
+          col[i * 3] = b;
+          col[i * 3 + 1] = b * 0.06;
+          col[i * 3 + 2] = b * 0.06;
         }
         const g = new THREE.BufferGeometry();
         g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+        g.setAttribute('color', new THREE.BufferAttribute(col, 3));
         return g;
       }
 
       const cloudWidth = isMobile ? 3.6 : 5;
       const body = new THREE.Points(
-        imageCloud(await sampleImage('/assets/hero.webp'), 60000, cloudWidth, 0.4),
-        new THREE.PointsMaterial({ color: 0xff0000, size: 0.012, sizeAttenuation: true })
+        imageCloud(await sampleImage('/assets/hero.webp'), isMobile ? 50000 : 100000, cloudWidth, 0.5),
+        new THREE.PointsMaterial({ size: 0.011, sizeAttenuation: true, vertexColors: true })
       );
       body.position.y = -0.6;
       group.add(body);
