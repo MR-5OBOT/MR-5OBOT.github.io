@@ -73,7 +73,7 @@
       scene.add(group);
 
       // ---- point cloud sampled from the hero illustration's dark pixels ----
-      async function sampleImage(url, targetW = 700) {
+      async function sampleImage(url, targetW = 1000) {
         const img = await new Promise((res, rej) => {
           const i = new Image();
           i.onload = () => res(i);
@@ -118,8 +118,8 @@
         for (let i = 0; i < count; i++) {
           const j = ((Math.random() * n) | 0) * 3;
           const dark = pts[j + 2];
-          pos[i * 3] = (pts[j] - 0.5) * width + (Math.random() - 0.5) * 0.02;
-          pos[i * 3 + 1] = (0.5 - pts[j + 1]) * width * aspect + (Math.random() - 0.5) * 0.02;
+          pos[i * 3] = (pts[j] - 0.5) * width + (Math.random() - 0.5) * 0.015;
+          pos[i * 3 + 1] = (0.5 - pts[j + 1]) * width * aspect + (Math.random() - 0.5) * 0.015;
           // front shell keeps the relief; a rear tail (denser near the front)
           // extrudes the drawing into a volumetric body
           const tail = Math.random() ** 2;
@@ -136,14 +136,39 @@
         return g;
       }
 
+      // TV-static flicker: every tick a random slice of points blinks off,
+      // plus an occasional horizontal dropout band. Runs in the vertex shader.
+      const flickerTime = { value: 0 };
+      function addFlicker(mat) {
+        mat.onBeforeCompile = (s) => {
+          s.uniforms.uT = flickerTime;
+          s.vertexShader = s.vertexShader
+            .replace('#include <common>', '#include <common>\nuniform float uT;\nvarying float vOn;')
+            .replace('#include <begin_vertex>', `#include <begin_vertex>
+              float tick = floor(uT * 24.0);
+              float h = fract(sin(dot(position.xy, vec2(12.9898, 78.233)) + tick * 0.618) * 43758.5453);
+              vOn = step(0.15, h);
+              float band = fract(uT * 7.3) * 4.0 - 2.0;
+              if (fract(uT * 0.31) < 0.05 && abs(position.y - band) < 0.12) vOn = 0.0;`);
+          s.fragmentShader = s.fragmentShader
+            .replace('#include <common>', '#include <common>\nvarying float vOn;')
+            .replace(
+              'vec4 diffuseColor = vec4( diffuse, opacity );',
+              'vec4 diffuseColor = vec4( diffuse, opacity * vOn );'
+            );
+        };
+      }
+
       const cloudWidth = isMobile ? 3.6 : 5;
+      const bodyMat = new THREE.PointsMaterial({
+        size: 0.008, sizeAttenuation: true, vertexColors: true,
+        transparent: true, opacity: 0.7, depthWrite: false,
+        blending: THREE.AdditiveBlending,
+      });
+      addFlicker(bodyMat);
       const body = new THREE.Points(
-        imageCloud(await sampleImage('/assets/hero.webp'), isMobile ? 50000 : 100000, cloudWidth, isMobile ? 0.6 : 0.85),
-        new THREE.PointsMaterial({
-          size: 0.008, sizeAttenuation: true, vertexColors: true,
-          transparent: true, opacity: 0.7, depthWrite: false,
-          blending: THREE.AdditiveBlending,
-        })
+        imageCloud(await sampleImage('/assets/hero.webp'), isMobile ? 70000 : 150000, cloudWidth, isMobile ? 0.6 : 0.85),
+        bodyMat
       );
       body.position.y = -0.6;
       group.add(body);
@@ -157,15 +182,12 @@
       }
       const noiseGeo = new THREE.BufferGeometry();
       noiseGeo.setAttribute('position', new THREE.BufferAttribute(scatter, 3));
-      group.add(
-        new THREE.Points(
-          noiseGeo,
-          new THREE.PointsMaterial({
-            color: 0xff0000, size: 0.01, sizeAttenuation: true,
-            transparent: true, opacity: 0.3, depthWrite: false,
-          })
-        )
-      );
+      const noiseMat = new THREE.PointsMaterial({
+        color: 0xff0000, size: 0.01, sizeAttenuation: true,
+        transparent: true, opacity: 0.3, depthWrite: false,
+      });
+      addFlicker(noiseMat);
+      group.add(new THREE.Points(noiseGeo, noiseMat));
 
       // ---- stats text as a plane in world space (skews with the camera) ----
       function statsPanel(lines) {
@@ -212,6 +234,7 @@
       });
 
       renderer.setAnimationLoop(() => {
+        flickerTime.value = performance.now() / 1000;
         group.rotation.y += (swayTarget - group.rotation.y) * 0.02;
         controls.update();
         renderer.render(scene, camera);
