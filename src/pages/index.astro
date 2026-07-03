@@ -51,7 +51,7 @@
         // ref uses 3.0 (fills/crops the frame); 2.0 = the previous commit's
         // apparent hero size, whole drawing visible on screen. The 3D model is
         // deep (front sits near the camera), so it needs a smaller scale.
-        scale: HERO3D ? (isMobile ? 1.2 : 1.6) : (isMobile ? 1.73 : 2.3),
+        scale: HERO3D ? (isMobile ? 1.35 : 1.8) : (isMobile ? 1.73 : 2.3),
         cursorFollow: { maxAngle: HERO3D ? 30 : 10, smoothing: 0.005 },
       };
       const CAMERA = {
@@ -212,11 +212,12 @@
 
       // Ground scatter under the model, like the reference's floor scan line:
       // a thin bell-curve band of red dots, denser under the figure, ragged edges.
+      // floor sits a bit below the hero so they read as separate pieces
+      const floorY = model.position.y - (size.y / 2) * MODEL.scale - 0.25;
       {
         const count = isMobile ? 14000 : 28000;
         const pos = new Float32Array(count * 3);
-        // floor sits a bit below the hero so they read as separate pieces
-        const baseY = model.position.y - (size.y / 2) * MODEL.scale - 0.25;
+        const baseY = floorY;
         const bell = () => (Math.random() + Math.random() + Math.random()) / 1.5 - 1;
         for (let i = 0; i < count; i++) {
           pos[i * 3] = bell() * 3.4;
@@ -227,6 +228,101 @@
         g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
         scene.add(new THREE.Points(g, new THREE.PointsMaterial({ color: 0xff1a1a, size: 0.008, sizeAttenuation: true })));
       }
+
+      // ---- social buttons: icon PNGs (simpleicons.org, black on transparent)
+      // sampled into small point-cloud cards standing in the floppy zone ----
+      async function iconPoints(url, count) {
+        const img = await new Promise((res, rej) => {
+          const i = new Image();
+          i.onload = () => res(i);
+          i.onerror = rej;
+          i.src = url;
+        });
+        const S = 160;
+        const c = document.createElement('canvas');
+        c.width = c.height = S;
+        const x = c.getContext('2d', { willReadFrequently: true });
+        x.drawImage(img, 0, 0, S, S);
+        const d = x.getImageData(0, 0, S, S).data;
+        const cand = [];
+        for (let py = 0; py < S; py++)
+          for (let px = 0; px < S; px++) {
+            const i4 = (py * S + px) * 4;
+            if (d[i4 + 3] > 128 && d[i4] < 128) cand.push(px, py);
+          }
+        const n = cand.length / 2;
+        const pos = new Float32Array(count * 3);
+        for (let i = 0; i < count; i++) {
+          const j = ((Math.random() * n) | 0) * 2;
+          pos[i * 3] = cand[j] / S - 0.5 + (Math.random() - 0.5) * 0.012;
+          pos[i * 3 + 1] = 0.5 - cand[j + 1] / S + (Math.random() - 0.5) * 0.012;
+          pos[i * 3 + 2] = (Math.random() - 0.5) * 0.04;
+        }
+        const g = new THREE.BufferGeometry();
+        g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+        return g;
+      }
+
+      const SOCIALS = [
+        ['github', 'https://github.com/MR-5OBOT'],
+        ['x', 'https://x.com/MR_5OBOT'],
+        ['telegram', 'https://t.me/MR_5OBOT'],
+        ['youtube', 'https://youtube.com/@mr5obot'],
+      ];
+      const IDLE = 0xcc2222, HOT = 0xff6060;
+      const hitboxes = [];
+      // fixed UI layer: the icon column rides the camera, pinned to the
+      // viewport's left edge — separate from the hero, unaffected by orbit/sway
+      const ui = new THREE.Group();
+      camera.add(ui);
+      scene.add(camera);
+      const iconW = 0.21, gap = 0.46, uiDist = 4;
+      const uiEdgeX = () => -Math.tan(deg(CAMERA.fov) / 2) * uiDist * camera.aspect + 0.45;
+      ui.position.set(uiEdgeX(), 0.85, -uiDist);
+      for (let i = 0; i < SOCIALS.length; i++) {
+        const [name, url] = SOCIALS[i];
+        const icon = new THREE.Points(
+          await iconPoints(`/assets/icons/${name}.png`, 6000),
+          new THREE.PointsMaterial({ color: IDLE, size: 0.005, sizeAttenuation: true })
+        );
+        icon.scale.setScalar(iconW);
+        icon.position.set(0, -i * gap, 0);
+        ui.add(icon);
+        const hit = new THREE.Mesh(
+          new THREE.PlaneGeometry(iconW * 1.6, gap * 0.85),
+          new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })
+        );
+        hit.position.copy(icon.position);
+        hit.userData = { url, icon };
+        ui.add(hit);
+        hitboxes.push(hit);
+      }
+
+      const ray = new THREE.Raycaster();
+      const ptr = new THREE.Vector2();
+      let hover = null;
+      function pick(e) {
+        ptr.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
+        ray.setFromCamera(ptr, camera);
+        const hit = ray.intersectObjects(hitboxes, false)[0];
+        return hit ? hit.object : null;
+      }
+      addEventListener('pointermove', (e) => {
+        const h = pick(e);
+        if (h !== hover) {
+          if (hover) hover.userData.icon.material.color.set(IDLE);
+          if (h) h.userData.icon.material.color.set(HOT);
+          hover = h;
+          document.body.style.cursor = h ? 'pointer' : '';
+        }
+      });
+      let downX = 0, downY = 0;
+      addEventListener('pointerdown', (e) => { downX = e.clientX; downY = e.clientY; });
+      addEventListener('click', (e) => {
+        if (Math.hypot(e.clientX - downX, e.clientY - downY) > 6) return; // it was a drag
+        const h = pick(e);
+        if (h) open(h.userData.url, '_blank');
+      });
 
       // camera distance from the UNSCALED box, model scaled 3x -> fills the frame
       const maxDim = Math.max(size.x, size.y, size.z);
@@ -333,6 +429,7 @@
         camera.aspect = innerWidth / innerHeight;
         camera.updateProjectionMatrix();
         renderer.setSize(innerWidth, innerHeight);
+        ui.position.x = uiEdgeX(); // keep the icon column on the edge
       });
 
       document.getElementById('loading')?.remove();
