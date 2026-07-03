@@ -146,6 +146,8 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
       }
       document.addEventListener('astro:before-preparation', (e: any) => {
         if (reduce) return;
+        const isPost = (u: any) => u && u.pathname.startsWith('/posts/');
+        if (isPost(e.to) || isPost(e.from)) return;         // post frame: no pixel curtain in either direction
         const orig = e.loader;
         e.loader = async () => { await raise(); await orig(); };  // curtain up first, swap happens under it
       });

@@ -70,6 +70,7 @@ const { items, big = false, vertical = false } = Astro.props;
   /* one gem — hand-drawn frame (Framer template asset), 9-sliced so the line stays even on any card size */
   .gem {
     position: relative;
+    cursor: pointer;                                       /* the whole card opens its post/project */
     width: min(620px, 92vw); margin: 0 auto;
     background: #000;
     background-clip: padding-box;                          /* keep the black inside the frame, not bleeding past the line */

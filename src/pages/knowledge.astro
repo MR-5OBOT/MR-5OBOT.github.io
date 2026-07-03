@@ -27,4 +27,19 @@ const items: CarouselItem[] = posts.map((post) => ({
       background: #000 radial-gradient(ellipse 700px 320px at 50% 45%, rgba(177,140,255,.07), transparent 70%) fixed;
     }
   </style>
+
+  <script>
+    // Whole card opens the post. Document-level delegation (survives carousel cloning);
+    // gated by body class because the document persists across client-side navs.
+    let px = 0, py = 0;
+    addEventListener('pointerdown', (e) => { px = e.clientX; py = e.clientY; }, true);
+    document.addEventListener('click', (e) => {
+      if (!document.body.classList.contains('knowledge')) return;
+      const t = e.target as Element;
+      if (t.closest('a')) return;                                 // real links keep working
+      const gem = t.closest('.gem');
+      if (!gem || Math.hypot(e.clientX - px, e.clientY - py) > 8) return;  // that was a drag
+      gem.querySelector<HTMLAnchorElement>('.cta')?.click();      // real anchor -> router -> dissolve -> frame
+    });
+  </script>
 </Base>

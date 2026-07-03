@@ -94,5 +94,21 @@ const items: CarouselItem[] = projects.map((p) => ({
       left: 14px; right: auto; top: 50%; bottom: auto;
       transform: translateY(-50%); gap: 8px;
     }
+
   </style>
+
+  <script>
+    // Whole card opens the project link (new tab). Delegated on document (survives carousel clones),
+    // gated by body class because the document persists across client-side navs.
+    let px = 0, py = 0;
+    addEventListener('pointerdown', (e) => { px = e.clientX; py = e.clientY; }, true);
+    document.addEventListener('click', (e) => {
+      if (!document.body.classList.contains('jankyard')) return;
+      const t = e.target as Element;
+      if (t.closest('a')) return;                               // the card's own link works as-is
+      const gem = t.closest('.gem');
+      if (!gem || Math.hypot(e.clientX - px, e.clientY - py) > 8) return;  // that was a drag
+      gem.querySelector<HTMLAnchorElement>('.cta')?.click();    // -> repo, new tab
+    });
+  </script>
 </Base>
