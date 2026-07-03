@@ -1,128 +1,204 @@
 ---
-import Base from '../layouts/Base.astro';
+// v3 home — full-screen three.js point-cloud hero.
+// Original implementation inspired by agrshch.com (behavior, not code/assets).
 ---
 
-<Base title="MR5OBOT" active="home" vig={0.2} bodyClass="home">
-  <div class="face" id="face">
-    <!-- ponytail: copy is placeholder, on-theme. Swap freely. -->
-    <div class="desc left" id="descLeft">
-      <h1>ohlc trader</h1>
-      <p>Automates losing money so I can lose it in my sleep.</p>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MR5OBOT</title>
+    <meta name="description" content="OHLC trader and token burner." />
+    <link rel="icon" type="image/png" href="/assets/profile-2.png" />
+    <script type="importmap" is:inline>
+      {
+        "imports": {
+          "three": "https://esm.sh/three@0.163.0",
+          "three/addons/": "https://esm.sh/three@0.163.0/examples/jsm/"
+        }
+      }
+    </script>
+    <style>
+      html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+      canvas { display: block; }
+      #loading {
+        position: fixed; inset: 0; display: grid; place-items: center;
+        color: #666; font: 16px 'Helvetica Neue', Arial, sans-serif;
+      }
+      #info {
+        position: fixed; left: 0; right: 0; bottom: 24px; z-index: 2;
+        text-align: center; color: #9c9c9c;
+        font: 15px/1.55 'Helvetica Neue', Arial, sans-serif;
+      }
+      #info a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+      #info a:hover { color: #ff2020; }
+    </style>
+  </head>
+  <body>
+    <div id="loading">Loading&hellip;</div>
+
+    <div id="info">
+      <p>MR-5OBOT &nbsp;|&nbsp; OHLC Trader &amp; Token Burner</p>
+      <p>
+        <a href="https://github.com/MR-5OBOT" target="_blank">GitHub</a> &nbsp;|&nbsp;
+        <a href="https://x.com/MR_5OBOT" target="_blank">X</a> &nbsp;|&nbsp;
+        <a href="https://t.me/MR_5OBOT" target="_blank">Telegram</a> &nbsp;|&nbsp;
+        <a href="https://youtube.com/@mr5obot" target="_blank">YouTube</a> &nbsp;|&nbsp;
+        <a href="mailto:yassir7m7@gmail.com">Email</a>
+      </p>
     </div>
-    <div class="desc right" id="descRight">
-      <h1><span class="chev">&lt;</span>token burner<span class="chev">&gt;</span></h1>
-      <p>Full of ideas no LLM can turn into working code.</p>
-    </div>
 
-    <img class="half left" id="halfL" src="/assets/hero-2-aligned.webp" alt="" fetchpriority="high" decoding="async" />
-    <img class="half right" id="halfR" src="/assets/hero.webp" alt="" fetchpriority="high" decoding="async" />
-    <div class="seam" id="seam"></div>
-  </div>
+    <script type="module" is:inline>
+      import * as THREE from 'three';
+      import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-  <style is:global>
-    html, body { height: 100%; }
-    body.home { background: #000; display: flex; align-items: center; justify-content: center; }
+      const isMobile = matchMedia('(max-width: 768px)').matches;
 
-    /* Stage — full-screen hero, the image is the leader */
-    .face { position: relative; width: 100vw; height: 100vh; margin: auto; overflow: hidden; z-index: 1; }
-    /* top + bottom shadow: fade the hero into black at the edges */
-    .face::after {
-      content: ""; position: absolute; inset: 0; z-index: 3; pointer-events: none;
-      background: linear-gradient(to bottom, #000 0%, transparent 20%, transparent 80%, #000 100%);
-    }
-    /* soft seam: frost the two halves together where they meet */
-    .seam {
-      position: absolute; top: 0; bottom: 0; left: 51.3%;
-      width: 16px; transform: translateX(-50%);
-      z-index: 2; pointer-events: none;
-      backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px);
-      -webkit-mask: linear-gradient(90deg, transparent, #000 35%, #000 65%, transparent);
-              mask: linear-gradient(90deg, transparent, #000 35%, #000 65%, transparent);
-    }
-    /* Two halves of one image, clipped at the centre seam */
-    .half {
-      position: absolute; top: -16%; left: 24%; width: 52%; height: auto; z-index: 1;
-      opacity: 0; filter: invert(1) hue-rotate(180deg);
-      will-change: transform, clip-path; backface-visibility: hidden;
-    }
-    .half.left  { clip-path: inset(0 47.5% 0 0); transform: translateX(-120%); }
-    .half.right { clip-path: inset(0 0 0 52.5%); transform: translateX(120%); }
-    /* Load: slide in and assemble (easeOutExpo) */
-    .face.loaded .half {
-      opacity: 1; transform: translateX(0);
-      transition: transform 1s cubic-bezier(.16,1,.3,1), opacity 1s ease;
-    }
-    .face.loaded .half.left { transform: translateY(1.2%); }
-    .face.ready .half, .face.ready .desc { transition: none; }
+      const STATS = [
+        'Pulse: 77',
+        'PnL Today: -$4.20',
+        'Open Positions: 3',
+        'Win Rate (30d): 41%',
+        'Tokens Burned: 2.1M',
+        'Coffee Level: 86%',
+        'Last Sync: just now',
+      ];
 
-    /* Flanking labels */
-    .desc { position: absolute; top: 38%; width: 21%; z-index: 2; opacity: 0; transition: opacity .6s ease .9s; pointer-events: none; }
-    .face.loaded .desc { opacity: 1; }
-    .desc.left  { left: 1.5%; text-align: right; }
-    .desc.right { right: 1.5%; text-align: left; }
-    .desc h1 { margin: 0 0 .35em; white-space: nowrap; color: #ededed; font-weight: 700; font-size: clamp(22px, 2.7vw, 38px); line-height: 1.05; letter-spacing: -.03em; }
-    .desc h1 .chev { color: #5a5a5a; }
-    .desc p { margin: 0; font-size: clamp(14px, 1.55vw, 20px); line-height: 1.45; }
-    @media (max-width: 1139px) {
-      .desc { width: 30%; }
-      .desc h1 { white-space: normal; }   /* phones/tablets: let the headline wrap instead of running off-screen */
-    }
-  </style>
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x000000);
 
-  <script>
-    // Re-inits on each View-Transitions navigation (astro:page-load); tears down on leave (astro:before-swap).
-    function initHero() {
-      const face = document.getElementById('face');
-      if (!face) return;            // only the home page has it
-      const L = document.getElementById('halfL') as HTMLImageElement;
-      const R = document.getElementById('halfR') as HTMLImageElement;
-      const dL = document.getElementById('descLeft')!;
-      const dR = document.getElementById('descRight')!;
-      const seam = document.getElementById('seam')!;
-      const REST = 0.525;           // seam at the middle man's nose
-      const GAIN = 1;               // seam tracks the cursor 1:1
-      const mq = matchMedia('(min-width: 1140px)');
-      const ac = new AbortController(), { signal } = ac;   // one handle to drop every listener + the loop on leave
-      let imgL = 0, imgW = 1, target = 0, xp = 0, raf = 0;
-      document.addEventListener('astro:before-swap', () => ac.abort(), { once: true });
-      signal.addEventListener('abort', () => cancelAnimationFrame(raf));
+      const camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 0.01, 100);
+      camera.position.set(0, 0.5, isMobile ? 8 : 5.4);
 
-      const measure = () => { const r = L.getBoundingClientRect(); imgL = r.left; imgW = r.width; };
+      const renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+      renderer.setSize(innerWidth, innerHeight);
+      document.body.appendChild(renderer.domElement);
 
-      requestAnimationFrame(() => face.classList.add('loaded'));
-      if (!mq.matches) return;      // desktop showpiece only
-      setTimeout(() => { if (!signal.aborted) start(); }, 1200);   // after the slide-in finishes
+      // Everything lives in one group so the cursor-follow sway rotates the whole scene.
+      const group = new THREE.Group();
+      scene.add(group);
 
-      function start() {
-        measure();
-        target = xp = imgW * REST;
-        face!.classList.add('ready');
-        addEventListener('resize', measure, { signal });
-        const SNAP = imgW * 0.05;   // close the wipe fully near the ends
-        face!.addEventListener('mousemove', (e) => {
-          const d = e.clientX - (imgL + imgW * REST);
-          let t = Math.max(0, Math.min(imgW, imgW * REST - d * GAIN));
-          if (t < SNAP) t = 0;
-          else if (t > imgW - SNAP) t = imgW;
-          target = t;
-        }, { signal });
-        face!.addEventListener('mouseleave', () => (target = imgW * REST), { signal });
-        loop();
+      // ---- point cloud sampled from rasterized text ----
+      function sampleText(text, fontPx = 240) {
+        const c = document.createElement('canvas');
+        const x = c.getContext('2d', { willReadFrequently: true });
+        const font = `900 ${fontPx}px Arial, sans-serif`;
+        x.font = font;
+        c.width = Math.ceil(x.measureText(text).width) + 40;
+        c.height = Math.ceil(fontPx * 1.5);
+        x.font = font; // canvas resize resets ctx state
+        x.fillStyle = '#fff';
+        x.textBaseline = 'middle';
+        x.fillText(text, 20, c.height / 2);
+        const img = x.getImageData(0, 0, c.width, c.height).data;
+        const pts = [];
+        for (let py = 0; py < c.height; py += 2)
+          for (let px = 0; px < c.width; px += 2)
+            if (img[(py * c.width + px) * 4 + 3] > 128) pts.push(px / c.width, py / c.height);
+        return { pts, aspect: c.height / c.width };
       }
 
-      function loop() {
-        if (signal.aborted) return;
-        xp += (target - xp) / 12;   // zeno damping
-        if (Math.abs(target - xp) < 0.5) xp = target;
-        L.style.clipPath = 'inset(0 ' + (imgW - xp) + 'px 0 0)';
-        R.style.clipPath = 'inset(0 0 0 ' + xp + 'px)';
-        seam.style.left = (imgL + xp) + 'px';
-        const h = imgW / 2;
-        dL.style.opacity = String(Math.min(1, xp / h));
-        dR.style.opacity = String(Math.min(1, (imgW - xp) / h));
-        raf = requestAnimationFrame(loop);
+      function textCloud(text, count, width, depth) {
+        const { pts, aspect } = sampleText(text);
+        const n = pts.length / 2;
+        const pos = new Float32Array(count * 3);
+        for (let i = 0; i < count; i++) {
+          const j = (Math.random() * n) | 0;
+          pos[i * 3] = (pts[j * 2] - 0.5) * width + (Math.random() - 0.5) * 0.03;
+          pos[i * 3 + 1] = (0.5 - pts[j * 2 + 1]) * width * aspect + (Math.random() - 0.5) * 0.03;
+          pos[i * 3 + 2] = (Math.random() + Math.random() - 1) * depth; // denser at the core
+        }
+        const g = new THREE.BufferGeometry();
+        g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+        return g;
       }
-    }
-    document.addEventListener('astro:page-load', initHero);
-  </script>
-</Base>
+
+      const cloudWidth = isMobile ? 4.5 : 6;
+      const body = new THREE.Points(
+        textCloud('MR-5OBOT', 60000, cloudWidth, 0.35),
+        new THREE.PointsMaterial({ color: 0xff0000, size: 0.012, sizeAttenuation: true })
+      );
+      body.position.y = -0.6;
+      group.add(body);
+
+      // Ambient scan-noise scatter around the model.
+      const scatter = new Float32Array(6000 * 3);
+      for (let i = 0; i < scatter.length; i += 3) {
+        scatter[i] = (Math.random() - 0.5) * 9;
+        scatter[i + 1] = (Math.random() - 0.5) * 5;
+        scatter[i + 2] = (Math.random() - 0.5) * 3;
+      }
+      const noiseGeo = new THREE.BufferGeometry();
+      noiseGeo.setAttribute('position', new THREE.BufferAttribute(scatter, 3));
+      group.add(
+        new THREE.Points(
+          noiseGeo,
+          new THREE.PointsMaterial({
+            color: 0xff0000, size: 0.01, sizeAttenuation: true,
+            transparent: true, opacity: 0.3, depthWrite: false,
+          })
+        )
+      );
+
+      // ---- stats text as a plane in world space (skews with the camera) ----
+      function statsPanel(lines) {
+        const c = document.createElement('canvas');
+        const x = c.getContext('2d');
+        const fs = 120, lh = fs * 1.25;
+        const font = `${fs}px 'Helvetica Neue', Arial, sans-serif`;
+        x.font = font;
+        c.width = Math.ceil(Math.max(...lines.map((l) => x.measureText(l).width))) + 40;
+        c.height = Math.ceil(lh * lines.length + 40);
+        x.font = font;
+        x.fillStyle = '#9c9c9c';
+        x.textAlign = 'center';
+        x.textBaseline = 'middle';
+        lines.forEach((l, i) => x.fillText(l, c.width / 2, 20 + lh * (i + 0.5)));
+        const tex = new THREE.CanvasTexture(c);
+        tex.colorSpace = THREE.SRGBColorSpace;
+        const h = isMobile ? 2 : 2.5, w = (h * c.width) / c.height;
+        return new THREE.Mesh(
+          new THREE.PlaneGeometry(w, h),
+          new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false })
+        );
+      }
+      const stats = statsPanel(STATS);
+      stats.position.set(0, 1.15, -0.8);
+      group.add(stats);
+
+      // ---- controls: drag-to-orbit, clamped, damped, no zoom/pan ----
+      const controls = new OrbitControls(camera, renderer.domElement);
+      controls.target.set(0, 0.3, 0);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.03;
+      controls.enablePan = false;
+      controls.enableZoom = false;
+      controls.minAzimuthAngle = -Math.PI / 4;
+      controls.maxAzimuthAngle = Math.PI / 4;
+      controls.minPolarAngle = THREE.MathUtils.degToRad(60);
+      controls.maxPolarAngle = THREE.MathUtils.degToRad(110);
+
+      // Cursor-follow: the scene lazily sways toward the pointer.
+      let swayTarget = 0;
+      addEventListener('pointermove', (e) => {
+        if (e.pointerType === 'mouse') swayTarget = (e.clientX / innerWidth - 0.5) * -0.6;
+      });
+
+      renderer.setAnimationLoop(() => {
+        group.rotation.y += (swayTarget - group.rotation.y) * 0.02;
+        controls.update();
+        renderer.render(scene, camera);
+      });
+
+      addEventListener('resize', () => {
+        camera.aspect = innerWidth / innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(innerWidth, innerHeight);
+      });
+
+      document.getElementById('loading')?.remove();
+    </script>
+  </body>
+</html>
