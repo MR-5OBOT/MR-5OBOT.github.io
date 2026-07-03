@@ -70,10 +70,12 @@
       const CAMERA = {
         fov: 55,
         distanceMultiplier: 2.2,
-        heightFraction: isMobile ? 1.62 : 2,
+        // camera level with the target: launch shows the drawing perfectly flat,
+        // any parallax appears only once the user drags / moves the mouse
+        heightFraction: 0.58,
         targetHeightFraction: 0.58,
-        initialAzimuth: isMobile ? 0 : -5,
-        initialPolar: isMobile ? -30 : 0,
+        initialAzimuth: 0,
+        initialPolar: 0,
       };
       // tighter than the ref's ±45: our depth is estimated from one image,
       // so we stop before the angles where the illusion falls apart
