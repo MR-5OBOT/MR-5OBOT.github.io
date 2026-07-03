@@ -11,14 +11,6 @@
     <title>MR5OBOT</title>
     <meta name="description" content="OHLC trader and token burner." />
     <link rel="icon" type="image/png" href="/assets/profile-2.png" />
-    <script type="importmap" is:inline>
-      {
-        "imports": {
-          "three": "https://esm.sh/three@0.163.0",
-          "three/addons/": "https://esm.sh/three@0.163.0/examples/jsm/"
-        }
-      }
-    </script>
     <style>
       html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
       canvas { display: block; }
@@ -50,8 +42,8 @@
     </div>
 
     <script type="module" is:inline>
-      import * as THREE from 'three';
-      import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+      import * as THREE from 'https://esm.sh/three@0.163.0';
+      import { OrbitControls } from 'https://esm.sh/three@0.163.0/examples/jsm/controls/OrbitControls.js';
 
       const isMobile = matchMedia('(max-width: 768px)').matches;
 
