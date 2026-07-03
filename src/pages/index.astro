@@ -198,6 +198,18 @@
       model.scale.setScalar(MODEL.scale);
       scene.add(model);
 
+      // fsociety mask glowing on the CRT glass (screen plane measured from the
+      // cloud data); child of the model so it rotates with the PC
+      if (HERO3D) {
+        const mask = new THREE.Points(
+          await loadPoints('/assets/fsociety.bin'),
+          new THREE.PointsMaterial({ color: 0xff5050, size: 0.003, sizeAttenuation: true })
+        );
+        mask.scale.setScalar(0.38);
+        mask.position.set(-0.27, 0.16, 0.56);
+        model.add(mask);
+      }
+
       // Ground scatter under the model, like the reference's floor scan line:
       // a thin bell-curve band of red dots, denser under the figure, ragged edges.
       {
