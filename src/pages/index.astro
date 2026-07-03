@@ -31,7 +31,7 @@
     <div id="loading">Loading&hellip;</div>
 
     <div id="info">
-      <p>MR-5OBOT &nbsp;|&nbsp; OHLC Trader &amp; Token Burner</p>
+      <p>MR5OBOT &nbsp;|&nbsp; OHLC Trader &amp; Token Burner</p>
       <p>
         <a href="https://github.com/MR-5OBOT" target="_blank">GitHub</a> &nbsp;|&nbsp;
         <a href="https://x.com/MR_5OBOT" target="_blank">X</a> &nbsp;|&nbsp;
@@ -72,28 +72,45 @@
       const group = new THREE.Group();
       scene.add(group);
 
-      // ---- point cloud sampled from rasterized text ----
-      function sampleText(text, fontPx = 240) {
+      // ---- point cloud sampled from the hero illustration's dark pixels ----
+      async function sampleImage(url, targetW = 700) {
+        const img = await new Promise((res, rej) => {
+          const i = new Image();
+          i.onload = () => res(i);
+          i.onerror = rej;
+          i.src = url;
+        });
         const c = document.createElement('canvas');
+        c.width = targetW;
+        c.height = Math.round((img.height / img.width) * targetW);
         const x = c.getContext('2d', { willReadFrequently: true });
-        const font = `900 ${fontPx}px Arial, sans-serif`;
-        x.font = font;
-        c.width = Math.ceil(x.measureText(text).width) + 40;
-        c.height = Math.ceil(fontPx * 1.5);
-        x.font = font; // canvas resize resets ctx state
-        x.fillStyle = '#fff';
-        x.textBaseline = 'middle';
-        x.fillText(text, 20, c.height / 2);
-        const img = x.getImageData(0, 0, c.width, c.height).data;
+        x.drawImage(img, 0, 0, c.width, c.height);
+        const d = x.getImageData(0, 0, c.width, c.height).data;
         const pts = [];
-        for (let py = 0; py < c.height; py += 2)
-          for (let px = 0; px < c.width; px += 2)
-            if (img[(py * c.width + px) * 4 + 3] > 128) pts.push(px / c.width, py / c.height);
-        return { pts, aspect: c.height / c.width };
+        let minX = 1e9, maxX = -1e9, minY = 1e9, maxY = -1e9;
+        for (let py = 0; py < c.height; py++)
+          for (let px = 0; px < c.width; px++) {
+            const i4 = (py * c.width + px) * 4;
+            const lum = (d[i4] + d[i4 + 1] + d[i4 + 2]) / 3;
+            // darker pixels spawn points more often; white/transparent almost never
+            if (d[i4 + 3] > 128 && Math.random() * 255 < 250 - lum) {
+              pts.push(px, py);
+              if (px < minX) minX = px;
+              if (px > maxX) maxX = px;
+              if (py < minY) minY = py;
+              if (py > maxY) maxY = py;
+            }
+          }
+        // normalize to the drawing's bounding box so the cloud sits centered
+        const w = Math.max(1, maxX - minX), h = Math.max(1, maxY - minY);
+        for (let i = 0; i < pts.length; i += 2) {
+          pts[i] = (pts[i] - minX) / w;
+          pts[i + 1] = (pts[i + 1] - minY) / h;
+        }
+        return { pts, aspect: h / w };
       }
 
-      function textCloud(text, count, width, depth) {
-        const { pts, aspect } = sampleText(text);
+      function imageCloud({ pts, aspect }, count, width, depth) {
         const n = pts.length / 2;
         const pos = new Float32Array(count * 3);
         for (let i = 0; i < count; i++) {
@@ -107,9 +124,9 @@
         return g;
       }
 
-      const cloudWidth = isMobile ? 4.5 : 6;
+      const cloudWidth = isMobile ? 3.6 : 5;
       const body = new THREE.Points(
-        textCloud('MR-5OBOT', 60000, cloudWidth, 0.35),
+        imageCloud(await sampleImage('/assets/hero.webp'), 60000, cloudWidth, 0.4),
         new THREE.PointsMaterial({ color: 0xff0000, size: 0.012, sizeAttenuation: true })
       );
       body.position.y = -0.6;
