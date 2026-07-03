@@ -61,11 +61,11 @@
 
       // ---- reference-site tuning (agrshch.com constants) ----
       const MODEL = {
-        offset: { x: 0, y: isMobile ? -0.25 : -0.35, z: isMobile ? -0.5 : 0 },
+        offset: { x: 0, y: isMobile ? -0.15 : -0.25, z: isMobile ? -0.5 : 0 },
         // ref uses 3.0 (fills/crops the frame); 2.0 = the previous commit's
         // apparent hero size, whole drawing visible on screen
         scale: isMobile ? 1.73 : 2.3,
-        cursorFollow: { maxAngle: 30, smoothing: 0.005 },
+        cursorFollow: { maxAngle: 10, smoothing: 0.005 },
       };
       const CAMERA = {
         fov: 55,
@@ -75,7 +75,9 @@
         initialAzimuth: isMobile ? 0 : -5,
         initialPolar: isMobile ? -30 : 0,
       };
-      const LIMITS = { minAzimuth: -45, maxAzimuth: 45, minPolar: 60, maxPolar: 110 };
+      // tighter than the ref's ±45: our depth is estimated from one image,
+      // so we stop before the angles where the illusion falls apart
+      const LIMITS = { minAzimuth: -16, maxAzimuth: 16, minPolar: 75, maxPolar: 95 };
 
       const scene = new THREE.Scene();
       scene.background = new THREE.Color(0x000000);
@@ -88,29 +90,37 @@
       document.body.appendChild(renderer.domElement);
 
       // ---- point cloud sampled from the hero illustration's dark pixels ----
-      async function sampleImage(url, targetW = 1000) {
-        const img = await new Promise((res, rej) => {
-          const i = new Image();
-          i.onload = () => res(i);
-          i.onerror = rej;
-          i.src = url;
-        });
-        const c = document.createElement('canvas');
-        c.width = targetW;
-        c.height = Math.round((img.height / img.width) * targetW);
-        const x = c.getContext('2d', { willReadFrequently: true });
-        x.drawImage(img, 0, 0, c.width, c.height);
-        const d = x.getImageData(0, 0, c.width, c.height).data;
-        const pts = []; // triplets: x, y, darkness 0..1
+      // depthUrl is an AI-estimated depth map (white = near) of the same image;
+      // it gives every point real z structure, like the reference's scan.
+      async function sampleImage(url, depthUrl, targetW = 1000) {
+        const load = (src) =>
+          new Promise((res, rej) => {
+            const i = new Image();
+            i.onload = () => res(i);
+            i.onerror = rej;
+            i.src = src;
+          });
+        const [img, depthImg] = await Promise.all([load(url), load(depthUrl)]);
+        const read = (image) => {
+          const c = document.createElement('canvas');
+          c.width = targetW;
+          c.height = Math.round((img.height / img.width) * targetW);
+          const x = c.getContext('2d', { willReadFrequently: true });
+          x.drawImage(image, 0, 0, c.width, c.height);
+          return { data: x.getImageData(0, 0, c.width, c.height).data, W: c.width, H: c.height };
+        };
+        const { data: d, W, H } = read(img);
+        const { data: dd } = read(depthImg);
+        const pts = []; // quads: x, y, darkness 0..1, depth 0..1 (1 = near)
         let minX = 1e9, maxX = -1e9, minY = 1e9, maxY = -1e9;
-        for (let py = 0; py < c.height; py++)
-          for (let px = 0; px < c.width; px++) {
-            const i4 = (py * c.width + px) * 4;
+        for (let py = 0; py < H; py++)
+          for (let px = 0; px < W; px++) {
+            const i4 = (py * W + px) * 4;
             const lum = (d[i4] + d[i4 + 1] + d[i4 + 2]) / 3;
             const dark = (250 - lum) / 250;
             // quadratic weighting: linework gets far more points than grey fills
             if (d[i4 + 3] > 128 && Math.random() < dark * dark) {
-              pts.push(px, py, dark);
+              pts.push(px, py, dark, dd[i4] / 255);
               if (px < minX) minX = px;
               if (px > maxX) maxX = px;
               if (py < minY) minY = py;
@@ -119,25 +129,31 @@
           }
         // normalize to the drawing's bounding box so the cloud sits centered
         const w = Math.max(1, maxX - minX), h = Math.max(1, maxY - minY);
-        for (let i = 0; i < pts.length; i += 3) {
+        for (let i = 0; i < pts.length; i += 4) {
           pts[i] = (pts[i] - minX) / w;
           pts[i + 1] = (pts[i + 1] - minY) / h;
         }
         return { pts, aspect: h / w };
       }
 
-      // Flat drawing -> volume: front shell keeps the relief, a rear tail
-      // (denser near the front) extrudes it into a body.
-      function imageCloud({ pts, aspect }, count, width, depth) {
-        const n = pts.length / 3;
+      // Every point sits at its real estimated depth (plus a thin jitter for
+      // point-cloud thickness), so rotation shows true parallax like a scan.
+      // x/y are shrunk by depth to cancel perspective from the initial camera:
+      // the launch view matches the flat drawing exactly, rotation reveals 3D.
+      function imageCloud({ pts, aspect }, count, width, depthRange) {
+        const n = pts.length / 4;
         const pos = new Float32Array(count * 3);
         const col = new Float32Array(count * 3);
+        // camera distance in the cloud's local units (world dist / model scale)
+        const D = ((width / 2) / Math.tan(deg(CAMERA.fov) / 2)) * CAMERA.distanceMultiplier / MODEL.scale;
         for (let i = 0; i < count; i++) {
-          const j = ((Math.random() * n) | 0) * 3;
+          const j = ((Math.random() * n) | 0) * 4;
           const dark = pts[j + 2];
-          pos[i * 3] = (pts[j] - 0.5) * width + (Math.random() - 0.5) * 0.008;
-          pos[i * 3 + 1] = (0.5 - pts[j + 1]) * width * aspect + (Math.random() - 0.5) * 0.008;
-          pos[i * 3 + 2] = dark * 0.25 - Math.random() ** 2 * depth;
+          const z = (pts[j + 3] - 0.5) * depthRange + dark * 0.05 + (Math.random() - 0.5) * 0.04;
+          const k = (D - z) / D;
+          pos[i * 3] = ((pts[j] - 0.5) * width + (Math.random() - 0.5) * 0.008) * k;
+          pos[i * 3 + 1] = ((0.5 - pts[j + 1]) * width * aspect + (Math.random() - 0.5) * 0.008) * k;
+          pos[i * 3 + 2] = z;
           // red brightness follows the drawing's darkness so linework reads at once
           const b = 0.35 + 0.65 * dark;
           col[i * 3] = b;
@@ -151,7 +167,10 @@
       }
 
       const model = new THREE.Points(
-        imageCloud(await sampleImage('/assets/hero.webp'), isMobile ? 120000 : 260000, 2.56, 0.45),
+        imageCloud(
+          await sampleImage('/assets/hero.webp', '/assets/hero-depth.png'),
+          isMobile ? 120000 : 260000, 2.56, 0.7
+        ),
         new THREE.PointsMaterial({ vertexColors: true, size: 0.006, sizeAttenuation: true })
       );
 

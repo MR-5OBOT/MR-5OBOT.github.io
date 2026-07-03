@@ -1,0 +1,12 @@
+HTTrack3.49-5 launched on Fri, 03 Jul 2026 17:55:19 at https://agrshch.com/
+(httrack https://agrshch.com/ )
+
+Information, Warnings and Errors reported for this mirror:
+note:	the hts-log.txt file, and hts-cache folder, may contain sensitive information,
+	such as username/password authentication for websites mirrored in this project
+	do not share these files/folders if you want these information to remain private
+
+17:55:29	Error: 	"Not Found" (404) at link https://agrshch.com/cdn-cgi/l/email-protection (from https://agrshch.com/)
+
+HTTrack Website Copier/3.49-5 mirror complete in 10 seconds : 10 links scanned, 8 files written (112737 bytes overall) [121788 bytes received at 12178 bytes/sec], 12409 bytes transferred using HTTP compression in 8 files, ratio 48%, 3.3 requests per connection
+(1 errors, 0 warnings, 0 messages)
