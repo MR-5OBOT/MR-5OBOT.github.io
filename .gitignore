@@ -1,2 +1,8 @@
+clones/
+node_modules/
+dist/
+.astro/
+
+# too large for GitHub (100MB limit)
 public/assets/zennetz_90s_notebook.glb
 public/assets/phone-room.glb

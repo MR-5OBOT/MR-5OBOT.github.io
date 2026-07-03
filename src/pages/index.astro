@@ -19,28 +19,10 @@
         position: fixed; inset: 0; display: grid; place-items: center;
         color: #666; font: 16px 'Helvetica Neue', Arial, sans-serif;
       }
-      #info {
-        position: fixed; left: 0; right: 0; bottom: 24px; z-index: 2;
-        text-align: center; color: #9c9c9c;
-        font: 15px/1.55 'Helvetica Neue', Arial, sans-serif;
-      }
-      #info a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
-      #info a:hover { color: #ff2020; }
     </style>
   </head>
   <body>
     <div id="loading">Loading&hellip;</div>
-
-    <div id="info">
-      <p>MR5OBOT &nbsp;|&nbsp; OHLC Trader &amp; Token Burner</p>
-      <p>
-        <a href="https://github.com/MR-5OBOT" target="_blank">GitHub</a> &nbsp;|&nbsp;
-        <a href="https://x.com/MR_5OBOT" target="_blank">X</a> &nbsp;|&nbsp;
-        <a href="https://t.me/MR_5OBOT" target="_blank">Telegram</a> &nbsp;|&nbsp;
-        <a href="https://youtube.com/@mr5obot" target="_blank">YouTube</a> &nbsp;|&nbsp;
-        <a href="mailto:yassir7m7@gmail.com">Email</a>
-      </p>
-    </div>
 
     <script type="module" is:inline>
       import * as THREE from 'https://esm.sh/three@0.163.0';
@@ -59,13 +41,18 @@
         'Last Sync: just now',
       ];
 
+      // hero source test: a real 3D point cloud (full rotation, like the ref's
+      // scan) — set to null to go back to the drawing + AI depth map
+      const HERO3D = '/assets/retro-pc-1.bin';
+
       // ---- reference-site tuning (agrshch.com constants) ----
       const MODEL = {
         offset: { x: 0, y: isMobile ? -0.15 : -0.25, z: isMobile ? -0.5 : 0 },
         // ref uses 3.0 (fills/crops the frame); 2.0 = the previous commit's
-        // apparent hero size, whole drawing visible on screen
-        scale: isMobile ? 1.73 : 2.3,
-        cursorFollow: { maxAngle: 10, smoothing: 0.005 },
+        // apparent hero size, whole drawing visible on screen. The 3D model is
+        // deep (front sits near the camera), so it needs a smaller scale.
+        scale: HERO3D ? (isMobile ? 1.2 : 1.6) : (isMobile ? 1.73 : 2.3),
+        cursorFollow: { maxAngle: HERO3D ? 30 : 10, smoothing: 0.005 },
       };
       const CAMERA = {
         fov: 55,
@@ -77,9 +64,11 @@
         initialAzimuth: 0,
         initialPolar: 0,
       };
-      // tighter than the ref's ±45: our depth is estimated from one image,
-      // so we stop before the angles where the illusion falls apart
-      const LIMITS = { minAzimuth: -16, maxAzimuth: 16, minPolar: 75, maxPolar: 95 };
+      // real 3D gets the ref's full range; the drawing's estimated depth is
+      // clamped tighter, stopping before the angles where the illusion breaks
+      const LIMITS = HERO3D
+        ? { minAzimuth: -45, maxAzimuth: 45, minPolar: 60, maxPolar: 110 }
+        : { minAzimuth: -16, maxAzimuth: 16, minPolar: 75, maxPolar: 95 };
 
       const scene = new THREE.Scene();
       scene.background = new THREE.Color(0x000000);
@@ -168,13 +157,34 @@
         return g;
       }
 
-      const model = new THREE.Points(
-        imageCloud(
-          await sampleImage('/assets/hero.webp', '/assets/hero-depth.png'),
-          isMobile ? 120000 : 260000, 2.56, 0.7
-        ),
-        new THREE.PointsMaterial({ vertexColors: true, size: 0.006, sizeAttenuation: true })
-      );
+      // quantized point cloud: 24-byte header (min & scale xyz, float32) + uint16 xyz triples
+      async function loadPoints(url) {
+        const buf = await (await fetch(url)).arrayBuffer();
+        const h = new Float32Array(buf, 0, 6);
+        const q = new Uint16Array(buf, 24);
+        const pos = new Float32Array(q.length);
+        for (let i = 0; i < q.length; i += 3) {
+          pos[i] = h[0] + (q[i] / 65535) * h[3];
+          pos[i + 1] = h[1] + (q[i + 1] / 65535) * h[4];
+          pos[i + 2] = h[2] + (q[i + 2] / 65535) * h[5];
+        }
+        const g = new THREE.BufferGeometry();
+        g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+        return g;
+      }
+
+      const model = HERO3D
+        ? new THREE.Points(
+            await loadPoints(HERO3D),
+            new THREE.PointsMaterial({ color: 0xff0000, size: 0.004, sizeAttenuation: true })
+          )
+        : new THREE.Points(
+            imageCloud(
+              await sampleImage('/assets/hero.webp', '/assets/hero-depth.png'),
+              isMobile ? 120000 : 260000, 2.56, 0.7
+            ),
+            new THREE.PointsMaterial({ vertexColors: true, size: 0.006, sizeAttenuation: true })
+          );
 
       // ---- place model + camera exactly like the reference's setupModel ----
       const box = new THREE.Box3().setFromObject(model);
