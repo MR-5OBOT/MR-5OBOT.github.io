@@ -1,6 +1,7 @@
 ---
 // v3 home — full-screen three.js point-cloud hero.
-// Original implementation inspired by agrshch.com (behavior, not code/assets).
+// Scene constants lifted from agrshch.com's model-viewer (behavior, not assets):
+// same camera formula, orbit limits, cursor-follow, and cylinder vitals text.
 ---
 
 <!doctype html>
@@ -46,6 +47,7 @@
       import { OrbitControls } from 'https://esm.sh/three@0.163.0/examples/jsm/controls/OrbitControls.js';
 
       const isMobile = matchMedia('(max-width: 768px)').matches;
+      const deg = (d) => d * (Math.PI / 180);
 
       const STATS = [
         'Pulse: 77',
@@ -57,20 +59,33 @@
         'Last Sync: just now',
       ];
 
+      // ---- reference-site tuning (agrshch.com constants) ----
+      const MODEL = {
+        offset: { x: 0, y: isMobile ? -0.25 : -0.35, z: isMobile ? -0.5 : 0 },
+        // ref uses 3.0 (fills/crops the frame); 2.0 = the previous commit's
+        // apparent hero size, whole drawing visible on screen
+        scale: isMobile ? 1.73 : 2.3,
+        cursorFollow: { maxAngle: 30, smoothing: 0.005 },
+      };
+      const CAMERA = {
+        fov: 55,
+        distanceMultiplier: 2.2,
+        heightFraction: isMobile ? 1.62 : 2,
+        targetHeightFraction: 0.58,
+        initialAzimuth: isMobile ? 0 : -5,
+        initialPolar: isMobile ? -30 : 0,
+      };
+      const LIMITS = { minAzimuth: -45, maxAzimuth: 45, minPolar: 60, maxPolar: 110 };
+
       const scene = new THREE.Scene();
       scene.background = new THREE.Color(0x000000);
 
-      const camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 0.01, 100);
-      camera.position.set(0, 0.5, isMobile ? 8 : 5.4);
+      const camera = new THREE.PerspectiveCamera(CAMERA.fov, innerWidth / innerHeight, 0.01, 1000);
 
       const renderer = new THREE.WebGLRenderer({ antialias: true });
       renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
       renderer.setSize(innerWidth, innerHeight);
       document.body.appendChild(renderer.domElement);
-
-      // Everything lives in one group so the cursor-follow sway rotates the whole scene.
-      const group = new THREE.Group();
-      scene.add(group);
 
       // ---- point cloud sampled from the hero illustration's dark pixels ----
       async function sampleImage(url, targetW = 1000) {
@@ -111,6 +126,8 @@
         return { pts, aspect: h / w };
       }
 
+      // Flat drawing -> volume: front shell keeps the relief, a rear tail
+      // (denser near the front) extrudes it into a body.
       function imageCloud({ pts, aspect }, count, width, depth) {
         const n = pts.length / 3;
         const pos = new Float32Array(count * 3);
@@ -118,17 +135,14 @@
         for (let i = 0; i < count; i++) {
           const j = ((Math.random() * n) | 0) * 3;
           const dark = pts[j + 2];
-          pos[i * 3] = (pts[j] - 0.5) * width + (Math.random() - 0.5) * 0.015;
-          pos[i * 3 + 1] = (0.5 - pts[j + 1]) * width * aspect + (Math.random() - 0.5) * 0.015;
-          // front shell keeps the relief; a rear tail (denser near the front)
-          // extrudes the drawing into a volumetric body
-          const tail = Math.random() ** 2;
-          pos[i * 3 + 2] = dark * 0.5 - tail * depth;
-          // dim base; additive blending makes dense areas glow like a real scan
-          const b = (0.15 + 0.55 * dark) * (1 - tail * 0.45);
+          pos[i * 3] = (pts[j] - 0.5) * width + (Math.random() - 0.5) * 0.008;
+          pos[i * 3 + 1] = (0.5 - pts[j + 1]) * width * aspect + (Math.random() - 0.5) * 0.008;
+          pos[i * 3 + 2] = dark * 0.25 - Math.random() ** 2 * depth;
+          // red brightness follows the drawing's darkness so linework reads at once
+          const b = 0.35 + 0.65 * dark;
           col[i * 3] = b;
-          col[i * 3 + 1] = b * 0.06;
-          col[i * 3 + 2] = b * 0.06;
+          col[i * 3 + 1] = b * 0.05;
+          col[i * 3 + 2] = b * 0.05;
         }
         const g = new THREE.BufferGeometry();
         g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
@@ -136,106 +150,138 @@
         return g;
       }
 
-      // TV-static flicker: every tick a random slice of points blinks off,
-      // plus an occasional horizontal dropout band. Runs in the vertex shader.
-      const flickerTime = { value: 0 };
-      function addFlicker(mat) {
-        mat.onBeforeCompile = (s) => {
-          s.uniforms.uT = flickerTime;
-          s.vertexShader = s.vertexShader
-            .replace('#include <common>', '#include <common>\nuniform float uT;\nvarying float vOn;')
-            .replace('#include <begin_vertex>', `#include <begin_vertex>
-              float tick = floor(uT * 24.0);
-              float h = fract(sin(dot(position.xy, vec2(12.9898, 78.233)) + tick * 0.618) * 43758.5453);
-              vOn = step(0.15, h);
-              float band = fract(uT * 7.3) * 4.0 - 2.0;
-              if (fract(uT * 0.31) < 0.05 && abs(position.y - band) < 0.12) vOn = 0.0;`);
-          s.fragmentShader = s.fragmentShader
-            .replace('#include <common>', '#include <common>\nvarying float vOn;')
-            .replace(
-              'vec4 diffuseColor = vec4( diffuse, opacity );',
-              'vec4 diffuseColor = vec4( diffuse, opacity * vOn );'
-            );
-        };
-      }
-
-      const cloudWidth = isMobile ? 3.6 : 5;
-      const bodyMat = new THREE.PointsMaterial({
-        size: 0.008, sizeAttenuation: true, vertexColors: true,
-        transparent: true, opacity: 0.7, depthWrite: false,
-        blending: THREE.AdditiveBlending,
-      });
-      addFlicker(bodyMat);
-      const body = new THREE.Points(
-        imageCloud(await sampleImage('/assets/hero.webp'), isMobile ? 70000 : 150000, cloudWidth, isMobile ? 0.6 : 0.85),
-        bodyMat
+      const model = new THREE.Points(
+        imageCloud(await sampleImage('/assets/hero.webp'), isMobile ? 120000 : 260000, 2.56, 0.45),
+        new THREE.PointsMaterial({ vertexColors: true, size: 0.006, sizeAttenuation: true })
       );
-      body.position.y = -0.6;
-      group.add(body);
 
-      // Ambient scan-noise scatter around the model.
-      const scatter = new Float32Array(6000 * 3);
-      for (let i = 0; i < scatter.length; i += 3) {
-        scatter[i] = (Math.random() - 0.5) * 9;
-        scatter[i + 1] = (Math.random() - 0.5) * 5;
-        scatter[i + 2] = (Math.random() - 0.5) * 3;
+      // ---- place model + camera exactly like the reference's setupModel ----
+      const box = new THREE.Box3().setFromObject(model);
+      const center = box.getCenter(new THREE.Vector3());
+      const size = box.getSize(new THREE.Vector3());
+      model.position.sub(center);
+      model.position.y += size.y / 2;
+      model.position.x += MODEL.offset.x;
+      model.position.y += MODEL.offset.y;
+      model.position.z += MODEL.offset.z;
+      model.scale.setScalar(MODEL.scale);
+      scene.add(model);
+
+      // Ground scatter under the model, like the reference's floor scan line:
+      // a thin bell-curve band of red dots, denser under the figure, ragged edges.
+      {
+        const count = isMobile ? 14000 : 28000;
+        const pos = new Float32Array(count * 3);
+        // floor sits a bit below the hero so they read as separate pieces
+        const baseY = model.position.y - (size.y / 2) * MODEL.scale - 0.25;
+        const bell = () => (Math.random() + Math.random() + Math.random()) / 1.5 - 1;
+        for (let i = 0; i < count; i++) {
+          pos[i * 3] = bell() * 3.4;
+          pos[i * 3 + 1] = baseY + (Math.random() - 0.5) * 0.05;
+          pos[i * 3 + 2] = bell() * 1.5;
+        }
+        const g = new THREE.BufferGeometry();
+        g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+        scene.add(new THREE.Points(g, new THREE.PointsMaterial({ color: 0xff1a1a, size: 0.008, sizeAttenuation: true })));
       }
-      const noiseGeo = new THREE.BufferGeometry();
-      noiseGeo.setAttribute('position', new THREE.BufferAttribute(scatter, 3));
-      const noiseMat = new THREE.PointsMaterial({
-        color: 0xff0000, size: 0.01, sizeAttenuation: true,
-        transparent: true, opacity: 0.3, depthWrite: false,
-      });
-      addFlicker(noiseMat);
-      group.add(new THREE.Points(noiseGeo, noiseMat));
 
-      // ---- stats text as a plane in world space (skews with the camera) ----
-      function statsPanel(lines) {
-        const c = document.createElement('canvas');
-        const x = c.getContext('2d');
-        const fs = 120, lh = fs * 1.25;
-        const font = `${fs}px 'Helvetica Neue', Arial, sans-serif`;
-        x.font = font;
-        c.width = Math.ceil(Math.max(...lines.map((l) => x.measureText(l).width))) + 40;
-        c.height = Math.ceil(lh * lines.length + 40);
-        x.font = font;
-        x.fillStyle = '#9c9c9c';
-        x.textAlign = 'center';
-        x.textBaseline = 'middle';
-        lines.forEach((l, i) => x.fillText(l, c.width / 2, 20 + lh * (i + 0.5)));
-        const tex = new THREE.CanvasTexture(c);
-        tex.colorSpace = THREE.SRGBColorSpace;
-        const h = isMobile ? 2 : 2.5, w = (h * c.width) / c.height;
-        return new THREE.Mesh(
-          new THREE.PlaneGeometry(w, h),
-          new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false })
-        );
-      }
-      const stats = statsPanel(STATS);
-      stats.position.set(0, 1.15, -0.8);
-      group.add(stats);
+      // camera distance from the UNSCALED box, model scaled 3x -> fills the frame
+      const maxDim = Math.max(size.x, size.y, size.z);
+      const dist = (maxDim / 2) / Math.tan(deg(CAMERA.fov) / 2) * CAMERA.distanceMultiplier;
+      camera.position.set(0, size.y * CAMERA.heightFraction, dist);
 
-      // ---- controls: drag-to-orbit, clamped, damped, no zoom/pan ----
       const controls = new OrbitControls(camera, renderer.domElement);
-      controls.target.set(0, 0.3, 0);
+      controls.target.set(0, size.y * CAMERA.targetHeightFraction, 0);
       controls.enableDamping = true;
       controls.dampingFactor = 0.03;
       controls.enablePan = false;
-      controls.enableZoom = false;
-      controls.minAzimuthAngle = -Math.PI / 4;
-      controls.maxAzimuthAngle = Math.PI / 4;
-      controls.minPolarAngle = THREE.MathUtils.degToRad(60);
-      controls.maxPolarAngle = THREE.MathUtils.degToRad(110);
+      controls.minDistance = controls.maxDistance = dist; // zoom locked, like the reference
+      controls.minAzimuthAngle = deg(LIMITS.minAzimuth);
+      controls.maxAzimuthAngle = deg(LIMITS.maxAzimuth);
+      controls.minPolarAngle = deg(LIMITS.minPolar);
+      controls.maxPolarAngle = deg(LIMITS.maxPolar);
+      controls.update();
 
-      // Cursor-follow: the scene lazily sways toward the pointer.
-      let swayTarget = 0;
-      addEventListener('pointermove', (e) => {
-        if (e.pointerType === 'mouse') swayTarget = (e.clientX / innerWidth - 0.5) * -0.6;
+      // orbit the camera around the target by spherical angles, clamped
+      const _off = new THREE.Vector3();
+      const _sph = new THREE.Spherical();
+      function applyOrbit(theta, phiOffset = 0) {
+        _off.copy(camera.position).sub(controls.target);
+        _sph.setFromVector3(_off);
+        _sph.theta = THREE.MathUtils.clamp(theta, controls.minAzimuthAngle, controls.maxAzimuthAngle);
+        _sph.phi = THREE.MathUtils.clamp(_sph.phi + phiOffset, controls.minPolarAngle, controls.maxPolarAngle);
+        _sph.makeSafe();
+        _off.setFromSpherical(_sph);
+        camera.position.copy(controls.target).add(_off);
+        camera.lookAt(controls.target);
+      }
+      const azOverride = new URLSearchParams(location.search).get('az'); // debug: ?az=40
+      applyOrbit(deg(azOverride !== null ? +azOverride : CAMERA.initialAzimuth), deg(CAMERA.initialPolar));
+      controls.update();
+
+      // Cursor-follow: when not dragging, the camera lazily swings toward the pointer.
+      let mouseX = 0, userInteracting = false, azimuthOffset = 0;
+      let baseAzimuth = controls.getAzimuthalAngle();
+      addEventListener('mousemove', (e) => { mouseX = (e.clientX / innerWidth) * 2 - 1; });
+      controls.addEventListener('start', () => { userInteracting = true; });
+      controls.addEventListener('end', () => {
+        userInteracting = false;
+        baseAzimuth = controls.getAzimuthalAngle() - azimuthOffset;
       });
 
+      // ---- stats as giant faint text on a cylinder behind the model ----
+      function vitalsCylinder(lines) {
+        const fontSize = 320;
+        const lineSpacing = 0.95;
+        const lineHeight = isMobile ? 0.26 : 0.55; // world units per text row
+        const radius = 5.0;
+        const c = document.createElement('canvas');
+        const x = c.getContext('2d');
+        const font = `${fontSize}px 'Helvetica Neue', Arial, sans-serif`;
+        const ls = `${-0.06 * fontSize}px`;
+        x.font = font;
+        x.letterSpacing = ls;
+        const rowPx = Math.ceil(fontSize * lineSpacing);
+        let maxW = 1;
+        for (const ln of lines) maxW = Math.max(maxW, x.measureText(ln).width);
+        c.width = Math.ceil(maxW) + 26;
+        c.height = lines.length * rowPx + Math.ceil(fontSize * 0.5);
+        x.font = font;
+        x.letterSpacing = ls;
+        x.fillStyle = isMobile ? '#222222' : '#111111';
+        x.textBaseline = 'top';
+        x.textAlign = 'center';
+        lines.forEach((ln, i) => x.fillText(ln, c.width / 2, i * rowPx + (rowPx - fontSize) / 2 + fontSize * 0.2));
+        const tex = new THREE.CanvasTexture(c);
+        tex.minFilter = THREE.LinearFilter;
+        tex.magFilter = THREE.LinearFilter;
+        tex.anisotropy = 16;
+        tex.generateMipmaps = false;
+        tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping;
+        tex.repeat.x = -1; // BackSide mirrors the texture; flip it back
+        tex.offset.x = 1;
+        const pxPerWorld = rowPx / lineHeight;
+        const worldW = c.width / pxPerWorld;
+        const worldH = c.height / pxPerWorld;
+        const thetaLength = Math.min(worldW / radius, Math.PI * 2);
+        const mesh = new THREE.Mesh(
+          new THREE.CylinderGeometry(radius, radius, worldH, 96, 1, true, Math.PI - thetaLength / 2, thetaLength),
+          new THREE.MeshBasicMaterial({
+            map: tex, transparent: true, opacity: 0.85, depthWrite: false, side: THREE.BackSide,
+          })
+        );
+        mesh.renderOrder = -1;
+        mesh.position.y = isMobile ? 2.2 : 1.7;
+        return mesh;
+      }
+      // scene.add(vitalsCylinder(STATS)); // texts off for now (was hiding the model)
+
       renderer.setAnimationLoop(() => {
-        flickerTime.value = performance.now() / 1000;
-        group.rotation.y += (swayTarget - group.rotation.y) * 0.02;
+        if (!userInteracting) {
+          const target = mouseX * deg(MODEL.cursorFollow.maxAngle);
+          azimuthOffset += (target - azimuthOffset) * MODEL.cursorFollow.smoothing;
+          applyOrbit(baseAzimuth + azimuthOffset);
+        }
         controls.update();
         renderer.render(scene, camera);
       });
