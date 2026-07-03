@@ -120,9 +120,11 @@
           const dark = pts[j + 2];
           pos[i * 3] = (pts[j] - 0.5) * width + (Math.random() - 0.5) * 0.02;
           pos[i * 3 + 1] = (0.5 - pts[j + 1]) * width * aspect + (Math.random() - 0.5) * 0.02;
-          // dark linework sits proud of the fills -> relief instead of a flat slab
-          pos[i * 3 + 2] = dark * depth + (Math.random() + Math.random() - 1) * depth * 0.3;
-          const b = 0.25 + 0.75 * dark; // per-point brightness carries the shading
+          // front shell keeps the relief; a rear tail (denser near the front)
+          // extrudes the drawing into a volumetric body
+          const tail = Math.random() ** 2;
+          pos[i * 3 + 2] = dark * 0.5 - tail * depth;
+          const b = (0.25 + 0.75 * dark) * (1 - tail * 0.45); // shading + depth fog
           col[i * 3] = b;
           col[i * 3 + 1] = b * 0.06;
           col[i * 3 + 2] = b * 0.06;
@@ -135,7 +137,7 @@
 
       const cloudWidth = isMobile ? 3.6 : 5;
       const body = new THREE.Points(
-        imageCloud(await sampleImage('/assets/hero.webp'), isMobile ? 50000 : 100000, cloudWidth, 0.5),
+        imageCloud(await sampleImage('/assets/hero.webp'), isMobile ? 50000 : 100000, cloudWidth, isMobile ? 0.6 : 0.85),
         new THREE.PointsMaterial({ size: 0.011, sizeAttenuation: true, vertexColors: true })
       );
       body.position.y = -0.6;
