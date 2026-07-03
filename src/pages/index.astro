@@ -124,7 +124,8 @@
           // extrudes the drawing into a volumetric body
           const tail = Math.random() ** 2;
           pos[i * 3 + 2] = dark * 0.5 - tail * depth;
-          const b = (0.25 + 0.75 * dark) * (1 - tail * 0.45); // shading + depth fog
+          // dim base; additive blending makes dense areas glow like a real scan
+          const b = (0.15 + 0.55 * dark) * (1 - tail * 0.45);
           col[i * 3] = b;
           col[i * 3 + 1] = b * 0.06;
           col[i * 3 + 2] = b * 0.06;
@@ -138,7 +139,11 @@
       const cloudWidth = isMobile ? 3.6 : 5;
       const body = new THREE.Points(
         imageCloud(await sampleImage('/assets/hero.webp'), isMobile ? 50000 : 100000, cloudWidth, isMobile ? 0.6 : 0.85),
-        new THREE.PointsMaterial({ size: 0.011, sizeAttenuation: true, vertexColors: true })
+        new THREE.PointsMaterial({
+          size: 0.008, sizeAttenuation: true, vertexColors: true,
+          transparent: true, opacity: 0.7, depthWrite: false,
+          blending: THREE.AdditiveBlending,
+        })
       );
       body.position.y = -0.6;
       group.add(body);
