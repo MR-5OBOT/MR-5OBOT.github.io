@@ -472,8 +472,11 @@
         // hovering the floppy (or the fan) slowly raises the icons out of it;
         // they sink back in when the pointer leaves
         const t = performance.now() / 1000;
-        // breathing grey on the hover-trigger shapes → advertises "interactive"
-        if (!debug) triggerMat.color.setScalar(0.4 + 0.35 * (0.5 + 0.5 * Math.sin(t * 2.2)));
+        // "hover me" beacon: the floppies breathe — brightness swings dim-grey
+        // to near-white while the points swell ~40%, calming once hovered
+        const pulse = 0.5 + 0.5 * Math.sin(t * 2.2);
+        if (!debug) triggerMat.color.setScalar(hover ? 0.95 : 0.35 + 0.6 * pulse);
+        triggerMat.size = hover ? 0.006 : 0.004 + 0.0025 * pulse;
         expand += ((hover ? 1 : 0) - expand) * 0.05;
         for (const hb of hitboxes) {
           const ic = hb.userData.icon;
