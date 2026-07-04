@@ -1,5 +1,5 @@
 ---
-// v5 home — textured office GLB (draco + webp, compressed from 133MB to 11MB),
+// v5 home — textured office GLB (quantize + webp, compressed from 133MB to 4MB),
 // rendered as-is like the Sketchfab viewer: free drag-orbit, pan, zoom. Nothing else.
 ---
 
@@ -41,8 +41,11 @@
       import * as THREE from 'https://esm.sh/three@0.163.0';
       import { OrbitControls } from 'https://esm.sh/three@0.163.0/examples/jsm/controls/OrbitControls.js';
       import { GLTFLoader } from 'https://esm.sh/three@0.163.0/examples/jsm/loaders/GLTFLoader.js';
-      import { DRACOLoader } from 'https://esm.sh/three@0.163.0/examples/jsm/loaders/DRACOLoader.js';
       import { RoomEnvironment } from 'https://esm.sh/three@0.163.0/examples/jsm/environments/RoomEnvironment.js';
+
+      // if anything crashes, drop the loading overlay instead of freezing on it
+      for (const ev of ['error', 'unhandledrejection'])
+        addEventListener(ev, () => document.getElementById('loading')?.remove());
 
       const deg = (d) => d * (Math.PI / 180);
 
@@ -75,9 +78,8 @@
         loadPct.textContent = pct + '%';
       }
 
-      const draco = new DRACOLoader().setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.7/');
       const gltf = await new Promise((res, rej) =>
-        new GLTFLoader().setDRACOLoader(draco).load(
+        new GLTFLoader().load(
           '/assets/office.glb',
           res,
           (e) => e.total && setProgress((e.loaded / e.total) * 0.9), // download = 0–90%
