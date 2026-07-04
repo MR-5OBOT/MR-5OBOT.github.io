@@ -1,7 +1,6 @@
 ---
-// v3 home — full-screen three.js point-cloud hero.
-// Scene constants lifted from agrshch.com's model-viewer (behavior, not assets):
-// same camera formula, orbit limits, cursor-follow, and cylinder vitals text.
+// v5 home — textured office GLB (draco + webp, compressed from 133MB to 11MB),
+// rendered as-is like the Sketchfab viewer: free drag-orbit, pan, zoom. Nothing else.
 ---
 
 <!doctype html>
@@ -13,23 +12,20 @@
     <meta name="description" content="OHLC trader and token burner." />
     <link rel="icon" type="image/png" href="/assets/profile-2.png" />
     <style>
-      html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+      html, body { margin: 0; height: 100%; background: #756769; overflow: hidden; }
       canvas { display: block; }
       #loading {
         position: fixed; inset: 0; display: grid; place-items: center;
-        background: #000; z-index: 10;
+        background: #756769; z-index: 10;
         font: 11px/1.4 ui-monospace, 'Cascadia Mono', Menlo, Consolas, monospace;
         transition: opacity 0.6s ease;
       }
       #loading.done { opacity: 0; pointer-events: none; }
       #loading .box { display: grid; gap: 12px; justify-items: center; }
-      #loading .name { color: #802020; letter-spacing: 0.5em; text-indent: 0.5em; font-size: 12px; }
-      #load-track { width: 220px; height: 2px; background: #200606; }
-      #load-bar {
-        width: 0%; height: 100%; background: #f33;
-        box-shadow: 0 0 10px #f33; transition: width 0.2s ease-out;
-      }
-      #load-pct { color: #b33; letter-spacing: 0.2em; }
+      #loading .name { color: #e8dfe0; letter-spacing: 0.5em; text-indent: 0.5em; font-size: 12px; }
+      #load-track { width: 220px; height: 2px; background: rgba(0, 0, 0, 0.25); }
+      #load-bar { width: 0%; height: 100%; background: #efe7e8; transition: width 0.2s ease-out; }
+      #load-pct { color: #cabfc1; letter-spacing: 0.2em; }
     </style>
   </head>
   <body>
@@ -44,138 +40,26 @@
     <script type="module" is:inline>
       import * as THREE from 'https://esm.sh/three@0.163.0';
       import { OrbitControls } from 'https://esm.sh/three@0.163.0/examples/jsm/controls/OrbitControls.js';
+      import { GLTFLoader } from 'https://esm.sh/three@0.163.0/examples/jsm/loaders/GLTFLoader.js';
+      import { DRACOLoader } from 'https://esm.sh/three@0.163.0/examples/jsm/loaders/DRACOLoader.js';
+      import { RoomEnvironment } from 'https://esm.sh/three@0.163.0/examples/jsm/environments/RoomEnvironment.js';
 
-      const isMobile = matchMedia('(max-width: 768px)').matches;
       const deg = (d) => d * (Math.PI / 180);
 
-      const STATS = [
-        'Pulse: 77',
-        'PnL Today: -$4.20',
-        'Open Positions: 3',
-        'Win Rate (30d): 41%',
-        'Tokens Burned: 2.1M',
-        'Coffee Level: 86%',
-        'Last Sync: just now',
-      ];
-
-      // hero source test: a real 3D point cloud (full rotation, like the ref's
-      // scan) — set to null to go back to the drawing + AI depth map
-      const HERO3D = '/assets/retro-pc-1.bin';
-
-      // ---- reference-site tuning (agrshch.com constants) ----
-      const MODEL = {
-        offset: { x: 0, y: isMobile ? -0.15 : -0.25, z: isMobile ? -0.5 : 0 },
-        // ref uses 3.0 (fills/crops the frame); 2.0 = the previous commit's
-        // apparent hero size, whole drawing visible on screen. The 3D model is
-        // deep (front sits near the camera), so it needs a smaller scale.
-        scale: HERO3D ? (isMobile ? 1.35 : 1.8) : (isMobile ? 1.73 : 2.3),
-        cursorFollow: { maxAngle: HERO3D ? 30 : 10, smoothing: 0.005 },
-      };
-      const CAMERA = {
-        fov: 55,
-        distanceMultiplier: 2.6, // higher = camera further back = model smaller, whole thing fits (bottom no longer cropped)
-        // camera level with the target: launch shows the drawing perfectly flat,
-        // any parallax appears only once the user drags / moves the mouse
-        heightFraction: 0.58,
-        targetHeightFraction: 0.58,
-        initialAzimuth: 0,
-        initialPolar: 0,
-      };
-      // real 3D gets the ref's full range; the drawing's estimated depth is
-      // clamped tighter, stopping before the angles where the illusion breaks
-      const LIMITS = HERO3D
-        ? { minAzimuth: -45, maxAzimuth: 45, minPolar: 60, maxPolar: 110 }
-        : { minAzimuth: -16, maxAzimuth: 16, minPolar: 75, maxPolar: 95 };
-
       const scene = new THREE.Scene();
-      scene.background = new THREE.Color(0x000000);
+      scene.background = new THREE.Color(0x756769);
 
-      const camera = new THREE.PerspectiveCamera(CAMERA.fov, innerWidth / innerHeight, 0.01, 1000);
+      const camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.01, 100);
 
       const renderer = new THREE.WebGLRenderer({ antialias: true });
       renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
       renderer.setSize(innerWidth, innerHeight);
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
       document.body.appendChild(renderer.domElement);
 
-      // ---- point cloud sampled from the hero illustration's dark pixels ----
-      // depthUrl is an AI-estimated depth map (white = near) of the same image;
-      // it gives every point real z structure, like the reference's scan.
-      async function sampleImage(url, depthUrl, targetW = 1000) {
-        const load = (src) =>
-          new Promise((res, rej) => {
-            const i = new Image();
-            i.onload = () => res(i);
-            i.onerror = rej;
-            i.src = src;
-          });
-        const [img, depthImg] = await Promise.all([load(url), load(depthUrl)]);
-        const read = (image) => {
-          const c = document.createElement('canvas');
-          c.width = targetW;
-          c.height = Math.round((img.height / img.width) * targetW);
-          const x = c.getContext('2d', { willReadFrequently: true });
-          x.drawImage(image, 0, 0, c.width, c.height);
-          return { data: x.getImageData(0, 0, c.width, c.height).data, W: c.width, H: c.height };
-        };
-        const { data: d, W, H } = read(img);
-        const { data: dd } = read(depthImg);
-        const pts = []; // quads: x, y, darkness 0..1, depth 0..1 (1 = near)
-        let minX = 1e9, maxX = -1e9, minY = 1e9, maxY = -1e9;
-        for (let py = 0; py < H; py++)
-          for (let px = 0; px < W; px++) {
-            const i4 = (py * W + px) * 4;
-            const lum = (d[i4] + d[i4 + 1] + d[i4 + 2]) / 3;
-            const dark = (250 - lum) / 250;
-            // quadratic weighting: linework gets far more points than grey fills
-            if (d[i4 + 3] > 128 && Math.random() < dark * dark) {
-              pts.push(px, py, dark, dd[i4] / 255);
-              if (px < minX) minX = px;
-              if (px > maxX) maxX = px;
-              if (py < minY) minY = py;
-              if (py > maxY) maxY = py;
-            }
-          }
-        // normalize to the drawing's bounding box so the cloud sits centered
-        const w = Math.max(1, maxX - minX), h = Math.max(1, maxY - minY);
-        for (let i = 0; i < pts.length; i += 4) {
-          pts[i] = (pts[i] - minX) / w;
-          pts[i + 1] = (pts[i + 1] - minY) / h;
-        }
-        return { pts, aspect: h / w };
-      }
+      // neutral studio lighting so the PBR textures read like the Sketchfab viewer
+      scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(renderer), 0.04).texture;
 
-      // Every point sits at its real estimated depth (plus a thin jitter for
-      // point-cloud thickness), so rotation shows true parallax like a scan.
-      // x/y are shrunk by depth to cancel perspective from the initial camera:
-      // the launch view matches the flat drawing exactly, rotation reveals 3D.
-      function imageCloud({ pts, aspect }, count, width, depthRange) {
-        const n = pts.length / 4;
-        const pos = new Float32Array(count * 3);
-        const col = new Float32Array(count * 3);
-        // camera distance in the cloud's local units (world dist / model scale)
-        const D = ((width / 2) / Math.tan(deg(CAMERA.fov) / 2)) * CAMERA.distanceMultiplier / MODEL.scale;
-        for (let i = 0; i < count; i++) {
-          const j = ((Math.random() * n) | 0) * 4;
-          const dark = pts[j + 2];
-          const z = (pts[j + 3] - 0.5) * depthRange + dark * 0.05 + (Math.random() - 0.5) * 0.04;
-          const k = (D - z) / D;
-          pos[i * 3] = ((pts[j] - 0.5) * width + (Math.random() - 0.5) * 0.008) * k;
-          pos[i * 3 + 1] = ((0.5 - pts[j + 1]) * width * aspect + (Math.random() - 0.5) * 0.008) * k;
-          pos[i * 3 + 2] = z;
-          // red brightness follows the drawing's darkness so linework reads at once
-          const b = 0.35 + 0.65 * dark;
-          col[i * 3] = b;
-          col[i * 3 + 1] = b * 0.05;
-          col[i * 3 + 2] = b * 0.05;
-        }
-        const g = new THREE.BufferGeometry();
-        g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-        g.setAttribute('color', new THREE.BufferAttribute(col, 3));
-        return g;
-      }
-
-      // loader UI: bar tracks the hero .bin download (the heavy asset) 0–90%,
-      // jumps to 100% when the scene is ready, then fades out
       const loadBar = document.getElementById('load-bar');
       const loadPct = document.getElementById('load-pct');
       function setProgress(p) { // p 0..1
@@ -183,359 +67,43 @@
         loadBar.style.width = pct + '%';
         loadPct.textContent = pct + '%';
       }
-      async function fetchProgress(url, onP) {
-        const r = await fetch(url);
-        const total = +r.headers.get('content-length') || 0;
-        if (!onP || !r.body || !total) return r.arrayBuffer();
-        const reader = r.body.getReader();
-        const chunks = [];
-        let got = 0;
-        for (;;) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          chunks.push(value);
-          got += value.length;
-          onP(Math.min(1, got / total)); // clamp: gzip makes totals approximate
-        }
-        const out = new Uint8Array(got);
-        let o = 0;
-        for (const c of chunks) { out.set(c, o); o += c.length; }
-        return out.buffer;
-      }
 
-      // quantized point cloud: 24-byte header (min & scale xyz, float32) + uint16 xyz triples
-      async function loadPoints(url, onP) {
-        const buf = await fetchProgress(url, onP);
-        const h = new Float32Array(buf, 0, 6);
-        const q = new Uint16Array(buf, 24);
-        const pos = new Float32Array(q.length);
-        for (let i = 0; i < q.length; i += 3) {
-          pos[i] = h[0] + (q[i] / 65535) * h[3];
-          pos[i + 1] = h[1] + (q[i + 1] / 65535) * h[4];
-          pos[i + 2] = h[2] + (q[i + 2] / 65535) * h[5];
-        }
-        const g = new THREE.BufferGeometry();
-        g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-        return g;
-      }
+      const draco = new DRACOLoader().setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.7/');
+      const gltf = await new Promise((res, rej) =>
+        new GLTFLoader().setDRACOLoader(draco).load(
+          '/assets/office.glb',
+          res,
+          (e) => e.total && setProgress((e.loaded / e.total) * 0.9), // download = 0–90%
+          rej
+        )
+      );
+      scene.add(gltf.scene);
 
-      const model = HERO3D
-        ? new THREE.Points(
-            await loadPoints(HERO3D, (p) => setProgress(p * 0.9)),
-            new THREE.PointsMaterial({ color: 0xff0000, size: 0.004, sizeAttenuation: true })
-          )
-        : new THREE.Points(
-            imageCloud(
-              await sampleImage('/assets/hero.webp', '/assets/hero-depth.png'),
-              isMobile ? 120000 : 260000, 2.56, 0.7
-            ),
-            new THREE.PointsMaterial({ vertexColors: true, size: 0.006, sizeAttenuation: true })
-          );
-
-      // ---- place model + camera exactly like the reference's setupModel ----
-      const box = new THREE.Box3().setFromObject(model);
+      // frame the whole scene head-on, camera slightly above center (screenshot view)
+      const box = new THREE.Box3().setFromObject(gltf.scene);
       const center = box.getCenter(new THREE.Vector3());
       const size = box.getSize(new THREE.Vector3());
-      model.position.sub(center);
-      model.position.y += size.y / 2;
-      model.position.x += MODEL.offset.x;
-      model.position.y += MODEL.offset.y;
-      model.position.z += MODEL.offset.z;
-      model.scale.setScalar(MODEL.scale);
-      scene.add(model);
-
-      // fsociety mask glowing on the CRT glass (screen plane measured from the
-      // cloud data); child of the model so it rotates with the PC
-      if (HERO3D) {
-        const mask = new THREE.Points(
-          await loadPoints('/assets/fsociety.bin'),
-          new THREE.PointsMaterial({ color: 0xff5050, size: 0.003, sizeAttenuation: true })
-        );
-        mask.scale.setScalar(0.38);
-        mask.position.set(-0.27, 0.16, 0.56);
-        model.add(mask);
-      }
-
-      // Ground scatter under the model, like the reference's floor scan line:
-      // a thin bell-curve band of red dots, denser under the figure, ragged edges.
-      // floor sits a bit below the hero so they read as separate pieces
-      const floorY = model.position.y - (size.y / 2) * MODEL.scale - 0.25;
-      {
-        const count = isMobile ? 14000 : 28000;
-        const pos = new Float32Array(count * 3);
-        const baseY = floorY;
-        const bell = () => (Math.random() + Math.random() + Math.random()) / 1.5 - 1;
-        for (let i = 0; i < count; i++) {
-          pos[i * 3] = bell() * 3.4;
-          pos[i * 3 + 1] = baseY + (Math.random() - 0.5) * 0.05;
-          pos[i * 3 + 2] = bell() * 1.5;
-        }
-        const g = new THREE.BufferGeometry();
-        g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-        scene.add(new THREE.Points(g, new THREE.PointsMaterial({ color: 0xff1a1a, size: 0.008, sizeAttenuation: true })));
-      }
-
-      // ---- social buttons: icon PNGs (simpleicons.org, black on transparent)
-      // sampled into small point-cloud cards standing in the floppy zone ----
-      async function iconPoints(url, count) {
-        const img = await new Promise((res, rej) => {
-          const i = new Image();
-          i.onload = () => res(i);
-          i.onerror = rej;
-          i.src = url;
-        });
-        const S = 160;
-        const c = document.createElement('canvas');
-        c.width = c.height = S;
-        const x = c.getContext('2d', { willReadFrequently: true });
-        x.drawImage(img, 0, 0, S, S);
-        const d = x.getImageData(0, 0, S, S).data;
-        const cand = [];
-        for (let py = 0; py < S; py++)
-          for (let px = 0; px < S; px++) {
-            const i4 = (py * S + px) * 4;
-            if (d[i4 + 3] > 128 && d[i4] < 128) cand.push(px, py);
-          }
-        const n = cand.length / 2;
-        const pos = new Float32Array(count * 3);
-        for (let i = 0; i < count; i++) {
-          const j = ((Math.random() * n) | 0) * 2;
-          pos[i * 3] = cand[j] / S - 0.5 + (Math.random() - 0.5) * 0.012;
-          pos[i * 3 + 1] = 0.5 - cand[j + 1] / S + (Math.random() - 0.5) * 0.012;
-          pos[i * 3 + 2] = (Math.random() - 0.5) * 0.04;
-        }
-        const g = new THREE.BufferGeometry();
-        g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-        return g;
-      }
-
-      const SOCIALS = [
-        ['github', 'https://github.com/MR-5OBOT'],
-        ['x', 'https://x.com/MR_5OBOT'],
-        ['telegram', 'https://t.me/MR_5OBOT'],
-        ['youtube', 'https://youtube.com/@mr5obot'],
-      ];
-      const IDLE = 0xcc2222, HOT = 0xff6060;
-      const hitboxes = [];
-      // hovering the front floppy disk fans the icons out above it, in-scene
-      const floppyLocal = new THREE.Vector3(0.45, -0.58, 0.92); // measured from the cloud
-      const socials3d = new THREE.Group();
-      socials3d.position.copy(floppyLocal.multiplyScalar(MODEL.scale).add(model.position));
-      scene.add(socials3d);
-
-      const floppyHit = new THREE.Mesh(
-        // small box = only the floppy's exact center triggers, not anything near it
-        new THREE.BoxGeometry(0.28, 0.12, 0.28),
-        new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })
-      );
-      floppyHit.userData = {};
-      socials3d.add(floppyHit);
-      hitboxes.push(floppyHit);
-
-      // the two floppy shapes on the desk read as "hover me": blacked out in the
-      // base cloud and re-drawn as a separate overlay that breathes grey (loop).
-      // boxes in the cloud's local space (x -0.83..0.83, y -0.60..0.60, z -1.28..1.28),
-      // found from a density scan of the .bin. add ?debug to tint box0 green / box1 blue.
-      const TRIGGER_BOXES = [
-        { x: [0.30, 0.70], y: [-0.62, -0.55], z: [0.75, 1.12] }, // floor floppy, left of the pair
-        { x: [0.53, 0.85], y: [-0.62, -0.55], z: [0.83, 1.30] }, // floor floppy, right (the diamond)
-      ];
-      const boxOf = (x, y, z) => TRIGGER_BOXES.findIndex(
-        (b) => x >= b.x[0] && x <= b.x[1] && y >= b.y[0] && y <= b.y[1] && z >= b.z[0] && z <= b.z[1]
-      );
-      const debug = new URLSearchParams(location.search).has('debug');
-      const triggerPos = [], triggerBox = [];
-      {
-        const pos = model.geometry.attributes.position;
-        const col = new Float32Array(pos.count * 3); // 0-init: non-red channels stay 0
-        for (let i = 0; i < pos.count; i++) {
-          const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
-          const bi = boxOf(x, y, z);
-          if (bi >= 0) { triggerPos.push(x, y, z); triggerBox.push(bi); } // black base; overlay draws these
-          else col[i * 3] = 1; // red linework
-        }
-        model.geometry.setAttribute('color', new THREE.BufferAttribute(col, 3));
-        model.material.vertexColors = true;
-        model.material.color.set(0xffffff);
-      }
-      // overlay cloud of just the trigger points; child of the model so it rotates
-      // with it. vertex colors: white normally (material.color pulses grey over it),
-      // green/blue per box under ?debug so you can confirm each box hits its shape.
-      const tcol = new Float32Array(triggerBox.length * 3);
-      for (let p = 0; p < triggerBox.length; p++) {
-        if (debug) { tcol[p*3+1] = triggerBox[p] === 0 ? 1 : 0.3; tcol[p*3+2] = triggerBox[p] === 1 ? 1 : 0.3; }
-        else tcol[p*3] = tcol[p*3+1] = tcol[p*3+2] = 1;
-      }
-      const triggerGeo = new THREE.BufferGeometry();
-      triggerGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(triggerPos), 3));
-      triggerGeo.setAttribute('color', new THREE.BufferAttribute(tcol, 3));
-      const triggerMat = new THREE.PointsMaterial({ vertexColors: true, size: 0.005, sizeAttenuation: true });
-      const triggerCloud = new THREE.Points(triggerGeo, triggerMat);
-      triggerCloud.renderOrder = 1; // above the blacked-out base points
-      model.add(triggerCloud);
-
-      const iconW = 0.26, gap = 0.36;
-      let expand = 0; // 0 = tucked into the floppy, 1 = fanned out
-      for (let i = 0; i < SOCIALS.length; i++) {
-        const [name, url] = SOCIALS[i];
-        const icon = new THREE.Points(
-          await iconPoints(`/assets/icons/${name}.png`, 6000),
-          new THREE.PointsMaterial({ color: IDLE, size: 0.006, sizeAttenuation: true, transparent: true, opacity: 0 })
-        );
-        icon.scale.setScalar(iconW);
-        icon.userData.outY = 0.25 + (SOCIALS.length - i) * gap; // vertical fan, first link on top
-        const hit = new THREE.Mesh(
-          new THREE.PlaneGeometry(iconW * 1.6, gap * 0.9),
-          new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })
-        );
-        hit.userData = { url, icon };
-        socials3d.add(icon, hit);
-        hitboxes.push(hit);
-      }
-
-      const ray = new THREE.Raycaster();
-      const ptr = new THREE.Vector2();
-      let hover = null;
-      function pick(e) {
-        ptr.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
-        ray.setFromCamera(ptr, camera);
-        const hit = ray.intersectObjects(hitboxes, false)[0];
-        return hit ? hit.object : null;
-      }
-      addEventListener('pointermove', (e) => {
-        const h = pick(e);
-        if (h !== hover) {
-          if (hover) hover.userData.icon?.material.color.set(IDLE);
-          if (h) h.userData.icon?.material.color.set(HOT);
-          hover = h;
-          document.body.style.cursor = h ? 'pointer' : '';
-        }
-      });
-      let downX = 0, downY = 0;
-      addEventListener('pointerdown', (e) => { downX = e.clientX; downY = e.clientY; });
-      addEventListener('click', (e) => {
-        if (Math.hypot(e.clientX - downX, e.clientY - downY) > 6) return; // it was a drag
-        const h = pick(e);
-        if (h && h.userData.url && expand > 0.6) open(h.userData.url, '_blank');
-      });
-
-      // camera distance from the UNSCALED box, model scaled 3x -> fills the frame
       const maxDim = Math.max(size.x, size.y, size.z);
-      const dist = (maxDim / 2) / Math.tan(deg(CAMERA.fov) / 2) * CAMERA.distanceMultiplier;
-      camera.position.set(0, size.y * CAMERA.heightFraction, dist);
+      const dist = (maxDim / 2) / Math.tan(deg(camera.fov) / 2) * 1.15;
 
       const controls = new OrbitControls(camera, renderer.domElement);
-      controls.target.set(0, size.y * CAMERA.targetHeightFraction, 0);
+      controls.target.copy(center);
       controls.enableDamping = true;
-      controls.dampingFactor = 0.03;
-      controls.enablePan = false;
-      controls.minDistance = controls.maxDistance = dist; // zoom locked, like the reference
-      controls.minAzimuthAngle = deg(LIMITS.minAzimuth);
-      controls.maxAzimuthAngle = deg(LIMITS.maxAzimuth);
-      controls.minPolarAngle = deg(LIMITS.minPolar);
-      controls.maxPolarAngle = deg(LIMITS.maxPolar);
+      controls.dampingFactor = 0.06;
+      controls.minDistance = maxDim * 0.25;
+      controls.maxDistance = maxDim * 4;
+
+      // ?az=<deg> to tweak the launch angle without editing code
+      const az = deg(+(new URLSearchParams(location.search).get('az') ?? 0));
+      camera.position.set(
+        center.x + Math.sin(az) * dist,
+        center.y + size.y * 0.08,
+        center.z + Math.cos(az) * dist
+      );
       controls.update();
-
-      // orbit the camera around the target by spherical angles, clamped
-      const _off = new THREE.Vector3();
-      const _sph = new THREE.Spherical();
-      function applyOrbit(theta, phiOffset = 0) {
-        _off.copy(camera.position).sub(controls.target);
-        _sph.setFromVector3(_off);
-        _sph.theta = THREE.MathUtils.clamp(theta, controls.minAzimuthAngle, controls.maxAzimuthAngle);
-        _sph.phi = THREE.MathUtils.clamp(_sph.phi + phiOffset, controls.minPolarAngle, controls.maxPolarAngle);
-        _sph.makeSafe();
-        _off.setFromSpherical(_sph);
-        camera.position.copy(controls.target).add(_off);
-        camera.lookAt(controls.target);
-      }
-      const azOverride = new URLSearchParams(location.search).get('az'); // debug: ?az=40
-      applyOrbit(deg(azOverride !== null ? +azOverride : CAMERA.initialAzimuth), deg(CAMERA.initialPolar));
-      controls.update();
-
-      // Cursor-follow: when not dragging, the camera lazily swings toward the pointer.
-      let mouseX = 0, userInteracting = false, azimuthOffset = 0;
-      let baseAzimuth = controls.getAzimuthalAngle();
-      addEventListener('mousemove', (e) => { mouseX = (e.clientX / innerWidth) * 2 - 1; });
-      controls.addEventListener('start', () => { userInteracting = true; });
-      controls.addEventListener('end', () => {
-        userInteracting = false;
-        baseAzimuth = controls.getAzimuthalAngle() - azimuthOffset;
-      });
-
-      // ---- stats as giant faint text on a cylinder behind the model ----
-      function vitalsCylinder(lines) {
-        const fontSize = 320;
-        const lineSpacing = 0.95;
-        const lineHeight = isMobile ? 0.26 : 0.55; // world units per text row
-        const radius = 5.0;
-        const c = document.createElement('canvas');
-        const x = c.getContext('2d');
-        const font = `${fontSize}px 'Helvetica Neue', Arial, sans-serif`;
-        const ls = `${-0.06 * fontSize}px`;
-        x.font = font;
-        x.letterSpacing = ls;
-        const rowPx = Math.ceil(fontSize * lineSpacing);
-        let maxW = 1;
-        for (const ln of lines) maxW = Math.max(maxW, x.measureText(ln).width);
-        c.width = Math.ceil(maxW) + 26;
-        c.height = lines.length * rowPx + Math.ceil(fontSize * 0.5);
-        x.font = font;
-        x.letterSpacing = ls;
-        x.fillStyle = isMobile ? '#222222' : '#111111';
-        x.textBaseline = 'top';
-        x.textAlign = 'center';
-        lines.forEach((ln, i) => x.fillText(ln, c.width / 2, i * rowPx + (rowPx - fontSize) / 2 + fontSize * 0.2));
-        const tex = new THREE.CanvasTexture(c);
-        tex.minFilter = THREE.LinearFilter;
-        tex.magFilter = THREE.LinearFilter;
-        tex.anisotropy = 16;
-        tex.generateMipmaps = false;
-        tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping;
-        tex.repeat.x = -1; // BackSide mirrors the texture; flip it back
-        tex.offset.x = 1;
-        const pxPerWorld = rowPx / lineHeight;
-        const worldW = c.width / pxPerWorld;
-        const worldH = c.height / pxPerWorld;
-        const thetaLength = Math.min(worldW / radius, Math.PI * 2);
-        const mesh = new THREE.Mesh(
-          new THREE.CylinderGeometry(radius, radius, worldH, 96, 1, true, Math.PI - thetaLength / 2, thetaLength),
-          new THREE.MeshBasicMaterial({
-            map: tex, transparent: true, opacity: 0.85, depthWrite: false, side: THREE.BackSide,
-          })
-        );
-        mesh.renderOrder = -1;
-        mesh.position.y = isMobile ? 2.2 : 1.7;
-        return mesh;
-      }
-      // scene.add(vitalsCylinder(STATS)); // texts off for now (was hiding the model)
 
       renderer.setAnimationLoop(() => {
-        if (!userInteracting) {
-          const target = mouseX * deg(MODEL.cursorFollow.maxAngle);
-          azimuthOffset += (target - azimuthOffset) * MODEL.cursorFollow.smoothing;
-          applyOrbit(baseAzimuth + azimuthOffset);
-        }
-        // hovering the floppy (or the fan) slowly raises the icons out of it;
-        // they sink back in when the pointer leaves
-        const t = performance.now() / 1000;
-        // "hover me" beacon: the floppies breathe — brightness swings dim-grey
-        // to near-white while the points swell ~40%, calming once hovered
-        const pulse = 0.5 + 0.5 * Math.sin(t * 2.2);
-        if (!debug) triggerMat.color.setScalar(hover ? 0.95 : 0.35 + 0.6 * pulse);
-        triggerMat.size = hover ? 0.006 : 0.004 + 0.0025 * pulse;
-        expand += ((hover ? 1 : 0) - expand) * 0.05;
-        for (const hb of hitboxes) {
-          const ic = hb.userData.icon;
-          if (!ic) continue; // the floppy trigger itself
-          const on = hover === hb;
-          ic.position.y = ic.userData.outY * expand;
-          ic.position.x = Math.sin(t * 2 + ic.userData.outY * 4) * 0.015 * expand;
-          ic.material.opacity = expand;
-          ic.scale.setScalar(ic.scale.x + ((on ? iconW * 1.3 : iconW) - ic.scale.x) * 0.06);
-          hb.position.copy(ic.position);
-        }
-        controls.update();
+        controls.update(); // damping = smooth glide after drag
         renderer.render(scene, camera);
       });
 
@@ -545,7 +113,6 @@
         renderer.setSize(innerWidth, innerHeight);
       });
 
-      // scene ready: complete the bar, fade the overlay, drop it from the DOM
       setProgress(1);
       const loading = document.getElementById('loading');
       requestAnimationFrame(() => loading.classList.add('done'));
