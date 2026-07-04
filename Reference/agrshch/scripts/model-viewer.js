@@ -1,6 +1,5 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { PLYLoader } from 'three/addons/loaders/PLYLoader.js';
 import {
   getPointCloudFormat,
   loadQuantizedNpzPointCloud,
@@ -266,37 +265,15 @@ function setupPointCloud(geometry) {
   setupModel(new THREE.Points(geometry, material));
 }
 
-function loadPlyModel(path) {
-  const loader = new PLYLoader();
+function loadModel() {
+  if (getPointCloudFormat(MODEL.path) !== 'npz') {
+    onLoadError(new Error(`Unsupported point cloud format in path: ${MODEL.path}`));
+    return;
+  }
 
-  loader.load(
-    path,
-    (geometry) => setupPointCloud(geometry),
-    undefined,
-    onLoadError,
-  );
-}
-
-function loadNpzModel(path) {
-  loadQuantizedNpzPointCloud(path)
+  loadQuantizedNpzPointCloud(MODEL.path)
     .then((geometry) => setupPointCloud(geometry))
     .catch(onLoadError);
-}
-
-function loadModel() {
-  const format = getPointCloudFormat(MODEL.path);
-
-  if (format === 'npz') {
-    loadNpzModel(MODEL.path);
-    return;
-  }
-
-  if (format === 'ply') {
-    loadPlyModel(MODEL.path);
-    return;
-  }
-
-  onLoadError(new Error(`Unsupported point cloud format in path: ${MODEL.path}`));
 }
 
 // ─────────────────────────────────────────────
