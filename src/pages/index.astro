@@ -285,22 +285,47 @@
       socials3d.add(floppyHit);
       hitboxes.push(floppyHit);
 
-      // the trigger floppy gets its own dark tint so it reads as "hover me":
-      // per-point colors — everything red except the floppy's box
+      // the two floppy shapes on the desk read as "hover me": blacked out in the
+      // base cloud and re-drawn as a separate overlay that breathes grey (loop).
+      // boxes in the cloud's local space (x -0.83..0.83, y -0.60..0.60, z -1.28..1.28),
+      // found from a density scan of the .bin. add ?debug to tint box0 green / box1 blue.
+      const TRIGGER_BOXES = [
+        { x: [0.30, 0.70], y: [-0.62, -0.55], z: [0.75, 1.12] }, // floor floppy, left of the pair
+        { x: [0.53, 0.85], y: [-0.62, -0.55], z: [0.83, 1.30] }, // floor floppy, right (the diamond)
+      ];
+      const boxOf = (x, y, z) => TRIGGER_BOXES.findIndex(
+        (b) => x >= b.x[0] && x <= b.x[1] && y >= b.y[0] && y <= b.y[1] && z >= b.z[0] && z <= b.z[1]
+      );
+      const debug = new URLSearchParams(location.search).has('debug');
+      const triggerPos = [], triggerBox = [];
       {
         const pos = model.geometry.attributes.position;
-        const col = new Float32Array(pos.count * 3);
+        const col = new Float32Array(pos.count * 3); // 0-init: non-red channels stay 0
         for (let i = 0; i < pos.count; i++) {
           const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
-          const trigger = x > 0.32 && x < 0.69 && y < -0.5 && z > 0.75 && z < 1.05;
-          col[i * 3] = trigger ? 0.5 : 1;
-          col[i * 3 + 1] = trigger ? 0.5 : 0;
-          col[i * 3 + 2] = trigger ? 0.5 : 0;
+          const bi = boxOf(x, y, z);
+          if (bi >= 0) { triggerPos.push(x, y, z); triggerBox.push(bi); } // black base; overlay draws these
+          else col[i * 3] = 1; // red linework
         }
         model.geometry.setAttribute('color', new THREE.BufferAttribute(col, 3));
         model.material.vertexColors = true;
         model.material.color.set(0xffffff);
       }
+      // overlay cloud of just the trigger points; child of the model so it rotates
+      // with it. vertex colors: white normally (material.color pulses grey over it),
+      // green/blue per box under ?debug so you can confirm each box hits its shape.
+      const tcol = new Float32Array(triggerBox.length * 3);
+      for (let p = 0; p < triggerBox.length; p++) {
+        if (debug) { tcol[p*3+1] = triggerBox[p] === 0 ? 1 : 0.3; tcol[p*3+2] = triggerBox[p] === 1 ? 1 : 0.3; }
+        else tcol[p*3] = tcol[p*3+1] = tcol[p*3+2] = 1;
+      }
+      const triggerGeo = new THREE.BufferGeometry();
+      triggerGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(triggerPos), 3));
+      triggerGeo.setAttribute('color', new THREE.BufferAttribute(tcol, 3));
+      const triggerMat = new THREE.PointsMaterial({ vertexColors: true, size: 0.005, sizeAttenuation: true });
+      const triggerCloud = new THREE.Points(triggerGeo, triggerMat);
+      triggerCloud.renderOrder = 1; // above the blacked-out base points
+      model.add(triggerCloud);
 
       const iconW = 0.26, gap = 0.36;
       let expand = 0; // 0 = tucked into the floppy, 1 = fanned out
@@ -447,6 +472,8 @@
         // hovering the floppy (or the fan) slowly raises the icons out of it;
         // they sink back in when the pointer leaves
         const t = performance.now() / 1000;
+        // breathing grey on the hover-trigger shapes → advertises "interactive"
+        if (!debug) triggerMat.color.setScalar(0.4 + 0.35 * (0.5 + 0.5 * Math.sin(t * 2.2)));
         expand += ((hover ? 1 : 0) - expand) * 0.05;
         for (const hb of hitboxes) {
           const ic = hb.userData.icon;
