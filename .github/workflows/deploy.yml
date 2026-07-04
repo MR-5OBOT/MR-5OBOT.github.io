@@ -19,6 +19,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # flips the repo's Pages source from legacy branch-deploy to GitHub Actions
+      # on first run, so no manual settings step is needed
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
       - uses: withastro/action@v3
 
   deploy:
