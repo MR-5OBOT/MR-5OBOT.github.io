@@ -114,14 +114,26 @@
       controls.minDistance = maxDim * 0.25;
       controls.maxDistance = maxDim * 4;
 
-      // launch angle: 90° = head-on at the wall (the model's front); ?az= overrides
-      const az = deg(knob('az', 90));
-      camera.position.set(
-        center.x + Math.sin(az) * dist,
-        center.y + size.y * 0.08,
-        center.z + Math.cos(az) * dist
+      // launch view (?az / ?pol / ?r override): az = horizontal angle, 90 is
+      // head-on at the wall; pol = vertical, <90 looks slightly down; r = distance
+      const sph = new THREE.Spherical(
+        maxDim * knob('r', (dist / maxDim) * 0.95),
+        deg(knob('pol', 84)),
+        deg(knob('az', 103))
       );
+      camera.position.copy(controls.target).add(new THREE.Vector3().setFromSpherical(sph));
       controls.update();
+
+      // dragging/zooming writes the current view into the address bar, so any
+      // view can be copied as a URL and baked as the new default
+      controls.addEventListener('end', () => {
+        const s = new THREE.Spherical().setFromVector3(camera.position.clone().sub(controls.target));
+        const q = new URLSearchParams(location.search);
+        q.set('az', THREE.MathUtils.radToDeg(s.theta).toFixed(1));
+        q.set('pol', THREE.MathUtils.radToDeg(s.phi).toFixed(1));
+        q.set('r', (s.radius / maxDim).toFixed(3));
+        history.replaceState(null, '', '?' + q);
+      });
 
       renderer.setAnimationLoop(() => {
         controls.update(); // damping = smooth glide after drag
