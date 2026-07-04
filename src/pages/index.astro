@@ -59,12 +59,12 @@
 
       // Sketchfab-style mood: dim neutral environment for fill + a warm key light
       // from the upper front-left. URL knobs for tuning without edits:
-      //   ?env=0.35  fill strength   ?key=2.2  key strength   ?exp=1  exposure
+      //   ?env  fill strength   ?key  key strength   ?exp  exposure
       const P = new URLSearchParams(location.search);
       const knob = (k, d) => +(P.get(k) ?? d);
-      renderer.toneMappingExposure = knob('exp', 1);
+      renderer.toneMappingExposure = knob('exp', 0.95);
       scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(renderer), 0.04).texture;
-      const key = new THREE.DirectionalLight(0xffe9d2, knob('key', 2.2));
+      const key = new THREE.DirectionalLight(0xffe9d2, knob('key', 0.9));
       scene.add(key, key.target);
 
       const loadBar = document.getElementById('load-bar');
@@ -88,7 +88,7 @@
 
       // sharpen textures at grazing angles + dial the env fill down to moody
       const maxAniso = renderer.capabilities.getMaxAnisotropy();
-      const envFill = knob('env', 0.35);
+      const envFill = knob('env', 0.55);
       gltf.scene.traverse((o) => {
         if (!o.isMesh) return;
         o.material.envMapIntensity = envFill;
