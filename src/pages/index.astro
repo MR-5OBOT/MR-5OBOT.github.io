@@ -119,9 +119,9 @@
       // launch view (?az / ?pol / ?r override): az = horizontal angle, 90 is
       // head-on at the wall; pol = vertical, <90 looks slightly down; r = distance
       const sph = new THREE.Spherical(
-        maxDim * knob('r', 0.911),
-        deg(knob('pol', 77.5)),
-        deg(knob('az', 73.1))
+        maxDim * knob('r', 0.969),
+        deg(knob('pol', 74.7)),
+        deg(knob('az', 75.7))
       );
       camera.position.copy(controls.target).add(new THREE.Vector3().setFromSpherical(sph));
       controls.update();
