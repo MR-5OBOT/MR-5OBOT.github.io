@@ -114,7 +114,7 @@
       controls.enableDamping = true;
       controls.dampingFactor = 0.06;
       controls.minDistance = maxDim * 0.25;
-      controls.maxDistance = maxDim * 4;
+      controls.maxDistance = maxDim * 1.49; // max zoom-out = the chosen framing, scene never gets tiny
 
       // launch view (?az / ?pol / ?r override): az = horizontal angle, 90 is
       // head-on at the wall; pol = vertical, <90 looks slightly down; r = distance
