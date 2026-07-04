@@ -17,12 +17,29 @@
       canvas { display: block; }
       #loading {
         position: fixed; inset: 0; display: grid; place-items: center;
-        color: #666; font: 16px 'Helvetica Neue', Arial, sans-serif;
+        background: #000; z-index: 10;
+        font: 11px/1.4 ui-monospace, 'Cascadia Mono', Menlo, Consolas, monospace;
+        transition: opacity 0.6s ease;
       }
+      #loading.done { opacity: 0; pointer-events: none; }
+      #loading .box { display: grid; gap: 12px; justify-items: center; }
+      #loading .name { color: #802020; letter-spacing: 0.5em; text-indent: 0.5em; font-size: 12px; }
+      #load-track { width: 220px; height: 2px; background: #200606; }
+      #load-bar {
+        width: 0%; height: 100%; background: #f33;
+        box-shadow: 0 0 10px #f33; transition: width 0.2s ease-out;
+      }
+      #load-pct { color: #b33; letter-spacing: 0.2em; }
     </style>
   </head>
   <body>
-    <div id="loading">Loading&hellip;</div>
+    <div id="loading">
+      <div class="box">
+        <div class="name">MR5OBOT</div>
+        <div id="load-track"><div id="load-bar"></div></div>
+        <div id="load-pct">0%</div>
+      </div>
+    </div>
 
     <script type="module" is:inline>
       import * as THREE from 'https://esm.sh/three@0.163.0';
@@ -157,9 +174,38 @@
         return g;
       }
 
+      // loader UI: bar tracks the hero .bin download (the heavy asset) 0–90%,
+      // jumps to 100% when the scene is ready, then fades out
+      const loadBar = document.getElementById('load-bar');
+      const loadPct = document.getElementById('load-pct');
+      function setProgress(p) { // p 0..1
+        const pct = Math.min(100, Math.round(p * 100));
+        loadBar.style.width = pct + '%';
+        loadPct.textContent = pct + '%';
+      }
+      async function fetchProgress(url, onP) {
+        const r = await fetch(url);
+        const total = +r.headers.get('content-length') || 0;
+        if (!onP || !r.body || !total) return r.arrayBuffer();
+        const reader = r.body.getReader();
+        const chunks = [];
+        let got = 0;
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          chunks.push(value);
+          got += value.length;
+          onP(Math.min(1, got / total)); // clamp: gzip makes totals approximate
+        }
+        const out = new Uint8Array(got);
+        let o = 0;
+        for (const c of chunks) { out.set(c, o); o += c.length; }
+        return out.buffer;
+      }
+
       // quantized point cloud: 24-byte header (min & scale xyz, float32) + uint16 xyz triples
-      async function loadPoints(url) {
-        const buf = await (await fetch(url)).arrayBuffer();
+      async function loadPoints(url, onP) {
+        const buf = await fetchProgress(url, onP);
         const h = new Float32Array(buf, 0, 6);
         const q = new Uint16Array(buf, 24);
         const pos = new Float32Array(q.length);
@@ -175,7 +221,7 @@
 
       const model = HERO3D
         ? new THREE.Points(
-            await loadPoints(HERO3D),
+            await loadPoints(HERO3D, (p) => setProgress(p * 0.9)),
             new THREE.PointsMaterial({ color: 0xff0000, size: 0.004, sizeAttenuation: true })
           )
         : new THREE.Points(
@@ -499,7 +545,11 @@
         renderer.setSize(innerWidth, innerHeight);
       });
 
-      document.getElementById('loading')?.remove();
+      // scene ready: complete the bar, fade the overlay, drop it from the DOM
+      setProgress(1);
+      const loading = document.getElementById('loading');
+      requestAnimationFrame(() => loading.classList.add('done'));
+      loading.addEventListener('transitionend', () => loading.remove(), { once: true });
     </script>
   </body>
 </html>
