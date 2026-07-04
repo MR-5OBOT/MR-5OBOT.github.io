@@ -114,8 +114,8 @@
       controls.minDistance = maxDim * 0.25;
       controls.maxDistance = maxDim * 4;
 
-      // ?az=<deg> to tweak the launch angle without editing code
-      const az = deg(+(new URLSearchParams(location.search).get('az') ?? 0));
+      // launch angle: 90° = head-on at the wall (the model's front); ?az= overrides
+      const az = deg(knob('az', 90));
       camera.position.set(
         center.x + Math.sin(az) * dist,
         center.y + size.y * 0.08,
