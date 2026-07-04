@@ -101,7 +101,7 @@
       const center = box.getCenter(new THREE.Vector3());
       const size = box.getSize(new THREE.Vector3());
       const maxDim = Math.max(size.x, size.y, size.z);
-      const dist = (maxDim / 2) / Math.tan(deg(camera.fov) / 2) * 1.15;
+      const dist = (maxDim / 2) / Math.tan(deg(camera.fov) / 2) * 1.0;
 
       // key light aims at the scene from upper front-left, like the ref's desk-lamp mood
       key.position.set(center.x - maxDim * 0.8, center.y + maxDim * 1.2, center.z + maxDim * 1.4);
