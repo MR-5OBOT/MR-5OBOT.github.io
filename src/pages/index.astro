@@ -1,6 +1,6 @@
 ---
-// v5 home — textured office GLB (quantize + webp, compressed from 133MB to 4MB),
-// rendered as-is like the Sketchfab viewer: free drag-orbit, pan, zoom. Nothing else.
+// v6 home — retro-pc3 GLB (517KB, used as-is, no compression),
+// rendered like the Sketchfab viewer: free drag-orbit, pan, zoom. Nothing else.
 ---
 
 <!doctype html>
@@ -12,20 +12,20 @@
     <meta name="description" content="OHLC trader and token burner." />
     <link rel="icon" type="image/png" href="/assets/profile-2.png" />
     <style>
-      html, body { margin: 0; height: 100%; background: #49434c; overflow: hidden; }
+      html, body { margin: 0; height: 100%; background: #fff; overflow: hidden; }
       canvas { display: block; }
       #loading {
         position: fixed; inset: 0; display: grid; place-items: center;
-        background: #49434c; z-index: 10;
+        background: #fff; z-index: 10;
         font: 11px/1.4 ui-monospace, 'Cascadia Mono', Menlo, Consolas, monospace;
         transition: opacity 0.6s ease;
       }
       #loading.done { opacity: 0; pointer-events: none; }
       #loading .box { display: grid; gap: 12px; justify-items: center; }
-      #loading .name { color: #e8dfe0; letter-spacing: 0.5em; text-indent: 0.5em; font-size: 12px; }
-      #load-track { width: 220px; height: 2px; background: rgba(0, 0, 0, 0.25); }
-      #load-bar { width: 0%; height: 100%; background: #efe7e8; transition: width 0.2s ease-out; }
-      #load-pct { color: #cabfc1; letter-spacing: 0.2em; }
+      #loading .name { color: #222; letter-spacing: 0.5em; text-indent: 0.5em; font-size: 12px; }
+      #load-track { width: 220px; height: 2px; background: rgba(0, 0, 0, 0.12); }
+      #load-bar { width: 0%; height: 100%; background: #222; transition: width 0.2s ease-out; }
+      #load-pct { color: #888; letter-spacing: 0.2em; }
     </style>
   </head>
   <body>
@@ -49,12 +49,12 @@
 
       const deg = (d) => d * (Math.PI / 180);
 
+      // no baked background — the GLB has none; transparent canvas over the page
       const scene = new THREE.Scene();
-      scene.background = new THREE.Color(0x49434c);
 
       const camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.01, 100);
 
-      const renderer = new THREE.WebGLRenderer({ antialias: true });
+      const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
       renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
       renderer.setSize(innerWidth, innerHeight);
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -80,7 +80,7 @@
 
       const gltf = await new Promise((res, rej) =>
         new GLTFLoader().load(
-          '/assets/office.glb',
+          '/assets/retro-pc3.glb',
           res,
           (e) => e.total && setProgress((e.loaded / e.total) * 0.9), // download = 0–90%
           rej
@@ -105,6 +105,12 @@
       const maxDim = Math.max(size.x, size.y, size.z);
       const dist = (maxDim / 2) / Math.tan(deg(camera.fov) / 2) * 1.0;
 
+      // near/far scale with the model — this GLB is ~200 units wide, a fixed
+      // far plane clips it entirely
+      camera.near = maxDim / 100;
+      camera.far = maxDim * 10;
+      camera.updateProjectionMatrix();
+
       // key light aims at the scene from upper front-left, like the ref's desk-lamp mood
       key.position.set(center.x - maxDim * 0.8, center.y + maxDim * 1.2, center.z + maxDim * 1.4);
       key.target.position.copy(center);
@@ -116,12 +122,12 @@
       controls.minDistance = maxDim * 0.25;
       controls.maxDistance = maxDim * 1.49; // max zoom-out = the chosen framing, scene never gets tiny
 
-      // launch view (?az / ?pol / ?r override): az = horizontal angle, 90 is
-      // head-on at the wall; pol = vertical, <90 looks slightly down; r = distance
+      // launch view (?az / ?pol / ?r override): az = horizontal angle, 0 is
+      // head-on at the desk front; pol = vertical, <90 looks slightly down; r = distance
       const sph = new THREE.Spherical(
-        maxDim * knob('r', 0.969),
-        deg(knob('pol', 74.7)),
-        deg(knob('az', 75.7))
+        maxDim * knob('r', 1.15),
+        deg(knob('pol', 72)),
+        deg(knob('az', 0))
       );
       camera.position.copy(controls.target).add(new THREE.Vector3().setFromSpherical(sph));
       controls.update();
