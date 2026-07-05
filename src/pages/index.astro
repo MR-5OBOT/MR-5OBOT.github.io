@@ -220,15 +220,20 @@
       const v3 = new THREE.Vector3();
       const worldOf = (i) => v3.fromBufferAttribute(pos, i).applyMatrix4(mon.matrixWorld);
 
+      // dark atlas texel + front-of-monitor position = CRT glass
+      const darkAt = (u, v) => {
+        const uu = ((u % 1) + 1) % 1, vv = ((v % 1) + 1) % 1;
+        const o = (((vv * atlasCnv.height) | 0) * atlasCnv.width + ((uu * atlasCnv.width) | 0)) * 4;
+        return Math.max(apix[o], apix[o + 1], apix[o + 2]) <= 80;
+      };
+      const inGlassArea = (p) => p.z > 33 && p.y > 83 && p.y < 114;
+
       const glassIdx = [];
       for (let f = 0; f < idx.count; f += 3) {
         const [a, b2, c] = [idx.getX(f), idx.getX(f + 1), idx.getX(f + 2)];
-        const u = (((auv.getX(a) + auv.getX(b2) + auv.getX(c)) / 3) % 1 + 1) % 1;
-        const v = (((auv.getY(a) + auv.getY(b2) + auv.getY(c)) / 3) % 1 + 1) % 1;
-        const o = (((v * atlasCnv.height) | 0) * atlasCnv.width + ((u * atlasCnv.width) | 0)) * 4;
-        if (Math.max(apix[o], apix[o + 1], apix[o + 2]) > 80) continue; // not dark → bezel/shell
-        const w = worldOf(a); // spatial guard: front glass area only
-        if (w.z < 33 || w.y < 83 || w.y > 114) continue;
+        const u = (auv.getX(a) + auv.getX(b2) + auv.getX(c)) / 3;
+        const v = (auv.getY(a) + auv.getY(b2) + auv.getY(c)) / 3;
+        if (!darkAt(u, v) || !inGlassArea(worldOf(a))) continue;
         glassIdx.push(a, b2, c);
       }
 
@@ -278,7 +283,12 @@
       function updateHover(dt) {
         raycaster.setFromCamera(pointer, camera);
         const hit = raycaster.intersectObject(scene, true)[0];
-        const on = !dragging && (hit?.object === mon || hit?.object === glass);
+        // screen-only hover: the overlay is glass by construction; a monitor
+        // hit counts only if it lands on a dark-glass texel on the front
+        const on = !dragging && !!hit && (
+          hit.object === glass ||
+          (hit.object === mon && hit.uv && darkAt(hit.uv.x, hit.uv.y) && inGlassArea(hit.point))
+        );
         if (on !== hoverPrev) {
           hoverPrev = on;
           renderer.domElement.style.cursor = on ? 'pointer' : '';
