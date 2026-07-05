@@ -151,8 +151,158 @@
         history.replaceState(null, '', '?' + q);
       });
 
-      renderer.setAnimationLoop(() => {
+      // hover the monitor → the CRT powers on: a canvas-textured quad over the
+      // glass shows a phosphor [ ENTER ] button with scanlines. The text lives
+      // in 3D, so orbit/zoom/resize can never desync it; re-raycasting every
+      // frame keeps a still cursor honest while the camera glides. (The GLB has
+      // no separate screen mesh — the glass is part of the monitor — so we
+      // overlay our own, placed as fractions of the monitor's bounding box.)
+      let mon = null;
+      gltf.scene.traverse((o) => { if (o.isMesh && /computer_monitor/i.test(o.name)) mon = o; });
+
+      const cnv = document.createElement('canvas');
+      cnv.width = 512; cnv.height = 384; // 4:3, like the tube
+      const ctx = cnv.getContext('2d');
+      const tex = new THREE.CanvasTexture(cnv);
+      tex.colorSpace = THREE.SRGBColorSpace;
+      tex.anisotropy = maxAniso;
+      function drawScreen(cursorOn, squash = 1) {
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.fillStyle = '#0b130d'; // dark tube
+        ctx.fillRect(0, 0, 512, 384);
+        ctx.setTransform(1, 0, 0, squash, 0, 192 * (1 - squash)); // CRT line-expand
+        const glow = ctx.createRadialGradient(256, 192, 40, 256, 192, 290);
+        glow.addColorStop(0, 'rgba(80, 150, 100, 0.16)');
+        glow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = glow;
+        ctx.fillRect(0, 0, 512, 384);
+        ctx.strokeStyle = '#7dff9f';
+        ctx.lineWidth = 3;
+        ctx.shadowColor = '#7dff9f';
+        ctx.shadowBlur = 16;
+        ctx.strokeRect(112, 136, 288, 112); // the button
+        ctx.font = "bold 52px ui-monospace, 'Cascadia Mono', Menlo, Consolas, monospace";
+        if ('letterSpacing' in ctx) ctx.letterSpacing = '10px';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        const tw = ctx.measureText('ENTER').width;
+        const x0 = 256 - (tw + 26) / 2;
+        ctx.fillStyle = '#b4ffc8';
+        ctx.fillText('ENTER', x0, 196);
+        if (cursorOn) ctx.fillRect(x0 + tw + 8, 172, 18, 46); // block cursor
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.25)'; // scanlines
+        for (let y = 0; y < 384; y += 4) ctx.fillRect(0, y, 512, 2);
+        tex.needsUpdate = true;
+      }
+      drawScreen(true);
+
+      // the ENTER screen uses the monitor's own glass: the GLB has no separate
+      // screen mesh, and the CRT face leans back ~17° and bulges ~1 unit, so
+      // any flat overlay floats or gets pierced at some angle. Instead, take
+      // the monitor's dark-textured front faces (sampled from the atlas),
+      // planar-re-UV them against the fitted glass plane, and texture those —
+      // surface-conformal, so it looks glued on from every camera angle.
+      const atlasCnv = document.createElement('canvas');
+      const atlasImg = mon.material.map.image;
+      atlasCnv.width = atlasImg.width;
+      atlasCnv.height = atlasImg.height;
+      atlasCnv.getContext('2d').drawImage(atlasImg, 0, 0);
+      const apix = atlasCnv.getContext('2d').getImageData(0, 0, atlasCnv.width, atlasCnv.height).data;
+
+      mon.updateWorldMatrix(true, false);
+      const pos = mon.geometry.attributes.position;
+      const auv = mon.geometry.attributes.uv;
+      const idx = mon.geometry.index;
+      const gN = new THREE.Vector3(-0.006, 0.301, 0.954); // fitted glass plane normal (probe)
+      const gRight = new THREE.Vector3().crossVectors(new THREE.Vector3(0, 1, 0), gN).normalize();
+      const gUp = new THREE.Vector3().crossVectors(gN, gRight);
+      const v3 = new THREE.Vector3();
+      const worldOf = (i) => v3.fromBufferAttribute(pos, i).applyMatrix4(mon.matrixWorld);
+
+      const glassIdx = [];
+      for (let f = 0; f < idx.count; f += 3) {
+        const [a, b2, c] = [idx.getX(f), idx.getX(f + 1), idx.getX(f + 2)];
+        const u = (((auv.getX(a) + auv.getX(b2) + auv.getX(c)) / 3) % 1 + 1) % 1;
+        const v = (((auv.getY(a) + auv.getY(b2) + auv.getY(c)) / 3) % 1 + 1) % 1;
+        const o = (((v * atlasCnv.height) | 0) * atlasCnv.width + ((u * atlasCnv.width) | 0)) * 4;
+        if (Math.max(apix[o], apix[o + 1], apix[o + 2]) > 80) continue; // not dark → bezel/shell
+        const w = worldOf(a); // spatial guard: front glass area only
+        if (w.z < 33 || w.y < 83 || w.y > 114) continue;
+        glassIdx.push(a, b2, c);
+      }
+
+      // re-UV the glass verts by planar projection onto the fitted plane
+      const uniq = [...new Set(glassIdx)];
+      let minU = 1e9, maxU = -1e9, minV = 1e9, maxV = -1e9;
+      const anchor = new THREE.Vector3(); // world glass center (also used by tests)
+      for (const i of uniq) {
+        const w = worldOf(i);
+        anchor.add(w);
+        const u = w.dot(gRight), v = w.dot(gUp);
+        minU = Math.min(minU, u); maxU = Math.max(maxU, u);
+        minV = Math.min(minV, v); maxV = Math.max(maxV, v);
+      }
+      anchor.multiplyScalar(1 / uniq.length);
+      const uvArr = new Float32Array(pos.count * 2);
+      for (const i of uniq) {
+        const w = worldOf(i);
+        uvArr[i * 2] = (w.dot(gRight) - minU) / (maxU - minU);
+        uvArr[i * 2 + 1] = (w.dot(gUp) - minV) / (maxV - minV);
+      }
+      const gGeo = new THREE.BufferGeometry();
+      gGeo.setAttribute('position', pos); // shared with the monitor
+      gGeo.setAttribute('uv', new THREE.BufferAttribute(uvArr, 2));
+      gGeo.setIndex(glassIdx);
+      const glass = new THREE.Mesh(
+        gGeo,
+        new THREE.MeshBasicMaterial({
+          map: tex, transparent: true, opacity: 0, toneMapped: false,
+          // same surface as the base mesh — win the depth tie, keep real occlusion
+          polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2,
+        })
+      );
+      glass.visible = false;
+      mon.add(glass); // inherit the monitor's baked transform
+
+      const raycaster = new THREE.Raycaster();
+      const pointer = new THREE.Vector2(2, 2); // offscreen until first move
+      let dragging = false, lit = 0, cursorPrev = null, hoverPrev = false, squashPrev = 0;
+      const trackPointer = (e) => pointer.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
+      addEventListener('pointermove', trackPointer);
+      addEventListener('pointerdown', trackPointer); // touch: tapping the monitor works too
+      addEventListener('blur', () => pointer.set(2, 2));
+      controls.addEventListener('start', () => (dragging = true));
+      controls.addEventListener('end', () => (dragging = false));
+
+      function updateHover(dt) {
+        raycaster.setFromCamera(pointer, camera);
+        const hit = raycaster.intersectObject(scene, true)[0];
+        const on = !dragging && (hit?.object === mon || hit?.object === glass);
+        if (on !== hoverPrev) {
+          hoverPrev = on;
+          renderer.domElement.style.cursor = on ? 'pointer' : '';
+        }
+        lit += ((on ? 1 : 0) - lit) * (1 - Math.exp(-dt * 8)); // eased power on/off, framerate-independent
+        glass.visible = lit > 0.02;
+        if (!glass.visible) return;
+        glass.material.opacity = Math.min(1, lit * 2.5);
+        const cursorOn = on && Math.floor(performance.now() / 530) % 2 === 0;
+        const squash = Math.min(lit * 1.06, 1); // picture expands as the tube wakes
+        if (cursorOn !== cursorPrev || Math.abs(squash - squashPrev) > 0.004) {
+          cursorPrev = cursorOn;
+          squashPrev = squash;
+          drawScreen(cursorOn, squash);
+        }
+      }
+      window.__dbg = { camera, glass, mon, anchor, scene, renderer, THREE }; // headless-test handle
+
+      let tPrev = performance.now();
+      renderer.setAnimationLoop((t) => {
+        const dt = Math.min((t - tPrev) / 1000, 0.1);
+        tPrev = t;
         controls.update(); // damping = smooth glide after drag
+        updateHover(dt);
         renderer.render(scene, camera);
       });
 
