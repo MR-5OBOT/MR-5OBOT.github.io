@@ -109,13 +109,14 @@
       camera.updateProjectionMatrix();
 
       // round pedestal base under the scene, a shade darker than the bg
-      const baseR = (Math.hypot(size.x, size.z) / 2) * 0.85;
+      const baseR = Math.hypot(size.x, size.z) / 2;
       const baseH = maxDim * 0.02;
       const base = new THREE.Mesh(
         new THREE.CylinderGeometry(baseR, baseR, baseH, 64),
         new THREE.MeshBasicMaterial({ color: 0x2f2f2f }) // flat, unlit — clean disc
       );
-      base.position.set(center.x, box.min.y - baseH / 2, center.z);
+      // nudge toward the desk: box center leans to the chair side
+      base.position.set(center.x, box.min.y - baseH / 2, center.z - size.z * 0.12);
       scene.add(base);
 
       // key light aims at the scene from upper front-left, like the ref's desk-lamp mood
