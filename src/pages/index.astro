@@ -41,7 +41,6 @@
       import * as THREE from 'https://esm.sh/three@0.163.0';
       import { OrbitControls } from 'https://esm.sh/three@0.163.0/examples/jsm/controls/OrbitControls.js';
       import { GLTFLoader } from 'https://esm.sh/three@0.163.0/examples/jsm/loaders/GLTFLoader.js';
-      import { RoomEnvironment } from 'https://esm.sh/three@0.163.0/examples/jsm/environments/RoomEnvironment.js';
 
       // if anything crashes, drop the loading overlay instead of freezing on it
       for (const ev of ['error', 'unhandledrejection'])
@@ -57,17 +56,17 @@
       const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
       renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
       renderer.setSize(innerWidth, innerHeight);
-      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMapping = THREE.NoToneMapping; // f3d-style raw colors, no filmic desat
       document.body.appendChild(renderer.domElement);
 
-      // Sketchfab-style mood: dim neutral environment for fill + a warm key light
-      // from the upper front-left. URL knobs for tuning without edits:
-      //   ?env  fill strength   ?key  key strength   ?exp  exposure
+      // f3d-style neutral look: flat ambient + one white key light, no env map,
+      // no tone mapping — raw texture colors. URL knobs for tuning without edits:
+      //   ?amb  ambient fill   ?key  key strength   ?exp  exposure
       const P = new URLSearchParams(location.search);
       const knob = (k, d) => +(P.get(k) ?? d);
-      renderer.toneMappingExposure = knob('exp', 0.95);
-      scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(renderer), 0.04).texture;
-      const key = new THREE.DirectionalLight(0xffe9d2, knob('key', 0.9));
+      renderer.toneMappingExposure = knob('exp', 1);
+      scene.add(new THREE.AmbientLight(0xffffff, knob('amb', 0.7)));
+      const key = new THREE.DirectionalLight(0xffffff, knob('key', 0.9));
       scene.add(key, key.target);
 
       const loadBar = document.getElementById('load-bar');
@@ -88,12 +87,10 @@
       );
       scene.add(gltf.scene);
 
-      // sharpen textures at grazing angles + dial the env fill down to moody
+      // sharpen textures at grazing angles
       const maxAniso = renderer.capabilities.getMaxAnisotropy();
-      const envFill = knob('env', 0.55);
       gltf.scene.traverse((o) => {
         if (!o.isMesh) return;
-        o.material.envMapIntensity = envFill;
         for (const k of ['map', 'aoMap', 'normalMap', 'roughnessMap', 'metalnessMap', 'emissiveMap'])
           if (o.material[k]) o.material[k].anisotropy = maxAniso;
       });
