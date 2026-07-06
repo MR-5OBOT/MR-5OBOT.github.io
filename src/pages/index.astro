@@ -353,21 +353,43 @@
       );
       scene.add(sheet);
 
-      // hovering the CD fans the social links out of it (v4's floppy trick,
-      // reskinned flat): cream keycap sprites that rise staggered from the
-      // disc, glow-scale when hot, and open the link on click
+      // a small pulsing "!" over the note's corner says "read this" — pure
+      // eye-catch in the same phosphor green, no interaction
+      const ecnv = document.createElement('canvas');
+      ecnv.width = 64; ecnv.height = 96;
+      const ectx = ecnv.getContext('2d');
+      ectx.fillStyle = '#7dff9f';
+      ectx.shadowColor = '#7dff9f';
+      ectx.shadowBlur = 12;
+      ectx.beginPath();
+      ectx.roundRect(23, 10, 18, 52, 9); // fat bar — a font "!" reads as a sliver
+      ectx.fill();
+      ectx.beginPath();
+      ectx.arc(32, 81, 10, 0, Math.PI * 2); // the dot
+      ectx.fill();
+      const etex = new THREE.CanvasTexture(ecnv);
+      etex.colorSpace = THREE.SRGBColorSpace;
+      const bang = new THREE.Sprite(new THREE.SpriteMaterial({ map: etex, transparent: true, opacity: 0.9, toneMapped: false }));
+      bang.scale.set(5.2, 7.8, 1);
+      const bangU = u0 + (u1 - u0) * 0.5, bangL = l0 + (l1 - l0) * 0.82; // below the pen, near edge of the sheet
+      const bangY = pTop + 4.2;
+      bang.position.set(U[0] * bangU + L[0] * bangL, bangY, U[1] * bangU + L[1] * bangL);
+      scene.add(bang);
+
+      // hovering the phone fans the social links out of it (contact lives in
+      // the phone): cream keycap sprites that rise staggered, glow-scale when
+      // hot, and open the link on click
       const SOCIALS = [
         ['github', 'https://github.com/MR-5OBOT'],
         ['x', 'https://x.com/MR_5OBOT'],
         ['telegram', 'https://t.me/MR_5OBOT'],
         ['youtube', 'https://youtube.com/@mr5obot'],
       ];
-      const cdParts = [];
-      gltf.scene.traverse((o) => { if (o.isMesh && /^CD/.test(o.name)) cdParts.push(o); });
-      // anchor everything on the disc itself; the sleeve stays hoverable
-      const disc = cdParts.find((o) => !/case/i.test(o.name)) || cdParts[0];
-      const cdBox = new THREE.Box3().setFromObject(disc);
-      const cdC = cdBox.getCenter(new THREE.Vector3());
+      const hubParts = [];
+      gltf.scene.traverse((o) => { if (o.isMesh && /^Phone/i.test(o.name)) hubParts.push(o); });
+      const hubBox = new THREE.Box3();
+      for (const h of hubParts) hubBox.union(new THREE.Box3().setFromObject(h));
+      const hubC = hubBox.getCenter(new THREE.Vector3());
       const iconW = 6.5, fanGap = 7.4;
       const fan = [];
       SOCIALS.forEach(([name, url], i) => {
@@ -390,15 +412,15 @@
           t.anisotropy = maxAniso;
           const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, transparent: true, opacity: 0, toneMapped: false }));
           s.scale.setScalar(iconW);
-          s.position.set(cdC.x, cdBox.max.y, cdC.z);
+          s.position.set(hubC.x, hubBox.max.y, hubC.z);
           s.userData = { url, idx: i, outY: 6 + (SOCIALS.length - 1 - i) * fanGap }; // first link on top
           s.visible = false;
           scene.add(s);
           fan[i] = s;
         };
       });
-      // a bobbing phosphor arrow over the CD says "hover here"; it fades once
-      // the fan opens and stays gone after the links have been discovered
+      // a bobbing phosphor arrow over the phone says "hover here"; it fades
+      // while the fan is out and returns when it sinks
       const acnv = document.createElement('canvas');
       acnv.width = 96; acnv.height = 128;
       const actx2 = acnv.getContext('2d');
@@ -416,36 +438,116 @@
       atex.colorSpace = THREE.SRGBColorSpace;
       const arrow = new THREE.Sprite(new THREE.SpriteMaterial({ map: atex, transparent: true, opacity: 0, toneMapped: false }));
       arrow.scale.set(7, 9.4, 1);
-      const arrowY = cdBox.max.y + 6.5;
-      arrow.position.set(cdC.x, arrowY, cdC.z);
+      const arrowY = hubBox.max.y + 6.5;
+      arrow.position.set(hubC.x, arrowY, hubC.z);
       arrow.userData.indicator = true; // hovering the arrow counts as the CD
       scene.add(arrow);
 
-      // keep the fan open while the pointer travels the gaps between icons:
-      // a static screen-space capsule around the column. (Measuring against
-      // the moving icons made the fan reopen as they sank past the cursor —
-      // the flicker loop.)
-      const fanTopY = cdBox.max.y + 6 + (SOCIALS.length - 1) * fanGap + 4;
-      const vA = new THREE.Vector3(), vB = new THREE.Vector3();
-      const nearFan = () => {
-        const a = vA.set(cdC.x, cdBox.max.y, cdC.z).project(camera);
-        const b = vB.set(cdC.x, fanTopY, cdC.z).project(camera);
-        const ax = ((a.x + 1) / 2) * innerWidth, ay = ((1 - a.y) / 2) * innerHeight;
-        const bx = ((b.x + 1) / 2) * innerWidth, by = ((1 - b.y) / 2) * innerHeight;
-        const px = ((pointer.x + 1) / 2) * innerWidth, py = ((1 - pointer.y) / 2) * innerHeight;
-        const dx = bx - ax, dy = by - ay;
-        const t = Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy || 1)));
-        return Math.hypot(px - (ax + t * dx), py - (ay + t * dy)) < 70;
+      // fan zones, pure screen-space geometry with hysteresis (raycasting the
+      // sprites for open/close caused every flicker bug so far — moving icons
+      // re-armed the fan, ghost sprites ate rays). Two capsules around the
+      // column axis, radii scaled by the icons' current projected size so
+      // zooming keeps the feel identical:
+      //   trigger — the arrow's spot + phone; the only thing that OPENS
+      //   keep    — the whole column, wider; only KEEPS an open fan open
+      const fanTopY = hubBox.max.y + 6 + (SOCIALS.length - 1) * fanGap + 4;
+      const vA = new THREE.Vector3(), vB = new THREE.Vector3(), vC = new THREE.Vector3();
+      const px2 = (v, out) => {
+        const q = v.project(camera);
+        out[0] = ((q.x + 1) / 2) * innerWidth;
+        out[1] = ((1 - q.y) / 2) * innerHeight;
+        return q.z < 1; // false = behind the camera, projection is garbage
+      };
+      const segDist = (p0, a, b) => {
+        const dx = b[0] - a[0], dy = b[1] - a[1];
+        const t = Math.max(0, Math.min(1, ((p0[0] - a[0]) * dx + (p0[1] - a[1]) * dy) / (dx * dx + dy * dy || 1)));
+        return Math.hypot(p0[0] - (a[0] + t * dx), p0[1] - (a[1] + t * dy));
+      };
+      const pxA = [0, 0], pxB = [0, 0], pxC = [0, 0];
+      const fanZone = () => {
+        if (!px2(vA.set(hubC.x, hubBox.max.y, hubC.z), pxA)) return { trigger: false, keep: false };
+        px2(vB.set(hubC.x, fanTopY, hubC.z), pxB);
+        px2(vC.set(hubC.x, hubBox.max.y + iconW, hubC.z), pxC);
+        const iconPx = Math.max(8, Math.hypot(pxC[0] - pxA[0], pxC[1] - pxA[1])); // one icon in px
+        const arrowTop = [pxA[0] + (pxB[0] - pxA[0]) * 0.45, pxA[1] + (pxB[1] - pxA[1]) * 0.45];
+        const pt = [((pointer.x + 1) / 2) * innerWidth, ((1 - pointer.y) / 2) * innerHeight];
+        return {
+          trigger: segDist(pt, pxA, arrowTop) < iconPx * 1.05,
+          keep: segDist(pt, pxA, pxB) < iconPx * 1.6,
+        };
+      };
+      // don't pop an indicator when its anchor is hidden behind something
+      const clearView = (x, y, z, selves) => {
+        vB.set(x, y, z);
+        const dist = vA.copy(vB).sub(camera.position).length();
+        raycaster.set(camera.position, vA.normalize());
+        const h = raycaster.intersectObject(gltf.scene, true)[0];
+        return !h || selves.includes(h.object) || h.distance > dist - 1;
+      };
+
+      // the floppy disk gets the same treatment: its own arrow, and hovering
+      // raises a PROJECTS tag — click stays unwired until the projects page
+      let floppy = null;
+      gltf.scene.traverse((o) => { if (o.isMesh && /floppy/i.test(o.name)) floppy = o; });
+      const flBox = new THREE.Box3().setFromObject(floppy);
+      const flC = flBox.getCenter(new THREE.Vector3());
+      const arrow2 = new THREE.Sprite(new THREE.SpriteMaterial({ map: atex, transparent: true, opacity: 0, toneMapped: false }));
+      arrow2.scale.set(7, 9.4, 1);
+      const arrow2Y = flBox.max.y + 6.5;
+      arrow2.position.set(flC.x, arrow2Y, flC.z);
+      scene.add(arrow2);
+
+      const lcnv = document.createElement('canvas');
+      lcnv.width = 256; lcnv.height = 110;
+      const lctx = lcnv.getContext('2d');
+      lctx.beginPath();
+      lctx.roundRect(4, 4, 248, 102, 24);
+      lctx.fillStyle = '#e7e2d4'; // same keycap cream as the fan icons
+      lctx.fill();
+      lctx.lineWidth = 3;
+      lctx.strokeStyle = '#b9b3a3';
+      lctx.stroke();
+      lctx.textAlign = 'center';
+      lctx.textBaseline = 'middle';
+      lctx.fillStyle = '#2e2c27';
+      lctx.font = "bold 34px ui-monospace, 'Cascadia Mono', Menlo, Consolas, monospace";
+      lctx.fillText('PROJECTS', 128, 42);
+      lctx.fillStyle = '#8a857a';
+      lctx.font = "16px ui-monospace, 'Cascadia Mono', Menlo, Consolas, monospace";
+      lctx.fillText('coming soon', 128, 78);
+      const ltex = new THREE.CanvasTexture(lcnv);
+      ltex.colorSpace = THREE.SRGBColorSpace;
+      ltex.anisotropy = maxAniso;
+      const tag = new THREE.Sprite(new THREE.SpriteMaterial({ map: ltex, transparent: true, opacity: 0, toneMapped: false }));
+      const tagW = 15.5;
+      tag.scale.set(tagW, tagW * (110 / 256), 1);
+      tag.position.set(flC.x, flBox.max.y, flC.z);
+      tag.visible = false;
+      scene.add(tag);
+
+      const flopZone = () => {
+        if (!px2(vA.set(flC.x, flBox.max.y, flC.z), pxA)) return { trigger: false, keep: false };
+        px2(vB.set(flC.x, flBox.max.y + 13, flC.z), pxB);
+        px2(vC.set(flC.x, flBox.max.y + iconW, flC.z), pxC);
+        const iconPx = Math.max(8, Math.hypot(pxC[0] - pxA[0], pxC[1] - pxA[1]));
+        const pt = [((pointer.x + 1) / 2) * innerWidth, ((1 - pointer.y) / 2) * innerHeight];
+        const d = segDist(pt, pxA, pxB);
+        return { trigger: d < iconPx * 1.05, keep: d < iconPx * 1.6 };
       };
 
       const raycaster = new THREE.Raycaster();
       const pointer = new THREE.Vector2(2, 2); // offscreen until first move
-      let lit = 0, fanT = 0, lastZone = 0, cursorPrev = null, pointerPrev = false, squashPrev = 0, downAt = null;
+      let lit = 0, fanT = 0, fanOpen = false, zoneLeftAt = 0, cursorPrev = null, pointerPrev = false, squashPrev = 0, downAt = null;
+      let flopT = 0, flopOpen = false, flopLeftAt = 0;
       const trackPointer = (e) => pointer.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
       addEventListener('pointermove', trackPointer);
+      // mouse gone from the window = no more events; park the pointer so
+      // open UI (fan, cursor) winds down on its own instead of freezing
+      addEventListener('pointerout', (e) => { if (!e.relatedTarget) pointer.set(2, 2); });
+      addEventListener('blur', () => pointer.set(2, 2));
 
-      // what's under the pointer: the CRT glass (pixel-true via the atlas),
-      // a link icon, or the CD that fans them out
+      // what's under the pointer: the CRT glass (pixel-true via the atlas)
+      // or a link icon — fan open/close is handled by fanZone(), not raycast
       const pick = () => {
         raycaster.setFromCamera(pointer, camera);
         // hidden sprites still raycast and would swallow the ray — the faded
@@ -457,10 +559,7 @@
         if (hit.object === glass ||
             (hit.object === mon && hit.uv && darkAt(hit.uv.x, hit.uv.y) && inGlassArea(hit.point)))
           return { kind: 'glass' };
-        if (hit.object.userData?.url && hit.object.visible) return { kind: 'icon', sprite: hit.object };
-        // tight trigger: only the arrow's spot and the disc under it — not the
-        // sleeve, not the empty air where hidden icons park
-        if (hit.object.userData?.indicator || hit.object === disc) return { kind: 'cd' };
+        if (hit.object.userData?.url) return { kind: 'icon', sprite: hit.object };
         return null;
       };
 
@@ -480,19 +579,24 @@
 
       // the CRT is always on — it powers up once as the page appears
       const sst = (x) => x * x * (3 - 2 * x); // smoothstep
+      const backOut = (x) => 1 + 2.3 * (x - 1) ** 3 + 1.3 * (x - 1) ** 2; // slight overshoot
       function updateScreen(dt) {
         const p = pick();
 
-        // links fan: rise while the pointer is on the CD/icons (or crossing
-        // the gaps between them), sink otherwise
-        // icons only re-arm the fan when it's already out — a sinking icon
-        // passing under a parked cursor must not reopen it. A short linger
-        // forgives fast mouse travel that skips outside the capsule briefly.
-        const inZone = p?.kind === 'cd' || (fanT > 0.5 && (p?.kind === 'icon' || nearFan()));
-        if (inZone) lastZone = performance.now();
-        const hold = fanT > 0.5 && performance.now() - lastZone < 300;
-        fanT += ((inZone || hold ? 1 : 0) - fanT) * (1 - Math.exp(-dt * 7));
-        const hot = fanT > 0.5 && p?.kind === 'icon' ? p.sprite : null;
+        // fan state: boolean with time hysteresis — flicker needs a fast
+        // open/close loop, and none exists: opening takes the trigger zone
+        // (with the phone actually visible), staying open takes the wide keep
+        // zone or an icon underfoot, closing takes 150ms fully outside, and
+        // a closing fan can only be re-armed by the trigger itself.
+        const z = fanZone();
+        const now = performance.now();
+        if (fanOpen) {
+          if (z.keep || z.trigger || p?.kind === 'icon') zoneLeftAt = 0;
+          else if (!zoneLeftAt) zoneLeftAt = now;
+          else if (now - zoneLeftAt > 150) { fanOpen = false; zoneLeftAt = 0; }
+        } else if (z.trigger && clearView(hubC.x, hubBox.max.y, hubC.z, hubParts)) fanOpen = true;
+        fanT += ((fanOpen ? 1 : 0) - fanT) * (1 - Math.exp(-dt * (fanOpen ? 4.5 : 10))); // unhurried rise, brisk close
+        const hot = fanOpen && p?.kind === 'icon' ? p.sprite : null;
 
         // hover-here arrow: hides while the fan is out, returns when it sinks
         const wantArrow = fanT < 0.15 ? 0.95 : 0;
@@ -504,11 +608,35 @@
           const k = sst(Math.min(Math.max(fanT * 1.45 - s.userData.idx * 0.13, 0), 1));
           s.visible = k > 0.02;
           s.material.opacity = k;
-          s.position.y = cdBox.max.y + k * s.userData.outY;
-          const want = s === hot ? iconW * 1.22 : iconW;
+          s.position.y = hubBox.max.y + backOut(k) * s.userData.outY; // pop past, settle
+          const base = iconW * (0.75 + 0.25 * k); // grow while rising
+          const want = s === hot ? base * 1.22 : base;
           s.scale.x += (want - s.scale.x) * (1 - Math.exp(-dt * 14));
           s.scale.y = s.scale.x;
         }
+
+        // floppy → PROJECTS tag: same state machine, one riser, no click yet
+        const fz = flopZone();
+        if (flopOpen) {
+          if (fz.keep || fz.trigger) flopLeftAt = 0;
+          else if (!flopLeftAt) flopLeftAt = now;
+          else if (now - flopLeftAt > 150) { flopOpen = false; flopLeftAt = 0; }
+        } else if (fz.trigger && clearView(flC.x, flBox.max.y, flC.z, [floppy])) flopOpen = true;
+        flopT += ((flopOpen ? 1 : 0) - flopT) * (1 - Math.exp(-dt * (flopOpen ? 4.5 : 10)));
+        const tk = sst(flopT);
+        tag.visible = tk > 0.02;
+        tag.material.opacity = tk;
+        tag.position.y = flBox.max.y + backOut(tk) * 7.5;
+        const ts = tagW * (0.75 + 0.25 * tk);
+        tag.scale.set(ts, ts * (110 / 256), 1);
+        const wantArrow2 = flopT < 0.15 ? 0.95 : 0;
+        arrow2.material.opacity += (wantArrow2 - arrow2.material.opacity) * (1 - Math.exp(-dt * 6));
+        arrow2.visible = arrow2.material.opacity > 0.02;
+        arrow2.position.y = arrow2Y + Math.sin(performance.now() / 420 + 2.1) * 1.7; // off-phase from the CD arrow
+
+        // the note's "!": gentle bob + breathing glow, off-phase from both arrows
+        bang.position.y = bangY + Math.sin(performance.now() / 520 + 4.2) * 0.7;
+        bang.material.opacity = 0.8 + Math.sin(performance.now() / 700) * 0.15;
 
         const wantPointer = p?.kind === 'glass' || !!hot;
         if (wantPointer !== pointerPrev) {
@@ -528,7 +656,7 @@
           drawScreen(cursorOn, squash);
         }
       }
-      window.__dbg = { camera, glass, mon, anchor, scene, renderer, THREE, fan, arrow, litNow: () => lit, fanNow: () => fanT }; // headless-test handle
+      window.__dbg = { camera, glass, mon, anchor, scene, renderer, THREE, fan, arrow, arrow2, tag, litNow: () => lit, fanNow: () => fanT, flopNow: () => flopT }; // headless-test handle
 
       let tPrev = performance.now();
       renderer.setAnimationLoop((t) => {
