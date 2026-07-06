@@ -11,6 +11,8 @@
     <title>MR5OBOT</title>
     <meta name="description" content="OHLC trader and token burner." />
     <link rel="icon" type="image/png" href="/assets/profile-2.png" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&display=swap" />
     <style>
       html, body { margin: 0; height: 100%; background: #3a3a3a; overflow: hidden; }
       canvas { display: block; }
@@ -151,12 +153,10 @@
         history.replaceState(null, '', '?' + q);
       });
 
-      // hover the monitor → the CRT powers on: a canvas-textured quad over the
-      // glass shows a phosphor [ ENTER ] button with scanlines. The text lives
-      // in 3D, so orbit/zoom/resize can never desync it; re-raycasting every
-      // frame keeps a still cursor honest while the camera glides. (The GLB has
-      // no separate screen mesh — the glass is part of the monitor — so we
-      // overlay our own, placed as fractions of the monitor's bounding box.)
+      // the CRT is always on, showing a phosphor [ ENTER ] button with
+      // scanlines; it powers up (line-expand) as the page appears, and
+      // clicking the glass replays the cycle. The text lives in 3D on the
+      // screen itself, so orbit/zoom/resize can never desync it.
       let mon = null;
       gltf.scene.traverse((o) => { if (o.isMesh && /computer_monitor/i.test(o.name)) mon = o; });
 
@@ -270,34 +270,257 @@
       glass.visible = false;
       mon.add(glass); // inherit the monitor's baked transform
 
+      // hand-written quote + MR5OBOT sign-off on the top sheet (Paper2). The
+      // sheet is flat, so a thin quad is enough: PCA of the paper's footprint
+      // gives its yaw and extents; the ink redraws once the Caveat font arrives.
+      let paper = null;
+      gltf.scene.traverse((o) => { if (o.isMesh && /paper2/i.test(o.name)) paper = o; });
+      paper.updateWorldMatrix(true, false);
+      const pp = paper.geometry.attributes.position;
+      const pw = new THREE.Vector3();
+      let pcx = 0, pcz = 0, pTop = -1e9;
+      const ptsXZ = [];
+      for (let i = 0; i < pp.count; i++) {
+        pw.fromBufferAttribute(pp, i).applyMatrix4(paper.matrixWorld);
+        ptsXZ.push([pw.x, pw.z]);
+        pcx += pw.x; pcz += pw.z;
+        pTop = Math.max(pTop, pw.y);
+      }
+      pcx /= pp.count; pcz /= pp.count;
+      let sxx = 0, sxz = 0, szz = 0;
+      for (const [x, z] of ptsXZ) {
+        sxx += (x - pcx) ** 2; sxz += (x - pcx) * (z - pcz); szz += (z - pcz) ** 2;
+      }
+      const th = 0.5 * Math.atan2(2 * sxz, sxx - szz); // principal axis in XZ
+      let L = [Math.cos(th), Math.sin(th)]; // candidate long axis (x, z)
+      let U = [-Math.sin(th), Math.cos(th)];
+      const span = (a) => {
+        let lo = 1e9, hi = -1e9;
+        for (const [x, z] of ptsXZ) { const d = x * a[0] + z * a[1]; lo = Math.min(lo, d); hi = Math.max(hi, d); }
+        return [lo, hi];
+      };
+      if (span(U)[1] - span(U)[0] > span(L)[1] - span(L)[0]) [L, U] = [U, L];
+      if (L[1] < 0) L = [-L[0], -L[1]]; // long axis points +z → canvas-down faces the chair
+      U = [L[1], -L[0]]; // perpendicular, right-handed → text reads left-to-right
+      const [u0, u1] = span(U), [l0, l1] = span(L);
+
+      const pcnv = document.createElement('canvas');
+      pcnv.width = 512;
+      pcnv.height = Math.round((512 * (l1 - l0)) / (u1 - u0));
+      const pctx = pcnv.getContext('2d');
+      const ptex = new THREE.CanvasTexture(pcnv);
+      ptex.colorSpace = THREE.SRGBColorSpace;
+      ptex.anisotropy = maxAniso;
+      const drawInk = () => {
+        pctx.clearRect(0, 0, pcnv.width, pcnv.height);
+        pctx.save();
+        pctx.translate(pcnv.width / 2, 0);
+        pctx.rotate(-0.05); // a hair off-square, like real handwriting
+        pctx.textAlign = 'center';
+        pctx.textBaseline = 'middle';
+        pctx.fillStyle = '#26357c'; // same ink as the pen scribble
+        pctx.font = "700 70px Caveat, 'Segoe Script', 'Comic Sans MS', cursive";
+        const lines = ['A winner is', 'someone who', 'loses more than', 'any loser.'];
+        lines.forEach((l, i) => pctx.fillText(l, 0, pcnv.height * (0.15 + i * 0.1)));
+        pctx.font = "700 48px Caveat, 'Segoe Script', 'Comic Sans MS', cursive";
+        pctx.fillText('— MR5OBOT', pcnv.width * 0.15, pcnv.height * 0.60);
+        pctx.restore();
+        ptex.needsUpdate = true;
+      };
+      drawInk();
+      (async () => { // the fonts.css may not be parsed yet — poll, then re-ink
+        for (let i = 0; i < 20 && !document.fonts.check('700 92px Caveat'); i++) {
+          await document.fonts.load('700 92px Caveat');
+          if (!document.fonts.check('700 92px Caveat')) await new Promise((r) => setTimeout(r, 250));
+        }
+        drawInk();
+      })();
+
+      const sheet = new THREE.Mesh(
+        new THREE.PlaneGeometry((u1 - u0) * 0.94, (l1 - l0) * 0.94),
+        new THREE.MeshBasicMaterial({
+          map: ptex, transparent: true, toneMapped: false,
+          polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2,
+        })
+      );
+      sheet.rotation.order = 'YXZ'; // yaw to the paper's angle, then lie flat
+      sheet.rotation.y = Math.atan2(-U[1], U[0]);
+      sheet.rotation.x = -Math.PI / 2;
+      sheet.position.set(
+        U[0] * ((u0 + u1) / 2) + L[0] * ((l0 + l1) / 2),
+        pTop + 0.05,
+        U[1] * ((u0 + u1) / 2) + L[1] * ((l0 + l1) / 2)
+      );
+      scene.add(sheet);
+
+      // hovering the CD fans the social links out of it (v4's floppy trick,
+      // reskinned flat): cream keycap sprites that rise staggered from the
+      // disc, glow-scale when hot, and open the link on click
+      const SOCIALS = [
+        ['github', 'https://github.com/MR-5OBOT'],
+        ['x', 'https://x.com/MR_5OBOT'],
+        ['telegram', 'https://t.me/MR_5OBOT'],
+        ['youtube', 'https://youtube.com/@mr5obot'],
+      ];
+      const cdParts = [];
+      gltf.scene.traverse((o) => { if (o.isMesh && /^CD/.test(o.name)) cdParts.push(o); });
+      // anchor everything on the disc itself; the sleeve stays hoverable
+      const disc = cdParts.find((o) => !/case/i.test(o.name)) || cdParts[0];
+      const cdBox = new THREE.Box3().setFromObject(disc);
+      const cdC = cdBox.getCenter(new THREE.Vector3());
+      const iconW = 6.5, fanGap = 7.4;
+      const fan = [];
+      SOCIALS.forEach(([name, url], i) => {
+        const img = new Image();
+        img.src = `/assets/icons/${name}.png`;
+        img.onload = () => {
+          const c = document.createElement('canvas');
+          c.width = c.height = 128;
+          const g = c.getContext('2d');
+          g.beginPath();
+          g.roundRect(4, 4, 120, 120, 30);
+          g.fillStyle = '#e7e2d4'; // hardware cream, like the keycaps
+          g.fill();
+          g.lineWidth = 3;
+          g.strokeStyle = '#b9b3a3';
+          g.stroke();
+          g.drawImage(img, 24, 24, 80, 80); // simpleicons: black on transparent
+          const t = new THREE.CanvasTexture(c);
+          t.colorSpace = THREE.SRGBColorSpace;
+          t.anisotropy = maxAniso;
+          const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, transparent: true, opacity: 0, toneMapped: false }));
+          s.scale.setScalar(iconW);
+          s.position.set(cdC.x, cdBox.max.y, cdC.z);
+          s.userData = { url, idx: i, outY: 6 + (SOCIALS.length - 1 - i) * fanGap }; // first link on top
+          s.visible = false;
+          scene.add(s);
+          fan[i] = s;
+        };
+      });
+      // a bobbing phosphor arrow over the CD says "hover here"; it fades once
+      // the fan opens and stays gone after the links have been discovered
+      const acnv = document.createElement('canvas');
+      acnv.width = 96; acnv.height = 128;
+      const actx2 = acnv.getContext('2d');
+      actx2.strokeStyle = '#7dff9f';
+      actx2.lineWidth = 10;
+      actx2.lineCap = 'round';
+      actx2.lineJoin = 'round';
+      actx2.shadowColor = '#7dff9f';
+      actx2.shadowBlur = 14;
+      actx2.beginPath();
+      actx2.moveTo(48, 18); actx2.lineTo(48, 82); // shaft
+      actx2.moveTo(26, 62); actx2.lineTo(48, 92); actx2.lineTo(70, 62); // head
+      actx2.stroke();
+      const atex = new THREE.CanvasTexture(acnv);
+      atex.colorSpace = THREE.SRGBColorSpace;
+      const arrow = new THREE.Sprite(new THREE.SpriteMaterial({ map: atex, transparent: true, opacity: 0, toneMapped: false }));
+      arrow.scale.set(7, 9.4, 1);
+      const arrowY = cdBox.max.y + 6.5;
+      arrow.position.set(cdC.x, arrowY, cdC.z);
+      arrow.userData.indicator = true; // hovering the arrow counts as the CD
+      scene.add(arrow);
+
+      // keep the fan open while the pointer travels the gaps between icons:
+      // a static screen-space capsule around the column. (Measuring against
+      // the moving icons made the fan reopen as they sank past the cursor —
+      // the flicker loop.)
+      const fanTopY = cdBox.max.y + 6 + (SOCIALS.length - 1) * fanGap + 4;
+      const vA = new THREE.Vector3(), vB = new THREE.Vector3();
+      const nearFan = () => {
+        const a = vA.set(cdC.x, cdBox.max.y, cdC.z).project(camera);
+        const b = vB.set(cdC.x, fanTopY, cdC.z).project(camera);
+        const ax = ((a.x + 1) / 2) * innerWidth, ay = ((1 - a.y) / 2) * innerHeight;
+        const bx = ((b.x + 1) / 2) * innerWidth, by = ((1 - b.y) / 2) * innerHeight;
+        const px = ((pointer.x + 1) / 2) * innerWidth, py = ((1 - pointer.y) / 2) * innerHeight;
+        const dx = bx - ax, dy = by - ay;
+        const t = Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy || 1)));
+        return Math.hypot(px - (ax + t * dx), py - (ay + t * dy)) < 70;
+      };
+
       const raycaster = new THREE.Raycaster();
       const pointer = new THREE.Vector2(2, 2); // offscreen until first move
-      let dragging = false, lit = 0, cursorPrev = null, hoverPrev = false, squashPrev = 0;
+      let lit = 0, fanT = 0, lastZone = 0, cursorPrev = null, pointerPrev = false, squashPrev = 0, downAt = null;
       const trackPointer = (e) => pointer.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
       addEventListener('pointermove', trackPointer);
-      addEventListener('pointerdown', trackPointer); // touch: tapping the monitor works too
-      addEventListener('blur', () => pointer.set(2, 2));
-      controls.addEventListener('start', () => (dragging = true));
-      controls.addEventListener('end', () => (dragging = false));
 
-      function updateHover(dt) {
+      // what's under the pointer: the CRT glass (pixel-true via the atlas),
+      // a link icon, or the CD that fans them out
+      const pick = () => {
         raycaster.setFromCamera(pointer, camera);
-        const hit = raycaster.intersectObject(scene, true)[0];
-        // screen-only hover: the overlay is glass by construction; a monitor
-        // hit counts only if it lands on a dark-glass texel on the front
-        const on = !dragging && !!hit && (
-          hit.object === glass ||
-          (hit.object === mon && hit.uv && darkAt(hit.uv.x, hit.uv.y) && inGlassArea(hit.point))
-        );
-        if (on !== hoverPrev) {
-          hoverPrev = on;
-          renderer.domElement.style.cursor = on ? 'pointer' : '';
+        // hidden sprites still raycast and would swallow the ray — the faded
+        // arrow parks exactly where the bottom icon rises — so skip ghosts
+        const hit = raycaster
+          .intersectObject(scene, true)
+          .find((h) => !h.object.isSprite || (h.object.visible && h.object.material.opacity > 0.1));
+        if (!hit) return null;
+        if (hit.object === glass ||
+            (hit.object === mon && hit.uv && darkAt(hit.uv.x, hit.uv.y) && inGlassArea(hit.point)))
+          return { kind: 'glass' };
+        if (hit.object.userData?.url && hit.object.visible) return { kind: 'icon', sprite: hit.object };
+        // tight trigger: only the arrow's spot and the disc under it — not the
+        // sleeve, not the empty air where hidden icons park
+        if (hit.object.userData?.indicator || hit.object === disc) return { kind: 'cd' };
+        return null;
+      };
+
+      // clicks (or taps; a drag is not a click): glass power-cycles the CRT,
+      // an icon opens its link
+      addEventListener('pointerdown', (e) => {
+        trackPointer(e);
+        downAt = [e.clientX, e.clientY];
+      });
+      addEventListener('pointerup', (e) => {
+        if (!downAt || Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 6) return;
+        trackPointer(e);
+        const p = pick();
+        if (p?.kind === 'glass') lit = 0;
+        else if (p?.kind === 'icon' && fanT > 0.6) window.open(p.sprite.userData.url, '_blank', 'noopener');
+      });
+
+      // the CRT is always on — it powers up once as the page appears
+      const sst = (x) => x * x * (3 - 2 * x); // smoothstep
+      function updateScreen(dt) {
+        const p = pick();
+
+        // links fan: rise while the pointer is on the CD/icons (or crossing
+        // the gaps between them), sink otherwise
+        // icons only re-arm the fan when it's already out — a sinking icon
+        // passing under a parked cursor must not reopen it. A short linger
+        // forgives fast mouse travel that skips outside the capsule briefly.
+        const inZone = p?.kind === 'cd' || (fanT > 0.5 && (p?.kind === 'icon' || nearFan()));
+        if (inZone) lastZone = performance.now();
+        const hold = fanT > 0.5 && performance.now() - lastZone < 300;
+        fanT += ((inZone || hold ? 1 : 0) - fanT) * (1 - Math.exp(-dt * 7));
+        const hot = fanT > 0.5 && p?.kind === 'icon' ? p.sprite : null;
+
+        // hover-here arrow: hides while the fan is out, returns when it sinks
+        const wantArrow = fanT < 0.15 ? 0.95 : 0;
+        arrow.material.opacity += (wantArrow - arrow.material.opacity) * (1 - Math.exp(-dt * 6));
+        arrow.visible = arrow.material.opacity > 0.02;
+        arrow.position.y = arrowY + Math.sin(performance.now() / 420) * 1.7; // the drop-bounce
+        for (const s of fan) {
+          if (!s) continue;
+          const k = sst(Math.min(Math.max(fanT * 1.45 - s.userData.idx * 0.13, 0), 1));
+          s.visible = k > 0.02;
+          s.material.opacity = k;
+          s.position.y = cdBox.max.y + k * s.userData.outY;
+          const want = s === hot ? iconW * 1.22 : iconW;
+          s.scale.x += (want - s.scale.x) * (1 - Math.exp(-dt * 14));
+          s.scale.y = s.scale.x;
         }
-        lit += ((on ? 1 : 0) - lit) * (1 - Math.exp(-dt * 8)); // eased power on/off, framerate-independent
+
+        const wantPointer = p?.kind === 'glass' || !!hot;
+        if (wantPointer !== pointerPrev) {
+          pointerPrev = wantPointer;
+          renderer.domElement.style.cursor = wantPointer ? 'pointer' : '';
+        }
+
+        lit += (1 - lit) * (1 - Math.exp(-dt * 8)); // framerate-independent ease to on
         glass.visible = lit > 0.02;
         if (!glass.visible) return;
         glass.material.opacity = Math.min(1, lit * 2.5);
-        const cursorOn = on && Math.floor(performance.now() / 530) % 2 === 0;
+        const cursorOn = Math.floor(performance.now() / 530) % 2 === 0;
         const squash = Math.min(lit * 1.06, 1); // picture expands as the tube wakes
         if (cursorOn !== cursorPrev || Math.abs(squash - squashPrev) > 0.004) {
           cursorPrev = cursorOn;
@@ -305,14 +528,14 @@
           drawScreen(cursorOn, squash);
         }
       }
-      window.__dbg = { camera, glass, mon, anchor, scene, renderer, THREE }; // headless-test handle
+      window.__dbg = { camera, glass, mon, anchor, scene, renderer, THREE, fan, arrow, litNow: () => lit, fanNow: () => fanT }; // headless-test handle
 
       let tPrev = performance.now();
       renderer.setAnimationLoop((t) => {
         const dt = Math.min((t - tPrev) / 1000, 0.1);
         tPrev = t;
         controls.update(); // damping = smooth glide after drag
-        updateHover(dt);
+        updateScreen(dt);
         renderer.render(scene, camera);
       });
 
