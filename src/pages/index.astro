@@ -569,7 +569,7 @@
       // the viewer's right. 46MB of textures — stream it in the background
       // after the desk is up; ENTER queues the flight if clicked early.
       const cabSpot = new THREE.Vector3(center.x + maxDim * 1.7, 0, center.z);
-      let cabCam = null, cabTgt = null, pendingFly = false, drawers = [];
+      let cabCam = null, cabTgt = null, pendingFly = false, drawers = [], cabTag = null, cabTagY = 0;
       const cabRoot = new THREE.Group(); // hidden until ENTER — no spoilers when orbiting
       cabRoot.visible = false;
       scene.add(cabRoot);
@@ -643,20 +643,28 @@
           .normalize().multiplyScalar((cb2.max.x - cb2.min.x) * 0.24);
         const localOff = (m) => m.parent.worldToLocal(m.parent.getWorldPosition(new THREE.Vector3()).add(slideW));
         const offF = localOff(fronts[0]), offK = localOff(knobs[0]);
-        // island centroid — walk its OWN index; the shared position buffer
+        // island bbox — walk its OWN index; the shared position buffer
         // holds all 16 islands, so Box3.setFromObject would measure them all
-        const ctr = (m) => {
+        const isleBox = (m) => {
           const b = new THREE.Box3(), v = new THREE.Vector3();
           const pos = m.geometry.attributes.position;
           for (const i of m.geometry.index.array) b.expandByPoint(v.fromBufferAttribute(pos, i).applyMatrix4(m.parent.matrixWorld));
-          return b.getCenter(new THREE.Vector3());
+          return b;
         };
-        const kcs = knobs.map((k) => ({ k, c: ctr(k) }));
+        const kcs = knobs.map((k) => ({ k, c: isleBox(k).getCenter(new THREE.Vector3()) }));
         drawers = fronts.map((f, i) => {
-          const fc = ctr(f);
+          const fb = isleBox(f), fc = fb.getCenter(new THREE.Vector3()), fs = fb.getSize(new THREE.Vector3());
           kcs.sort((a, b) => a.c.distanceToSquared(fc) - b.c.distanceToSquared(fc));
           const parts = [[f, offF], [kcs.shift().k, offK]]; // claim the nearest knob
           for (const [m] of parts) m.userData.drawer = i;
+          // hover reads a STATIC invisible proxy parked at the closed spot —
+          // raycasting the sliding panel itself is a feedback loop (open moves
+          // it out from under the pointer, which closes it, which reopens it)
+          const proxy = new THREE.Mesh(new THREE.BoxGeometry(Math.max(fs.x, 8), fs.y, fs.z));
+          proxy.position.copy(fc);
+          proxy.visible = false; // invisible meshes still raycast
+          proxy.userData.drawer = i;
+          cabRoot.add(proxy);
           return { parts, t: 0 };
         });
         // arrival view: near head-on at the drawers, slightly above —
@@ -665,6 +673,38 @@
         cabTgt = new THREE.Vector3(cabSpot.x, box.min.y + h * 0.5, cabSpot.z);
         cabCam = cabTgt.clone().add(new THREE.Vector3()
           .setFromSpherical(new THREE.Spherical(maxDim * 1.39, deg(70.6), deg(-89.5))));
+        // floating hand-scrawled label over the top — drawn letter by letter
+        // with jitter and a double pen pass so it reads as handwriting
+        const tcnv = document.createElement('canvas');
+        tcnv.width = 1024; tcnv.height = 224;
+        const tctx = tcnv.getContext('2d');
+        tctx.font = "italic 96px 'Segoe Print', 'Bradley Hand', 'Comic Sans MS', cursive";
+        tctx.textBaseline = 'middle';
+        tctx.strokeStyle = '#417076'; // the cabinet's own teal
+        tctx.lineWidth = 2.5;
+        tctx.lineJoin = 'round';
+        tctx.shadowColor = '#417076';
+        tctx.shadowBlur = 16;
+        const label = 'Projects Cabinet';
+        let lx = (tcnv.width - tctx.measureText(label).width) / 2;
+        for (const ch of label) {
+          tctx.save();
+          tctx.translate(lx, 112 + (Math.random() - 0.5) * 9);
+          tctx.rotate((Math.random() - 0.5) * 0.09);
+          tctx.strokeText(ch, 0, 0);
+          tctx.strokeText(ch, 1.5, -1); // the second pass of the pen
+          tctx.restore();
+          lx += tctx.measureText(ch).width;
+        }
+        const ttex = new THREE.CanvasTexture(tcnv);
+        ttex.colorSpace = THREE.SRGBColorSpace;
+        ttex.anisotropy = maxAniso;
+        cabTag = new THREE.Sprite(new THREE.SpriteMaterial({ map: ttex, transparent: true, toneMapped: false }));
+        const ctw = (cb2.max.z - cb2.min.z) * 0.72;
+        cabTag.scale.set(ctw, ctw * (224 / 1024), 1);
+        cabTagY = box.min.y + h * 1.24;
+        cabTag.position.set(cabSpot.x, cabTagY, cabSpot.z);
+        cabRoot.add(cabTag);
         if (pendingFly) { pendingFly = false; flyTo(cabCam, cabTgt, true); }
       });
 
@@ -788,6 +828,9 @@
         // the note's "!": gentle bob + breathing glow, off-phase from both arrows
         bang.position.y = bangY + Math.sin(performance.now() / 520 + 4.2) * 0.7;
         bang.material.opacity = 0.8 + Math.sin(performance.now() / 700) * 0.15;
+
+        // the cabinet's scrawled label drifts on its own slow swell
+        if (cabTag) cabTag.position.y = cabTagY + Math.sin(performance.now() / 560 + 1.3) * 2.4;
 
         const wantPointer = p?.kind === 'glass' || p?.kind === 'drawer' || !!hot;
         if (wantPointer !== pointerPrev) {
