@@ -28,6 +28,17 @@
       #load-track { width: 220px; height: 2px; background: rgba(255, 255, 255, 0.15); }
       #load-bar { width: 0%; height: 100%; background: #e8e8e8; transition: width 0.2s ease-out; }
       #load-pct { color: #999; letter-spacing: 0.2em; }
+      #back {
+        position: fixed; top: 14px; left: 18px; z-index: 5;
+        font: 56px ui-monospace, 'Cascadia Mono', Menlo, Consolas, monospace;
+        line-height: 1; color: #7dff9f;
+        text-shadow: 0 0 14px #7dff9f, 0 0 30px #7dff9f; /* same glow as the scene arrows */
+        background: none; border: none; padding: 6px 12px; cursor: pointer;
+        opacity: 0; pointer-events: none; transition: opacity 0.4s ease;
+      }
+      #back.on span { display: inline-block; animation: back-bob 0.84s ease-in-out infinite; }
+      @keyframes back-bob { 50% { transform: translateX(-9px); } } /* same beat as the 3D arrows' bounce */
+      #back.on { opacity: 1; pointer-events: auto; }
     </style>
   </head>
   <body>
@@ -38,6 +49,7 @@
         <div id="load-pct">0%</div>
       </div>
     </div>
+    <button id="back" aria-label="Back"><span>&larr;</span></button>
 
     <script type="module" is:inline>
       import * as THREE from 'https://esm.sh/three@0.163.0';
@@ -535,6 +547,127 @@
         return { trigger: d < iconPx * 1.05, keep: d < iconPx * 1.6 };
       };
 
+      // referee-cam flight: a raised quadratic-bezier sweep between views;
+      // controls sleep while traveling and re-target on landing
+      const backBtn = document.getElementById('back');
+      let fly = null, homeCam = null, homeTgt = null, atCab = false;
+      function flyTo(pos, tgt, toCab) {
+        if (toCab) { homeCam = camera.position.clone(); homeTgt = controls.target.clone(); }
+        fly = { t: 0, p0: camera.position.clone(), p2: pos.clone(), t0: controls.target.clone(), t1: tgt.clone() };
+        fly.p1 = fly.p0.clone().add(fly.p2).multiplyScalar(0.5);
+        fly.p1.y += maxDim * 0.55; // the crane arc
+        controls.enabled = false;
+        atCab = toCab;
+        if (toCab) cabRoot.visible = true; // reveal for the trip; hidden again once home
+        if (!toCab) backBtn.classList.remove('on');
+      }
+      const goHome = () => { if (atCab && !fly) flyTo(homeCam, homeTgt, false); };
+      backBtn.addEventListener('click', goHome);
+      addEventListener('keydown', (e) => { if (e.key === 'Escape') goHome(); });
+
+      // ENTER's destination: the filing cabinet on its own pedestal off to
+      // the viewer's right. 46MB of textures — stream it in the background
+      // after the desk is up; ENTER queues the flight if clicked early.
+      const cabSpot = new THREE.Vector3(center.x + maxDim * 1.7, 0, center.z);
+      let cabCam = null, cabTgt = null, pendingFly = false, drawers = [];
+      const cabRoot = new THREE.Group(); // hidden until ENTER — no spoilers when orbiting
+      cabRoot.visible = false;
+      scene.add(cabRoot);
+      new GLTFLoader().load('/assets/old_filing_cabinet.glb', (g) => {
+        const cab = g.scene;
+        let knob = null, shelf = null;
+        cab.traverse((o) => {
+          if (!o.isMesh) return;
+          if (/knob/i.test(o.name)) knob = o;
+          if (/shelf/i.test(o.name)) shelf = o;
+          if (o.material.map) o.material.map.anisotropy = maxAniso;
+        });
+        // front = the knob side; yaw it to face the desk (angles from the
+        // unscaled boxes — uniform scale keeps directions, but don't mix)
+        const cb = new THREE.Box3().setFromObject(cab);
+        const cc = cb.getCenter(new THREE.Vector3());
+        const kc = new THREE.Box3().setFromObject(knob).getCenter(new THREE.Vector3());
+        const front = Math.atan2(kc.x - cc.x, kc.z - cc.z);
+        const want = Math.atan2(center.x - cabSpot.x, center.z - cabSpot.z);
+        cab.rotation.y = want - front;
+        cab.scale.setScalar((maxDim * 0.55) / (cb.max.y - cb.min.y)); // desk-scale height
+        // re-measure after scale+yaw, drop it onto the floor at the spot
+        const cb2 = new THREE.Box3().setFromObject(cab);
+        const cc2 = cb2.getCenter(new THREE.Vector3());
+        cab.position.set(cabSpot.x - cc2.x, box.min.y - cb2.min.y, cabSpot.z - cc2.z);
+        cabRoot.add(cab);
+        const discR = (Math.hypot(cb2.max.x - cb2.min.x, cb2.max.z - cb2.min.z) / 2) * 1.15;
+        const disc = new THREE.Mesh(new THREE.CylinderGeometry(discR, discR, baseH, 64), base.material);
+        disc.position.set(cabSpot.x, box.min.y - baseH / 2, cabSpot.z);
+        cabRoot.add(disc);
+        // drawers: the merged Shelf/Knob meshes hold 16 islands each — split
+        // them into per-cell meshes (shared GPU buffers, new index) so hover
+        // can slide a front+knob pair out. The body is one closed shell, so
+        // it's a shallow tease-open, not a full pull-out.
+        const split = (mesh) => {
+          const geo = mesh.geometry, pos = geo.attributes.position, idx = geo.index.array;
+          const vmap = new Map(), wid = new Int32Array(pos.count);
+          for (let i = 0; i < pos.count; i++) {
+            const k = pos.getX(i).toFixed(3) + ',' + pos.getY(i).toFixed(3) + ',' + pos.getZ(i).toFixed(3);
+            if (!vmap.has(k)) vmap.set(k, vmap.size);
+            wid[i] = vmap.get(k); // weld split verts so islands connect
+          }
+          const par = Int32Array.from({ length: vmap.size }, (_, i) => i);
+          const find = (a) => { while (par[a] !== a) a = par[a] = par[par[a]]; return a; };
+          for (let t = 0; t < idx.length; t += 3) {
+            const a = find(wid[idx[t]]);
+            par[find(wid[idx[t + 1]])] = a;
+            par[find(wid[idx[t + 2]])] = a;
+          }
+          const isles = new Map();
+          for (let t = 0; t < idx.length; t += 3) {
+            const r = find(wid[idx[t]]);
+            if (!isles.has(r)) isles.set(r, []);
+            isles.get(r).push(idx[t], idx[t + 1], idx[t + 2]);
+          }
+          geo.setIndex([]); // the original stops drawing; islands take over
+          return [...isles.values()].map((tris) => {
+            const sub = new THREE.BufferGeometry();
+            for (const n in geo.attributes) sub.setAttribute(n, geo.attributes[n]);
+            sub.setIndex(tris);
+            const m = new THREE.Mesh(sub, mesh.material);
+            mesh.add(m); // child of the original = inherits the baked FBX matrix
+            return m;
+          });
+        };
+        cab.updateWorldMatrix(true, true);
+        const fronts = split(shelf), knobs = split(knob);
+        // slide vector: a quarter of the depth toward the desk, expressed in
+        // each parent's local frame (front and knob carry different matrices)
+        const slideW = new THREE.Vector3(center.x - cabSpot.x, 0, center.z - cabSpot.z)
+          .normalize().multiplyScalar((cb2.max.x - cb2.min.x) * 0.24);
+        const localOff = (m) => m.parent.worldToLocal(m.parent.getWorldPosition(new THREE.Vector3()).add(slideW));
+        const offF = localOff(fronts[0]), offK = localOff(knobs[0]);
+        // island centroid — walk its OWN index; the shared position buffer
+        // holds all 16 islands, so Box3.setFromObject would measure them all
+        const ctr = (m) => {
+          const b = new THREE.Box3(), v = new THREE.Vector3();
+          const pos = m.geometry.attributes.position;
+          for (const i of m.geometry.index.array) b.expandByPoint(v.fromBufferAttribute(pos, i).applyMatrix4(m.parent.matrixWorld));
+          return b.getCenter(new THREE.Vector3());
+        };
+        const kcs = knobs.map((k) => ({ k, c: ctr(k) }));
+        drawers = fronts.map((f, i) => {
+          const fc = ctr(f);
+          kcs.sort((a, b) => a.c.distanceToSquared(fc) - b.c.distanceToSquared(fc));
+          const parts = [[f, offF], [kcs.shift().k, offK]]; // claim the nearest knob
+          for (const [m] of parts) m.userData.drawer = i;
+          return { parts, t: 0 };
+        });
+        // arrival view: near head-on at the drawers, slightly above —
+        // user-picked via the ?az/?pol/?r address-bar knobs while parked here
+        const h = cb2.max.y - cb2.min.y;
+        cabTgt = new THREE.Vector3(cabSpot.x, box.min.y + h * 0.5, cabSpot.z);
+        cabCam = cabTgt.clone().add(new THREE.Vector3()
+          .setFromSpherical(new THREE.Spherical(maxDim * 1.39, deg(70.6), deg(-89.5))));
+        if (pendingFly) { pendingFly = false; flyTo(cabCam, cabTgt, true); }
+      });
+
       const raycaster = new THREE.Raycaster();
       const pointer = new THREE.Vector2(2, 2); // offscreen until first move
       let lit = 0, fanT = 0, fanOpen = false, zoneLeftAt = 0, cursorPrev = null, pointerPrev = false, squashPrev = 0, downAt = null;
@@ -560,6 +693,8 @@
             (hit.object === mon && hit.uv && darkAt(hit.uv.x, hit.uv.y) && inGlassArea(hit.point)))
           return { kind: 'glass' };
         if (hit.object.userData?.url) return { kind: 'icon', sprite: hit.object };
+        if (hit.object.userData?.drawer !== undefined && atCab && !fly)
+          return { kind: 'drawer', idx: hit.object.userData.drawer };
         return null;
       };
 
@@ -573,7 +708,11 @@
         if (!downAt || Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 6) return;
         trackPointer(e);
         const p = pick();
-        if (p?.kind === 'glass') lit = 0;
+        if (p?.kind === 'glass' && !fly && !atCab) {
+          lit = 0; // power-cycle flash as the trip starts
+          if (cabCam) flyTo(cabCam, cabTgt, true);
+          else pendingFly = true; // the 46MB hasn't landed yet — fly on arrival
+        }
         else if (p?.kind === 'icon' && fanT > 0.6) window.open(p.sprite.userData.url, '_blank', 'noopener');
       });
 
@@ -582,6 +721,16 @@
       const backOut = (x) => 1 + 2.3 * (x - 1) ** 3 + 1.3 * (x - 1) ** 2; // slight overshoot
       function updateScreen(dt) {
         const p = pick();
+
+        // the hovered drawer slides open; the rest ease shut
+        for (let i = 0; i < drawers.length; i++) {
+          const d = drawers[i];
+          const want = p?.kind === 'drawer' && p.idx === i ? 1 : 0;
+          const t2 = d.t + (want - d.t) * (1 - Math.exp(-dt * 7));
+          if (Math.abs(t2 - d.t) < 1e-4) continue;
+          d.t = t2;
+          for (const [m, off] of d.parts) m.position.copy(off).multiplyScalar(sst(d.t));
+        }
 
         // fan state: boolean with time hysteresis — flicker needs a fast
         // open/close loop, and none exists: opening takes the trigger zone
@@ -594,7 +743,8 @@
           if (z.keep || z.trigger || p?.kind === 'icon') zoneLeftAt = 0;
           else if (!zoneLeftAt) zoneLeftAt = now;
           else if (now - zoneLeftAt > 150) { fanOpen = false; zoneLeftAt = 0; }
-        } else if (z.trigger && clearView(hubC.x, hubBox.max.y, hubC.z, hubParts)) fanOpen = true;
+        } else if (!fly && z.trigger && clearView(hubC.x, hubBox.max.y, hubC.z, hubParts)) fanOpen = true;
+        if (fly) fanOpen = false; // the camera sweep drags zones under the parked pointer
         fanT += ((fanOpen ? 1 : 0) - fanT) * (1 - Math.exp(-dt * (fanOpen ? 4.5 : 10))); // unhurried rise, brisk close
         const hot = fanOpen && p?.kind === 'icon' ? p.sprite : null;
 
@@ -622,6 +772,7 @@
           else if (!flopLeftAt) flopLeftAt = now;
           else if (now - flopLeftAt > 150) { flopOpen = false; flopLeftAt = 0; }
         } else if (fz.trigger && clearView(flC.x, flBox.max.y, flC.z, [floppy])) flopOpen = true;
+        if (fly) flopOpen = false;
         flopT += ((flopOpen ? 1 : 0) - flopT) * (1 - Math.exp(-dt * (flopOpen ? 4.5 : 10)));
         const tk = sst(flopT);
         tag.visible = tk > 0.02;
@@ -638,7 +789,7 @@
         bang.position.y = bangY + Math.sin(performance.now() / 520 + 4.2) * 0.7;
         bang.material.opacity = 0.8 + Math.sin(performance.now() / 700) * 0.15;
 
-        const wantPointer = p?.kind === 'glass' || !!hot;
+        const wantPointer = p?.kind === 'glass' || p?.kind === 'drawer' || !!hot;
         if (wantPointer !== pointerPrev) {
           pointerPrev = wantPointer;
           renderer.domElement.style.cursor = wantPointer ? 'pointer' : '';
@@ -656,13 +807,28 @@
           drawScreen(cursorOn, squash);
         }
       }
-      window.__dbg = { camera, glass, mon, anchor, scene, renderer, THREE, fan, arrow, arrow2, tag, litNow: () => lit, fanNow: () => fanT, flopNow: () => flopT }; // headless-test handle
+      window.__dbg = { camera, glass, mon, anchor, scene, renderer, THREE, fan, arrow, arrow2, tag, litNow: () => lit, fanNow: () => fanT, flopNow: () => flopT, flyNow: () => !!fly, atCab: () => atCab, cabView: () => cabCam, drawers: () => drawers, goHome }; // headless-test handle
 
       let tPrev = performance.now();
       renderer.setAnimationLoop((t) => {
         const dt = Math.min((t - tPrev) / 1000, 0.1);
         tPrev = t;
-        controls.update(); // damping = smooth glide after drag
+        if (fly) {
+          fly.t = Math.min(1, fly.t + dt / 2.6);
+          const k = fly.t ** 3 * (fly.t * (fly.t * 6 - 15) + 10); // smootherstep
+          const a = 1 - k;
+          camera.position.copy(fly.p0).multiplyScalar(a * a)
+            .addScaledVector(fly.p1, 2 * a * k)
+            .addScaledVector(fly.p2, k * k);
+          controls.target.lerpVectors(fly.t0, fly.t1, k);
+          camera.lookAt(controls.target);
+          if (fly.t >= 1) {
+            fly = null;
+            controls.enabled = true;
+            if (atCab) backBtn.classList.add('on');
+            else cabRoot.visible = false; // landed home — vanish behind our back
+          }
+        } else controls.update(); // damping = smooth glide after drag
         updateScreen(dt);
         renderer.render(scene, camera);
       });
