@@ -569,6 +569,17 @@
       // the viewer's right. 46MB of textures — stream it in the background
       // after the desk is up; ENTER queues the flight if clicked early.
       const cabSpot = new THREE.Vector3(center.x + maxDim * 1.7, 0, center.z);
+      // what's filed in the cabinet: PROJECTS[i] goes in drawer i counting the
+      // top row left→right (as you face it), then down. Hover floats a card
+      // out of the drawer; click on the drawer follows url. img is optional —
+      // a thumbnail path drawn above the title on the card.
+      const PROJECTS = [
+        { title: 'Tj Analyser', url: 'https://github.com/MR-5OBOT/Tj_analyser' },
+        { title: 'Probability Simulator', url: 'https://github.com/MR-5OBOT/probability-simulator' },
+        { title: 'Risk Model Tester', url: 'https://github.com/MR-5OBOT/risk-model-tester' },
+        { title: 'DotRobot', url: 'https://github.com/MR-5OBOT/DotRobot' },
+        { title: 'MR-NV', url: 'https://github.com/MR-5OBOT/MR-NV' },
+      ];
       let cabCam = null, cabTgt = null, pendingFly = false, drawers = [], cabTag = null, cabTagY = 0;
       const cabRoot = new THREE.Group(); // hidden until ENTER — no spoilers when orbiting
       cabRoot.visible = false;
@@ -665,8 +676,58 @@
           proxy.visible = false; // invisible meshes still raycast
           proxy.userData.drawer = i;
           cabRoot.add(proxy);
-          return { parts, t: 0 };
+          return { parts, t: 0, c: fc, s: fs };
         });
+        // file the projects: sort drawers into reading order (top row
+        // left→right as seen from the arrival camera, then down) and hang a
+        // manila card over each assigned one — it floats out as the drawer
+        // opens. The card never raycasts: hover/click live entirely on the
+        // static proxy, so no open-moves-it-closes-it feedback loop.
+        const slideDir = slideW.clone().normalize();
+        const rightAxis = new THREE.Vector3(0, 1, 0).cross(slideDir); // screen-right at the head-on view
+        const yTop = Math.max(...drawers.map((d) => d.c.y));
+        const pitch = (yTop - Math.min(...drawers.map((d) => d.c.y))) / 3 || 1;
+        [...drawers]
+          .sort((a, b) => Math.round((yTop - a.c.y) / pitch) - Math.round((yTop - b.c.y) / pitch)
+            || a.c.dot(rightAxis) - b.c.dot(rightAxis))
+          .forEach((d, i) => {
+            const proj = PROJECTS[i];
+            if (!proj) return;
+            const cw = Math.max(d.s.x, d.s.z) * 1.6, ch = cw * (288 / 512);
+            const ccnv = document.createElement('canvas');
+            ccnv.width = 512; ccnv.height = 288;
+            const cctx = ccnv.getContext('2d');
+            const ctex = new THREE.CanvasTexture(ccnv);
+            ctex.colorSpace = THREE.SRGBColorSpace;
+            ctex.anisotropy = maxAniso;
+            const paint = (img) => {
+              cctx.clearRect(0, 0, 512, 288);
+              cctx.fillStyle = '#e9dfc0'; // manila index card
+              cctx.fillRect(8, 8, 496, 272);
+              cctx.strokeStyle = '#417076'; // the cabinet's teal for the ink
+              cctx.lineWidth = 5;
+              cctx.strokeRect(8, 8, 496, 272);
+              if (img) cctx.drawImage(img, 16, 16, 480, 196);
+              cctx.fillStyle = '#2c4f54';
+              cctx.font = "italic 52px 'Segoe Print', 'Bradley Hand', 'Comic Sans MS', cursive";
+              cctx.textAlign = 'center';
+              cctx.textBaseline = 'middle';
+              cctx.fillText(proj.title, 256, img ? 242 : 144);
+              ctex.needsUpdate = true;
+            };
+            paint(null);
+            if (proj.img) { const im = new Image(); im.onload = () => paint(im); im.src = proj.img; }
+            d.card = new THREE.Sprite(new THREE.SpriteMaterial({ map: ctex, transparent: true, toneMapped: false, opacity: 0 }));
+            d.card.scale.set(cw, ch, 1);
+            d.card.material.rotation = (Math.random() - 0.5) * 0.07; // filed by hand, not by machine
+            d.card.raycast = () => {}; // informational only
+            d.card.position.copy(d.c).add(slideDir.clone().multiplyScalar(slideW.length() * 1.7));
+            d.cardY = d.c.y + d.s.y * 0.5; // rises from the drawer's top lip
+            d.cardRise = ch * 0.62;
+            d.card.visible = false;
+            d.url = proj.url;
+            cabRoot.add(d.card);
+          });
         // arrival view: near head-on at the drawers, slightly above —
         // user-picked via the ?az/?pol/?r address-bar knobs while parked here
         const h = cb2.max.y - cb2.min.y;
@@ -754,6 +815,8 @@
           else pendingFly = true; // the 46MB hasn't landed yet — fly on arrival
         }
         else if (p?.kind === 'icon' && fanT > 0.6) window.open(p.sprite.userData.url, '_blank', 'noopener');
+        else if (p?.kind === 'drawer' && drawers[p.idx].url && drawers[p.idx].t > 0.5)
+          window.open(drawers[p.idx].url, '_blank', 'noopener');
       });
 
       // the CRT is always on — it powers up once as the page appears
@@ -770,6 +833,12 @@
           if (Math.abs(t2 - d.t) < 1e-4) continue;
           d.t = t2;
           for (const [m, off] of d.parts) m.position.copy(off).multiplyScalar(sst(d.t));
+          if (d.card) {
+            const k = sst(d.t);
+            d.card.visible = k > 0.02;
+            d.card.material.opacity = k;
+            d.card.position.y = d.cardY + backOut(k) * d.cardRise;
+          }
         }
 
         // fan state: boolean with time hysteresis — flicker needs a fast
@@ -832,7 +901,7 @@
         // the cabinet's scrawled label drifts on its own slow swell
         if (cabTag) cabTag.position.y = cabTagY + Math.sin(performance.now() / 560 + 1.3) * 2.4;
 
-        const wantPointer = p?.kind === 'glass' || p?.kind === 'drawer' || !!hot;
+        const wantPointer = p?.kind === 'glass' || (p?.kind === 'drawer' && !!drawers[p.idx].url) || !!hot;
         if (wantPointer !== pointerPrev) {
           pointerPrev = wantPointer;
           renderer.domElement.style.cursor = wantPointer ? 'pointer' : '';
