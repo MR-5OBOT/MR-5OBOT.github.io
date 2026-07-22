@@ -10,6 +10,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>MR5OBOT</title>
     <meta name="description" content="OHLC trader and token burner." />
+    <!-- link-preview card when the URL is shared on X / Telegram / Discord -->
+    <meta property="og:title" content="MR5OBOT" />
+    <meta property="og:description" content="OHLC trader and token burner." />
+    <meta property="og:url" content="https://mr-5obot.github.io/" />
+    <meta property="og:image" content="https://mr-5obot.github.io/assets/og.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://mr-5obot.github.io/assets/og.png" />
     <link rel="icon" type="image/png" href="/assets/profile-2.png" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&display=swap" />
@@ -39,6 +46,9 @@
       #back.on span { display: inline-block; animation: back-bob 0.84s ease-in-out infinite; }
       @keyframes back-bob { 50% { transform: translateX(-9px); } } /* same beat as the 3D arrows' bounce */
       #back.on { opacity: 1; pointer-events: auto; }
+      /* real links for crawlers, screen readers, and no-WebGL browsers —
+         visually hidden, never displayed */
+      #fallback { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
     </style>
   </head>
   <body>
@@ -50,11 +60,25 @@
       </div>
     </div>
     <button id="back" aria-label="Back"><span>&larr;</span></button>
+    <div id="fallback">
+      <h1>MR5OBOT</h1>
+      <p>OHLC trader and token burner.</p>
+      <nav aria-label="Links">
+        <a href="https://github.com/MR-5OBOT">GitHub</a>
+        <a href="https://x.com/MR_5OBOT">X</a>
+        <a href="https://t.me/MR_5OBOT">Telegram</a>
+        <a href="https://youtube.com/@mr5obot">YouTube</a>
+        <a href="https://github.com/MR-5OBOT/risk-model-tester">Risk Model Tester</a>
+        <a href="https://github.com/MR-5OBOT/probability-simulator">Probability Simulator</a>
+        <a href="https://www.mql5.com/en/market/product/182273?source=Site+Profile+Seller">Position Dealer EA</a>
+      </nav>
+    </div>
 
-    <script type="module" is:inline>
-      import * as THREE from 'https://esm.sh/three@0.163.0';
-      import { OrbitControls } from 'https://esm.sh/three@0.163.0/examples/jsm/controls/OrbitControls.js';
-      import { GLTFLoader } from 'https://esm.sh/three@0.163.0/examples/jsm/loaders/GLTFLoader.js';
+    <script>
+      // bundled by Astro from the local npm package — no CDN in the load path
+      import * as THREE from 'three';
+      import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+      import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
       // if anything crashes, drop the loading overlay instead of freezing on it
       for (const ev of ['error', 'unhandledrejection'])
@@ -498,7 +522,7 @@
       };
 
       // the floppy disk gets the same treatment: its own arrow, and hovering
-      // raises a PROJECTS tag — click stays unwired until the projects page
+      // raises a PROJECTS tag — clicking the floppy or the tag flies to the cabinet
       let floppy = null;
       gltf.scene.traverse((o) => { if (o.isMesh && /floppy/i.test(o.name)) floppy = o; });
       const flBox = new THREE.Box3().setFromObject(floppy);
@@ -523,10 +547,7 @@
       lctx.textBaseline = 'middle';
       lctx.fillStyle = '#2e2c27';
       lctx.font = "bold 34px ui-monospace, 'Cascadia Mono', Menlo, Consolas, monospace";
-      lctx.fillText('PROJECTS', 128, 42);
-      lctx.fillStyle = '#8a857a';
-      lctx.font = "16px ui-monospace, 'Cascadia Mono', Menlo, Consolas, monospace";
-      lctx.fillText('coming soon', 128, 78);
+      lctx.fillText('PROJECTS', 128, 55);
       const ltex = new THREE.CanvasTexture(lcnv);
       ltex.colorSpace = THREE.SRGBColorSpace;
       ltex.anisotropy = maxAniso;
@@ -558,6 +579,8 @@
         fly.p1.y += maxDim * 0.55; // the crane arc
         controls.enabled = false;
         atCab = toCab;
+        // the cabinet view sits farther out than the home zoom cap — lift it for the visit
+        controls.maxDistance = maxDim * (toCab ? 2.2 : 1.49);
         if (toCab) cabRoot.visible = true; // reveal for the trip; hidden again once home
         if (!toCab) backBtn.classList.remove('on');
       }
@@ -566,13 +589,14 @@
       addEventListener('keydown', (e) => { if (e.key === 'Escape') goHome(); });
 
       // ENTER's destination: the filing cabinet on its own pedestal off to
-      // the viewer's right. 46MB of textures — stream it in the background
-      // after the desk is up; ENTER queues the flight if clicked early.
+      // the viewer's right. 4MB GLB — stream it in the background after the
+      // desk is up; ENTER queues the flight if clicked early.
       const cabSpot = new THREE.Vector3(center.x + maxDim * 1.7, 0, center.z);
       // what's filed in the cabinet: PROJECTS[i] goes in drawer i counting the
-      // top row left→right (as you face it), then down. Hovering a drawer
-      // paints its project onto the gallery frame beside the cabinet; click
-      // (drawer front or frame) follows url. Intros lifted from v1's stuff page.
+      // top row left→right (as you face it), then down. Hovering a filed
+      // drawer slides it open and floats the gallery frame up screen-center
+      // with the project on paper; unhover and the frame fades out. Click
+      // the drawer to follow url. Intros lifted from v1's stuff page.
       const PROJECTS = [
         { title: 'RISK_MODEL_TESTER', chip: 'RISK', tech: 'PYTHON · MONTE CARLO',
           intro: `Throws your risk model into Monte Carlo simulations and shows you the thousand ways it can die — before the market demonstrates one for free.`,
@@ -588,7 +612,7 @@
           url: null },
       ];
       let cabCam = null, cabTgt = null, pendingFly = false, drawers = [], cabTag = null, cabTagY = 0;
-      let framedProj = null, paintFrame = null, frameObj = null, frameBaseY = 0;
+      let framedProj = null, paintFrame = null, frameObj = null, frameBaseY = 0, frameT = 0, frameMats = [];
       const cabRoot = new THREE.Group(); // hidden until ENTER — no spoilers when orbiting
       cabRoot.visible = false;
       scene.add(cabRoot);
@@ -703,17 +727,12 @@
             d.proj = proj;
             d.url = proj.url;
           });
-        // the gallery frame: hangs in the air on the viewer's left of the
-        // cabinet, painted in the monitor's phosphor. Its spot is computed now
-        // (synchronously) so the arrival view can frame cabinet + frame both;
-        // the GLB drops onto the spot whenever it lands. It never moves or
-        // hides, so raycasting it for hover/click is flicker-safe.
+        // the gallery frame: a child of the camera, floating screen-center
+        // in front of the cabinet like a card held up to the glass — it
+        // tracks every orbit for free. Holds a paper card written in the
+        // desk note's hand, and only exists while a filed drawer is hovered.
         const h = cb2.max.y - cb2.min.y;
-        const cabW = Math.abs((cb2.max.x - cb2.min.x) * rightAxis.x) + Math.abs((cb2.max.z - cb2.min.z) * rightAxis.z);
-        const frameH = h * 0.9, frameW = frameH * 1.6 / 1.3, frameGap = frameW * 0.12;
-        const framePos = new THREE.Vector3(cabSpot.x, box.min.y + h * 0.55, cabSpot.z)
-          .addScaledVector(rightAxis, -(cabW / 2 + frameGap + frameW / 2));
-        // its canvas: same dark tube + phosphor + scanlines as the desk CRT
+        // its canvas: aged paper + the desk note's Caveat ink, not a CRT
         const fcnv = document.createElement('canvas');
         fcnv.width = 1024; fcnv.height = 818; // the Tableau quad's 1.25 aspect
         const fctx = fcnv.getContext('2d');
@@ -721,7 +740,6 @@
         ftex.colorSpace = THREE.SRGBColorSpace;
         ftex.anisotropy = maxAniso;
         ftex.flipY = false; // glTF UVs put v=0 at the top row, like the canvas
-        const mono = "ui-monospace, 'Cascadia Mono', Menlo, Consolas, monospace";
         const wrapText = (text, font, maxW) => {
           fctx.font = font;
           const lines = [];
@@ -734,87 +752,114 @@
           if (line) lines.push(line);
           return lines;
         };
+        const mono = "ui-monospace, 'Cascadia Mono', Menlo, Consolas, monospace";
+        // the card is a PHOSPHOR READOUT in the desk CRT's exact palette —
+        // a bright paper sheet glared against the dark room (user feedback);
+        // dark tube + green mono is the scene's native voice
         paintFrame = (proj) => {
           framedProj = proj;
-          fctx.fillStyle = '#0b130d'; // dark tube
+          fctx.setTransform(1, 0, 0, 1, 0, 0);
+          fctx.shadowBlur = 0;
+          fctx.fillStyle = '#0b130d'; // dark tube, same as the ENTER screen
           fctx.fillRect(0, 0, 1024, 818);
           const glow = fctx.createRadialGradient(512, 409, 80, 512, 409, 620);
-          glow.addColorStop(0, 'rgba(80, 150, 100, 0.16)');
+          glow.addColorStop(0, 'rgba(80, 150, 100, 0.18)');
           glow.addColorStop(1, 'rgba(0, 0, 0, 0)');
           fctx.fillStyle = glow;
           fctx.fillRect(0, 0, 1024, 818);
-          fctx.textAlign = 'center';
           fctx.textBaseline = 'middle';
           fctx.shadowColor = '#7dff9f';
-          if (!proj) { // idle card, until a drawer is hovered
-            fctx.shadowBlur = 18;
-            fctx.fillStyle = '#b4ffc8';
-            fctx.font = 'bold 84px ' + mono;
-            fctx.fillText('PROJECTS.DB', 512, 350);
-            fctx.shadowBlur = 8;
-            fctx.fillStyle = '#7dff9f';
-            fctx.font = '44px ' + mono;
-            fctx.fillText('── hover a drawer ──', 512, 480);
-          } else {
-            fctx.shadowBlur = 16;
-            fctx.fillStyle = '#b4ffc8';
-            fctx.font = 'bold 62px ' + mono;
-            fctx.fillText(proj.title, 512, 100);
-            fctx.font = 'bold 34px ' + mono;
-            const chipW = fctx.measureText(proj.chip).width + 44;
-            fctx.fillStyle = '#7dff9f';
-            fctx.fillRect(512 - chipW / 2, 152, chipW, 54); // inverse-video chip
-            fctx.shadowBlur = 0;
-            fctx.fillStyle = '#0b130d';
-            fctx.fillText(proj.chip, 512, 181);
-            // intro: wrapped, and shrunk to fit when it runs long
-            let size = 40;
-            let lines = wrapText(proj.intro, size + 'px ' + mono, 880);
-            if (lines.length * size * 1.35 > 400) {
-              size = Math.max(29, Math.floor(400 / (lines.length * 1.35)));
-              lines = wrapText(proj.intro, size + 'px ' + mono, 880);
-            }
-            fctx.shadowBlur = 8;
-            fctx.fillStyle = '#7dff9f';
-            lines.forEach((l, i) => fctx.fillText(l, 512, 262 + i * size * 1.35));
-            fctx.font = '32px ' + mono;
-            fctx.fillStyle = 'rgba(125, 255, 159, 0.55)';
-            fctx.fillText(proj.tech, 512, 704);
-            fctx.font = 'bold 36px ' + mono;
-            fctx.fillStyle = '#b4ffc8';
-            fctx.shadowBlur = 14;
-            fctx.fillText(proj.url ? '── click to open ──' : 'SOON™', 512, 764);
+          // file number top-left, chip tag top-right, both dim
+          fctx.fillStyle = 'rgba(125, 255, 159, 0.55)';
+          fctx.font = 'bold 28px ' + mono;
+          fctx.textAlign = 'left';
+          fctx.fillText('FILE ' + (PROJECTS.indexOf(proj) + 1) + '/' + PROJECTS.length, 52, 60);
+          fctx.textAlign = 'right';
+          fctx.fillText('[ ' + proj.chip + ' ]', 972, 60);
+          // title, glowing phosphor, shrunk to fit when it runs long
+          fctx.textAlign = 'center';
+          fctx.shadowBlur = 18;
+          fctx.fillStyle = '#b4ffc8'; // the ENTER text green
+          let ts = 64;
+          fctx.font = 'bold ' + ts + 'px ' + mono;
+          while (fctx.measureText(proj.title).width > 880 && ts > 40) {
+            ts -= 4;
+            fctx.font = 'bold ' + ts + 'px ' + mono;
           }
+          fctx.fillText(proj.title, 512, 148);
           fctx.shadowBlur = 0;
-          fctx.fillStyle = 'rgba(0, 0, 0, 0.25)'; // scanlines
-          for (let y = 0; y < 818; y += 6) fctx.fillRect(0, y, 1024, 3);
+          fctx.strokeStyle = 'rgba(125, 255, 159, 0.35)';
+          fctx.lineWidth = 2;
+          fctx.beginPath(); fctx.moveTo(72, 208); fctx.lineTo(952, 208); fctx.stroke();
+          // intro, softer green, shrinks if long
+          fctx.textAlign = 'left';
+          let size = 36;
+          let lines = wrapText(proj.intro, size + 'px ' + mono, 880);
+          while (lines.length > 9 && size > 26) {
+            size -= 2;
+            lines = wrapText(proj.intro, size + 'px ' + mono, 880);
+          }
+          fctx.fillStyle = '#9fe8b4';
+          lines.forEach((l, i) => fctx.fillText(l, 72, 268 + i * size * 1.4));
+          // footer: tech dim, the call to action glowing like a prompt
+          fctx.textAlign = 'center';
+          fctx.fillStyle = 'rgba(125, 255, 159, 0.55)';
+          fctx.font = 'bold 28px ' + mono;
+          fctx.fillText(proj.tech, 512, 700);
+          fctx.font = 'bold 42px ' + mono;
+          fctx.fillStyle = '#7dff9f';
+          fctx.shadowBlur = 14;
+          fctx.fillText(proj.url ? '> click to open_' : '> SOON™_', 512, 758);
+          fctx.shadowBlur = 0;
+          // scanlines over everything, like the desk CRT
+          fctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+          for (let y = 0; y < 818; y += 4) fctx.fillRect(0, y, 1024, 2);
           ftex.needsUpdate = true;
         };
-        paintFrame(null);
         new GLTFLoader().load('/assets/deco_cadre.glb', (fg) => {
-          const fr = fg.scene;
-          fr.rotation.y = Math.atan2(slideDir.x, slideDir.z); // face where the cabinet faces
+          const fr = fg.scene; // GLB front is +z = toward the camera as its child
+          const fDist = maxDim * 0.9; // past the near plane, before the cabinet
+          const viewH = 2 * fDist * Math.tan(deg(camera.fov) / 2);
+          const frameH = viewH * 0.5; // half the view height — the card owns the right column
           const fb = new THREE.Box3().setFromObject(fr);
           fr.scale.setScalar(frameH / (fb.max.y - fb.min.y));
-          const fb2 = new THREE.Box3().setFromObject(fr);
-          fr.position.copy(framePos).sub(fb2.getCenter(new THREE.Vector3()));
+          fr.updateMatrixWorld(true);
+          const fb2 = new THREE.Box3().setFromObject(fr); // parentless: local space
+          // split view: cabinet in the left half, card docked in the right — hovering
+          // any drawer flips the card without ever covering the drawers (tested
+          // against centered and corner placements; both hid part of the cabinet)
+          const xOff = viewH * camera.aspect * 0.24;
+          fr.position.set(xOff, 0, -fDist).sub(fb2.getCenter(new THREE.Vector3()));
+          fr.rotation.z = -0.03; // hung a hair askew, like the scrawled labels
           fr.traverse((o) => {
             if (!o.isMesh) return;
-            o.userData.frame = true;
+            o.raycast = () => {}; // never eat the drawer-hover ray it floats over
             if (o.material.name === 'Tableau')
-              o.material = new THREE.MeshBasicMaterial({ map: ftex, toneMapped: false }); // self-lit, like the CRT
-            else if (o.material.map) o.material.map.anisotropy = maxAniso;
+              o.material = new THREE.MeshBasicMaterial({ map: ftex, toneMapped: false }); // self-lit, readable from any angle
+            else // the GLB's frame texture is near-black — repaint it teal like the cabinet
+              o.material = new THREE.MeshStandardMaterial({ color: 0x3a6a68, roughness: 0.85 });
+            o.material.transparent = true; // fades in with the hovered drawer
+            o.material.opacity = 0;
+            frameMats.push(o.material);
           });
+          fr.visible = false;
           frameBaseY = fr.position.y;
           frameObj = fr;
-          cabRoot.add(fr);
+          camera.add(fr);
+          scene.add(camera); // camera children render only if the camera is in the scene
         });
-        // arrival view: near head-on, slightly above, widened and re-centered
-        // so the frame shares the shot — angles from the ?az/?pol/?r knobs
-        cabTgt = new THREE.Vector3(cabSpot.x, box.min.y + h * 0.5, cabSpot.z)
-          .addScaledVector(rightAxis, -(frameGap + frameW) / 2);
+        // arrival view: near head-on, slightly above — angles from the
+        // ?az/?pol/?r knobs
+        cabTgt = new THREE.Vector3(cabSpot.x, box.min.y + h * 0.5, cabSpot.z);
+        // zoomed out past the home cap (flyTo lifts maxDistance) and panned right,
+        // so the cabinet fills the left half of the screen and the card the right
+        const cabR = 2.05;
         cabCam = cabTgt.clone().add(new THREE.Vector3()
-          .setFromSpherical(new THREE.Spherical(maxDim * 1.55, deg(70.6), deg(-89.5))));
+          .setFromSpherical(new THREE.Spherical(maxDim * cabR, deg(70.6), deg(-89.5))));
+        const shove = cabTgt.clone().sub(cabCam).normalize().cross(camera.up).normalize()
+          .multiplyScalar(2 * cabR * maxDim * Math.tan(deg(camera.fov) / 2) * camera.aspect * 0.16);
+        cabCam.add(shove);
+        cabTgt.add(shove);
         // floating hand-scrawled label over the top — drawn letter by letter
         // with jitter and a double pen pass so it reads as handwriting
         const tcnv = document.createElement('canvas');
@@ -877,7 +922,8 @@
         if (hit.object.userData?.url) return { kind: 'icon', sprite: hit.object };
         if (hit.object.userData?.drawer !== undefined && atCab && !fly)
           return { kind: 'drawer', idx: hit.object.userData.drawer };
-        if (hit.object.userData?.frame && atCab && !fly) return { kind: 'frame' };
+        if ((hit.object === floppy || hit.object === tag) && !atCab)
+          return { kind: 'floppy' };
         return null;
       };
 
@@ -891,15 +937,14 @@
         if (!downAt || Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 6) return;
         trackPointer(e);
         const p = pick();
-        if (p?.kind === 'glass' && !fly && !atCab) {
-          lit = 0; // power-cycle flash as the trip starts
+        if ((p?.kind === 'glass' || p?.kind === 'floppy') && !fly && !atCab) {
+          if (p.kind === 'glass') lit = 0; // power-cycle flash as the trip starts
           if (cabCam) flyTo(cabCam, cabTgt, true);
-          else pendingFly = true; // the 46MB hasn't landed yet — fly on arrival
+          else pendingFly = true; // the cabinet hasn't landed yet — fly on arrival
         }
         else if (p?.kind === 'icon' && fanT > 0.6) window.open(p.sprite.userData.url, '_blank', 'noopener');
         else if (p?.kind === 'drawer' && drawers[p.idx].url && drawers[p.idx].t > 0.5)
           window.open(drawers[p.idx].url, '_blank', 'noopener');
-        else if (p?.kind === 'frame' && framedProj?.url) window.open(framedProj.url, '_blank', 'noopener');
       });
 
       // the CRT is always on — it powers up once as the page appears
@@ -917,11 +962,15 @@
           d.t = t2;
           for (const [m, off] of d.parts) m.position.copy(off).multiplyScalar(sst(d.t));
         }
-        // the hovered drawer's project takes the gallery frame — and stays
-        // there after the pointer leaves, so you can walk over and click it
-        if (p?.kind === 'drawer') {
-          const proj = drawers[p.idx].proj;
-          if (proj && proj !== framedProj) paintFrame(proj);
+        // the gallery frame only exists while a filed drawer is hovered:
+        // its project paints the paper, the frame fades in; unhover fades out
+        const hovProj = p?.kind === 'drawer' ? drawers[p.idx].proj : null;
+        if (hovProj && hovProj !== framedProj) paintFrame(hovProj);
+        frameT += ((hovProj ? 1 : 0) - frameT) * (1 - Math.exp(-dt * (hovProj ? 9 : 7)));
+        if (frameObj) {
+          frameObj.visible = frameT > 0.02;
+          const fo = sst(frameT);
+          for (const m of frameMats) m.opacity = fo;
         }
 
         // fan state: boolean with time hysteresis — flicker needs a fast
@@ -986,8 +1035,7 @@
         // the gallery frame floats on its own, slower and slighter
         if (frameObj) frameObj.position.y = frameBaseY + Math.sin(performance.now() / 640 + 3.3) * 1.2;
 
-        const wantPointer = p?.kind === 'glass' || (p?.kind === 'drawer' && !!drawers[p.idx].url)
-          || (p?.kind === 'frame' && !!framedProj?.url) || !!hot;
+        const wantPointer = p?.kind === 'glass' || p?.kind === 'floppy' || (p?.kind === 'drawer' && !!drawers[p.idx].url) || !!hot;
         if (wantPointer !== pointerPrev) {
           pointerPrev = wantPointer;
           renderer.domElement.style.cursor = wantPointer ? 'pointer' : '';
@@ -1005,7 +1053,7 @@
           drawScreen(cursorOn, squash);
         }
       }
-      window.__dbg = { camera, glass, mon, anchor, scene, renderer, THREE, fan, arrow, arrow2, tag, litNow: () => lit, fanNow: () => fanT, flopNow: () => flopT, flyNow: () => !!fly, atCab: () => atCab, cabView: () => cabCam, drawers: () => drawers, frameNow: () => framedProj?.title ?? null, frameObj: () => frameObj, goHome }; // headless-test handle
+      window.__dbg = { camera, glass, mon, anchor, scene, renderer, THREE, fan, arrow, arrow2, tag, litNow: () => lit, fanNow: () => fanT, flopNow: () => flopT, flyNow: () => !!fly, atCab: () => atCab, cabView: () => cabCam, drawers: () => drawers, frameNow: () => framedProj?.title ?? null, frameTNow: () => frameT, pickNow: () => pick(), frameObj: () => frameObj, goHome }; // headless-test handle
 
       let tPrev = performance.now();
       renderer.setAnimationLoop((t) => {
