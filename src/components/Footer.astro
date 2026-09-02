@@ -1,16 +1,14 @@
 ---
-import Github from '../icons/Github-Logo.svg';
 import X from '../icons/X-Twitter.svg';
 import Telegram from '../icons/Telegram.svg';
 import Youtube from '../icons/Youtube-Logo.svg';
-import Email from '../icons/Email-Logo.svg';
+import Instagram from '../icons/Instagram-Logo.svg';
 
 const links = [
-  { Icon: Github, href: 'https://github.com/MR-5OBOT', label: 'GitHub' },
   { Icon: X, href: 'https://x.com/MR_5OBOT', label: 'X' },
   { Icon: Telegram, href: 'https://t.me/MR_5OBOT', label: 'Telegram' },
   { Icon: Youtube, href: 'https://youtube.com/@mr5obot', label: 'YouTube' },
-  { Icon: Email, href: 'mailto:yassir7m7@gmail.com', label: 'Email' },
+  { Icon: Instagram, href: 'https://www.instagram.com/mr5obot.ohlc/', label: 'Instagram @mr5obot.ohlc' },
 ];
 ---
 
@@ -20,8 +18,8 @@ const links = [
       class="soc"
       href={href}
       aria-label={label}
-      target={href.startsWith('mailto') ? undefined : '_blank'}
-      rel={href.startsWith('mailto') ? undefined : 'noopener noreferrer'}
+      target="_blank"
+      rel="noopener noreferrer"
     >
       <span class="box"></span>
       <Icon class="ico" />
@@ -44,7 +42,7 @@ const links = [
     color: #8a8a8a;
     text-decoration: none;
   }
-  .soc .ico { width: 20px; height: 20px; color: inherit; transition: color .2s, transform .2s; }
+  .soc .ico { width: var(--icon-size, 20px); height: var(--icon-size, 20px); color: inherit; transition: color .2s, transform .2s; }
   .soc:hover { color: #b18cff; }
   .soc:hover .ico { transform: translateY(-3px) scale(1.12); filter: drop-shadow(0 0 6px rgba(177,140,255,.55)); }  /* lift + purple glow */
 

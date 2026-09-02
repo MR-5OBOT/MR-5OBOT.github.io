@@ -1,10 +1,6 @@
----
-const letters = [...'MR5OBOT'];
----
-
 <a class="nav" href="/" aria-label="MR5OBOT home">
   <span class="logo-name" aria-hidden="true">
-    {letters.map((letter, i) => <span style={`--i:${i}`}>{letter}</span>)}
+    <span>MR5OBOT</span>
   </span>
 </a>
 
@@ -17,20 +13,20 @@ const letters = [...'MR5OBOT'];
     color: #fff;
     text-decoration: none;
     transform: translateX(-50%);
-    filter: url(#pixelate);
   }
   .nav:hover { color: #a280ea; }
   .logo-name {
     display: flex;
-    align-items: baseline;
-    font: 700 clamp(40px, 5vw, 72px) 'Space Mono', monospace;
-    letter-spacing: .08em;
+    align-items: center;
+    font: 400 clamp(52px, 6vw, 84px) 'VT323', monospace;
+    text-shadow: 2px 2px 0 #3a1f72;
     white-space: nowrap;
   }
   .logo-name > span {
-    max-width: 0;
+    display: block;
+    width: 0;
     overflow: hidden;
-    animation: type .01s steps(1) calc(.3s + var(--i) * .12s) forwards;
+    animation: type 4s steps(7, end) infinite;
   }
   .logo-name::after {
     content: '';
@@ -40,14 +36,18 @@ const letters = [...'MR5OBOT'];
     background: #a280ea;
     animation: blink .7s step-end infinite;
   }
-  @keyframes type { to { max-width: 2em; } }
+  @keyframes type {
+    0%, 10% { width: 0; }
+    40%, 70% { width: 7ch; }
+    100% { width: 0; }
+  }
   @keyframes blink { 50% { opacity: 0; } }
   @media (prefers-reduced-motion: reduce) {
-    .logo-name > span { max-width: 2em; animation: none; }
+    .logo-name > span { width: 7ch; animation: none; }
     .logo-name::after { display: none; }
   }
   @media (max-width: 560px) {
     .nav { top: 20px; }
-    .logo-name { font-size: 36px; }
+    .logo-name { font-size: 46px; }
   }
 </style>
