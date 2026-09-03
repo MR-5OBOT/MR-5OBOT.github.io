@@ -8,6 +8,7 @@
   .nav {
     position: fixed;
     top: 32px;
+    top: max(32px, env(safe-area-inset-top));
     left: 50%;
     z-index: 50;
     color: #fff;
@@ -47,7 +48,11 @@
     .logo-name::after { display: none; }
   }
   @media (max-width: 560px) {
-    .nav { top: 20px; }
+    .nav { top: 20px; top: max(20px, env(safe-area-inset-top)); }
     .logo-name { font-size: 46px; }
+  }
+  @media (max-height: 500px) {
+    .nav { top: 8px; top: max(8px, env(safe-area-inset-top)); }
+    .logo-name { font-size: 40px; }
   }
 </style>

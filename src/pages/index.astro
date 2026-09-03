@@ -14,7 +14,7 @@ import Base from '../layouts/Base.astro';
     body.home { background: #000; display: flex; align-items: center; justify-content: center; }
 
     /* Stage — full-screen hero, the image is the leader */
-    .face { position: relative; width: 100vw; height: 100vh; margin: auto; overflow: hidden; z-index: 1; }
+    .face { position: relative; width: 100%; height: 100vh; height: 100dvh; margin: auto; overflow: hidden; z-index: 1; }
     /* top + bottom shadow: fade the hero into black at the edges */
     .face::after {
       content: ""; position: absolute; inset: 0; z-index: 3; pointer-events: none;
@@ -31,19 +31,25 @@ import Base from '../layouts/Base.astro';
     }
     /* Two halves of one image, clipped at the centre seam */
     .half {
-      position: absolute; top: -16%; left: 24%; width: 52%; height: auto; z-index: 1;
+      position: absolute; top: 50%; left: 50%; width: 52vw; height: auto; z-index: 1;
       opacity: 0; filter: invert(1) hue-rotate(180deg);
       will-change: transform, clip-path; backface-visibility: hidden;
     }
-    .half.left  { clip-path: inset(0 47.5% 0 0); transform: translateX(-120%); }
-    .half.right { clip-path: inset(0 0 0 52.5%); transform: translateX(120%); }
+    .half.left  { clip-path: inset(0 47.5% 0 0); transform: translate(-170%, -50%); }
+    .half.right { clip-path: inset(0 0 0 52.5%); transform: translate(70%, -50%); }
     /* Load: slide in and assemble (easeOutExpo) */
     .face.loaded .half {
-      opacity: 1; transform: translateX(0);
+      opacity: 1; transform: translate(-50%, -50%);
       transition: transform 1s cubic-bezier(.16,1,.3,1), opacity 1s ease;
     }
-    .face.loaded .half.left { transform: translateY(1.2%); }
+    .face.loaded .half.left { transform: translate(-50%, -48.8%); }
     .face.ready .half { transition: none; }
+
+    /* Portrait phones show the full trio instead of cropping the outer characters. */
+    @media (max-aspect-ratio: 1/1) {
+      .half { width: 100vw; }
+      .seam { left: 52.5%; }
+    }
 
     /* Two large social controls on either side of the hero. */
     body.home .social {
@@ -61,10 +67,16 @@ import Base from '../layouts/Base.astro';
     body.home .social .box { inset: 0; --l: 14px; --t: 2px; }
     @media (max-width: 900px) {
       body.home .social {
-        top: auto; bottom: 16px; left: 0; right: 0;
+        top: auto; bottom: 16px; bottom: max(16px, env(safe-area-inset-bottom)); left: 0; right: 0;
         display: flex; gap: 8px; transform: none;
       }
       body.home .social .soc { --icon-size: 36px; width: 60px; height: 60px; }
+    }
+    @media (max-width: 900px) and (max-aspect-ratio: 1/1) {
+      body.home .social { top: calc(50% + 35vw); bottom: auto; }
+    }
+    @media (max-height: 520px) and (max-width: 900px) {
+      body.home .social .soc { --icon-size: 30px; width: 52px; height: 52px; }
     }
   </style>
 
@@ -78,7 +90,7 @@ import Base from '../layouts/Base.astro';
       const seam = document.getElementById('seam')!;
       const REST = 0.525;           // seam at the middle man's nose
       const GAIN = 1;               // seam tracks the cursor 1:1
-      const mq = matchMedia('(min-width: 1140px)');
+      const mq = matchMedia('(min-width: 1140px) and (hover: hover) and (pointer: fine)');
       const ac = new AbortController(), { signal } = ac;   // one handle to drop every listener + the loop on leave
       let imgL = 0, imgW = 1, target = 0, xp = 0, raf = 0;
       document.addEventListener('astro:before-swap', () => ac.abort(), { once: true });

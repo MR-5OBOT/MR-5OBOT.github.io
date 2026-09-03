@@ -28,7 +28,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <link rel="icon" type="image/png" href="/assets/profile-2.png" />
     <title>{title}</title>
     <meta name="description" content={description} />
@@ -74,8 +74,11 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
 
     <style is:global>
       * { box-sizing: border-box; }
+      html { background: #000; -webkit-text-size-adjust: 100%; }
       body {
         margin: 0;
+        min-height: 100vh;
+        min-height: 100dvh;
         color: #9a9a9a;
         font-family: "Space Grotesk", "Helvetica Neue", Arial, sans-serif;
       }

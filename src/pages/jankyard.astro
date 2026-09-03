@@ -91,8 +91,16 @@ const items: CarouselItem[] = projects.map((p) => ({
     /* social row -> vertical strip pinned to the left edge (scrollbar owns the right) */
     body.jankyard .social {
       flex-direction: column;
-      left: 14px; right: auto; top: 50%; bottom: auto;
+      left: 14px; left: max(14px, env(safe-area-inset-left)); right: auto; top: 50%; bottom: auto;
       transform: translateY(-50%); gap: 8px;
+    }
+    @media (max-width: 759px), (pointer: coarse) {
+      body.jankyard .social {
+        flex-direction: row;
+        left: env(safe-area-inset-left); right: env(safe-area-inset-right); top: auto;
+        bottom: 8px; bottom: max(8px, env(safe-area-inset-bottom)); transform: none; gap: 4px;
+      }
+      body.jankyard .scrollbar.v { display: none; }
     }
 
   </style>
