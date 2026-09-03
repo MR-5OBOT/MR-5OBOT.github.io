@@ -47,8 +47,8 @@ import Base from '../layouts/Base.astro';
 
     /* Portrait phones show the full trio instead of cropping the outer characters. */
     @media (max-aspect-ratio: 1/1) {
-      .half { width: 100vw; }
-      .seam { left: 52.5%; }
+      .half { top: calc(120px + 45vw); width: 125vw; }
+      .seam { left: 53.125%; }
     }
 
     /* Two large social controls on either side of the hero. */
