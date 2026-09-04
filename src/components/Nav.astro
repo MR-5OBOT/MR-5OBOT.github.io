@@ -42,9 +42,10 @@
     40%, 70% { width: 7ch; }
     100% { width: 0; }
   }
+  @keyframes glow { 50% { color: #a280ea; } }
   @keyframes blink { 50% { opacity: 0; } }
   @media (prefers-reduced-motion: reduce) {
-    .logo-name > span { width: 7ch; animation: none; }
+    .logo-name > span { width: 7ch; animation: glow 2s ease-in-out infinite; }
     .logo-name::after { display: none; }
   }
   @media (max-width: 560px) {
